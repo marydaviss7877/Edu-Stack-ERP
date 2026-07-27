@@ -25,6 +25,13 @@ export interface IUser extends Document {
   passwordChangedAt?: Date;
   mustChangePassword: boolean;
   fcmTokens: string[];
+  emailVerifiedAt?: Date;
+  verification?: {
+    codeHash?: string;
+    expiresAt?: Date;
+    attempts: number;
+    lastSentAt?: Date;
+  };
   comparePassword(candidate: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +56,13 @@ const userSchema = new Schema<IUser>(
     passwordChangedAt: Date,
     mustChangePassword: { type: Boolean, default: false },
     fcmTokens: { type: [String], default: [] },
+    emailVerifiedAt: Date,
+    verification: {
+      codeHash: { type: String, select: false },
+      expiresAt: Date,
+      attempts: { type: Number, default: 0 },
+      lastSentAt: Date,
+    },
   },
   { timestamps: true }
 );

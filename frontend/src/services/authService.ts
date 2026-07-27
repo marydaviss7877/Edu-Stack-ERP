@@ -37,6 +37,16 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await api.put('/auth/change-password', { currentPassword, newPassword });
 }
 
+export async function verifyEmail(code: string): Promise<{ emailVerifiedAt: string }> {
+  const { data } = await api.post<ApiResponse<{ emailVerifiedAt: string }>>('/auth/verify-email', { code });
+  if (!data.success || !data.data) throw new Error(data.message ?? 'Verification failed');
+  return data.data;
+}
+
+export async function resendVerification(): Promise<void> {
+  await api.post('/auth/resend-verification');
+}
+
 export interface OrgBranding {
   name: string;
   slug: string;

@@ -11,6 +11,7 @@ import { notificationService } from '../services/notificationService';
 import { useSocket } from '../hooks/useSocket';
 import { getOrgBranding } from '../services/authService';
 import { getOrgSlug } from '../utils/tenant';
+import VerifyEmailBanner from '../components/shared/VerifyEmailBanner';
 
 interface NavItem {
   label: string;
@@ -448,6 +449,8 @@ export default function AppLayout() {
             </button>
           </div>
         )}
+
+        <VerifyEmailBanner />
 
         {/* MAIN SCROLLABLE CONTENT */}
         <main className="flex-1 overflow-y-auto dark:bg-slate-900">

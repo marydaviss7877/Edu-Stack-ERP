@@ -16,6 +16,7 @@ export interface AuthUser {
   orgId?: string;
   branchId?: string;
   profilePhotoUrl?: string;
+  emailVerifiedAt?: string | null;
 }
 
 export interface AuthTokens {

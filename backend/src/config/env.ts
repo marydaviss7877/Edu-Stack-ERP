@@ -40,6 +40,9 @@ export const env = {
   baseDomain: optional('BASE_DOMAIN', 'edustack.pk'),
   vercelPreviewUrl: optional('VERCEL_PREVIEW_URL', ''),
 
+  resendApiKey: optional('RESEND_API_KEY', ''),
+  emailFrom: optional('EMAIL_FROM', 'EduStack PK <onboarding@resend.dev>'),
+
   // AES-256-GCM key (64 hex chars = 32 bytes) for encrypting per-tenant gateway credentials
   gatewayEncryptionKey: optional('GATEWAY_ENCRYPTION_KEY', ''),
 };

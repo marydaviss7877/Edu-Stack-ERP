@@ -13,6 +13,11 @@ import {
   rotateRefreshToken,
 } from '../services/authService';
 import { withoutTenantEnforcement } from '../utils/tenantPlugin';
+import {
+  issueVerificationCode,
+  checkVerificationCode,
+  verificationCooldownRemaining,
+} from '../services/verificationService';
 
 const COOKIE_DOMAIN = env.isDev ? undefined : `.${env.baseDomain}`;
 
@@ -136,6 +141,7 @@ export async function login(req: Request, res: Response): Promise<void> {
             orgId: user.orgId,
             branchId: user.branchId,
             profilePhotoUrl: user.profilePhotoUrl,
+            emailVerifiedAt: user.emailVerifiedAt,
           },
         },
       });
@@ -156,6 +162,7 @@ export async function login(req: Request, res: Response): Promise<void> {
           orgId: user.orgId,
           branchId: user.branchId,
           profilePhotoUrl: user.profilePhotoUrl,
+          emailVerifiedAt: user.emailVerifiedAt,
         },
       },
     });
@@ -349,12 +356,97 @@ export async function registerOrg(req: Request, res: Response): Promise<void> {
           email: adminUser.email,
           role: adminUser.role,
           orgId: org._id,
+          emailVerifiedAt: null,
         },
         trialEndsAt: org.trialEndsAt,
         trialDays,
       },
     });
+
+    // Fire off the verification code after responding — full app access is
+    // never blocked on this; it's a soft nudge, not a signup gate.
+    issueVerificationCode(adminUser, org.name).catch(err =>
+      console.error('[registerOrg] failed to issue verification code:', err)
+    );
   } finally {
     await session.endSession();
   }
+}
+
+export const verifyEmailValidators = [
+  body('code').trim().isLength({ min: 6, max: 6 }).isNumeric().withMessage('Enter the 6-digit code'),
+];
+
+/** Verifies the authenticated user's email against a previously issued code. Idempotent. */
+export async function verifyEmail(req: Request, res: Response): Promise<void> {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({ success: false, errors: errors.array() });
+    return;
+  }
+
+  const user = await User.findById(req.user!.id).select('+verification.codeHash');
+  if (!user) {
+    res.status(404).json({ success: false, message: 'User not found' });
+    return;
+  }
+
+  if (user.emailVerifiedAt) {
+    res.json({ success: true, message: 'Email already verified', data: { emailVerifiedAt: user.emailVerifiedAt } });
+    return;
+  }
+
+  const result = checkVerificationCode(user, req.body.code);
+
+  if (!result.ok) {
+    const messages: Record<typeof result.reason, string> = {
+      none: 'No verification code pending. Please request a new one.',
+      expired: 'This code has expired. Please request a new one.',
+      too_many_attempts: 'Too many incorrect attempts. Please request a new code.',
+      incorrect: 'Incorrect code. Please try again.',
+    };
+
+    if (result.reason === 'incorrect' && user.verification) {
+      user.verification.attempts += 1;
+      await user.save();
+    }
+
+    res.status(400).json({ success: false, message: messages[result.reason], reason: result.reason });
+    return;
+  }
+
+  user.emailVerifiedAt = new Date();
+  user.verification = undefined;
+  await user.save();
+
+  res.json({ success: true, message: 'Email verified successfully', data: { emailVerifiedAt: user.emailVerifiedAt } });
+}
+
+/** Resends a fresh verification code, subject to a per-user cooldown. */
+export async function resendVerification(req: Request, res: Response): Promise<void> {
+  const user = await User.findById(req.user!.id);
+  if (!user) {
+    res.status(404).json({ success: false, message: 'User not found' });
+    return;
+  }
+
+  if (user.emailVerifiedAt) {
+    res.status(400).json({ success: false, message: 'Email already verified' });
+    return;
+  }
+
+  const cooldownMs = verificationCooldownRemaining(user);
+  if (cooldownMs > 0) {
+    res.status(429).json({
+      success: false,
+      message: `Please wait ${Math.ceil(cooldownMs / 1000)}s before requesting another code.`,
+      retryAfterMs: cooldownMs,
+    });
+    return;
+  }
+
+  const org = user.orgId ? await Organization.findById(user.orgId).select('name').lean() : null;
+  await issueVerificationCode(user, org?.name ?? 'your school');
+
+  res.json({ success: true, message: 'Verification code sent' });
 }
