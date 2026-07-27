@@ -51,6 +51,7 @@ app.use(cors({
     if (!origin || env.isDev) return cb(null, true);
     if (
       origin === env.frontendUrl ||
+      origin === `https://${env.baseDomain}` ||
       origin.endsWith(`.${env.baseDomain}`) ||
       (env.vercelPreviewUrl && origin === env.vercelPreviewUrl)
     ) return cb(null, true);
