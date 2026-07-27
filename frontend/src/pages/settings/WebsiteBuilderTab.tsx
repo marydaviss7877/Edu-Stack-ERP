@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { SiteConfig } from '../../types';
 import { cn } from '../../lib/utils';
+import { schoolUrl } from '../../utils/tenant';
 
 type TemplateId = 'classic' | 'modern' | 'minimal';
 
@@ -325,7 +326,7 @@ export default function WebsiteBuilderTab({ orgId, initialSite, orgSlug }: Props
           </span>
           {site.published && (
             <a
-              href={`https://${orgSlug}.tws.enterprises`}
+              href={schoolUrl(orgSlug)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"

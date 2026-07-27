@@ -4,7 +4,7 @@ import { Suspense, useEffect } from 'react';
 import './i18n';
 import { useThemeStore } from './stores/themeStore';
 import { useAuthStore } from './stores/authStore';
-import { getOrgSlug, isAdminDomain, getProductSubdomain } from './utils/tenant';
+import { getOrgSlug, isAdminDomain } from './utils/tenant';
 import { getSchoolSite } from './services/authService';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
@@ -47,7 +47,6 @@ import MobileDevicesPage from './pages/admin/MobileDevicesPage';
 import StudentProfilePage from './pages/profile/StudentProfilePage';
 import LandingPage from './pages/landing/LandingPage';
 import PlanBuilderPage from './pages/landing/PlanBuilderPage';
-import PortfolioPage from './pages/portfolio/PortfolioPage';
 import SchoolSitePage from './pages/public/SchoolSitePage';
 import WebsiteEditorPage from './pages/settings/WebsiteEditorPage';
 import AdmissionPortalPage from './pages/public/AdmissionPortalPage';
@@ -73,7 +72,7 @@ function PageLoader() {
   );
 }
 
-// ── admin.tws.enterprises ─────────────────────────────────
+// ── admin.edu.tws.enterprises ─────────────────────────────
 function AdminRouter() {
   return (
     <Routes>
@@ -99,7 +98,7 @@ function AdminRouter() {
   );
 }
 
-// ── beaconhouse.tws.enterprises (any school subdomain) ────
+// ── beaconhouse.edu.tws.enterprises (any school subdomain) ────
 // Authenticated → dashboard. Unauthenticated → check for published site,
 // fall back to /login if add-on is off or site is unpublished.
 function TenantRoot() {
@@ -288,34 +287,20 @@ function EduRouter() {
 }
 
 
-// ── tws.enterprises (root domain) — WolfStack portfolio ──
-function PortfolioRouter() {
-  return (
-    <Routes>
-      <Route path="/" element={<PortfolioPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
-}
-
 export default function App() {
   const isDark = useThemeStore((s) => s.isDark);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  const admin   = isAdminDomain();
-  const product = getProductSubdomain(); // 'edu' | null
-  const slug    = getOrgSlug();
+  const admin = isAdminDomain();
+  const slug  = getOrgSlug();
 
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
-          {admin            ? <AdminRouter />    :
-           product === 'edu' ? <EduRouter />    :
-           slug              ? <TenantRouter /> :
-           <PortfolioRouter />}
+          {admin ? <AdminRouter /> : slug ? <TenantRouter /> : <EduRouter />}
         </Suspense>
       </BrowserRouter>
     </QueryClientProvider>

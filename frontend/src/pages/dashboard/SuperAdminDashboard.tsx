@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { schoolUrl } from '../../utils/tenant';
 import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
 
@@ -207,7 +208,7 @@ export default function SuperAdminDashboard() {
                 {/* Org info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{org.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{org.slug}.tws.enterprises</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{schoolUrl(org.slug).replace('https://', '')}</p>
                 </div>
 
                 {/* Students */}

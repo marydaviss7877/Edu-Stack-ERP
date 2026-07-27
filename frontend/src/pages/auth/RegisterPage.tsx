@@ -2,7 +2,7 @@ import { useState } from 'react';
 import api from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
-import { schoolUrl, adminLoginUrl } from '../../utils/tenant';
+import { schoolUrl, adminLoginUrl, BASE_DOMAIN } from '../../utils/tenant';
 import type { AuthUser } from '../../types';
 import { cn } from '../../lib/utils';
 
@@ -497,7 +497,7 @@ export default function RegisterPage() {
                     {/* Prefix */}
                     <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/60 px-3 text-[11px] text-gray-400 dark:text-slate-500 border-r border-gray-200 dark:border-slate-600 font-mono whitespace-nowrap select-none">
                       <IcoGlobe />
-                      tws.enterprises/
+                      {BASE_DOMAIN}/
                     </span>
                     {/* Slug input with its own float label */}
                     <div className="relative flex-1">
@@ -530,7 +530,7 @@ export default function RegisterPage() {
                         <p className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500 pl-1 mt-1.5">
                           <svg className="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                           <span className="font-medium text-blue-500">{form.slug}</span>
-                          <span>.tws.enterprises</span>
+                          <span>.{BASE_DOMAIN}</span>
                         </p>
                       )
                       : <p className="text-[11px] text-gray-400 dark:text-slate-500 pl-1 mt-1.5">Staff and students will log in at this address</p>

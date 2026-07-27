@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { productUrl } from '../../utils/tenant';
 
 const SWH_APP_URL = 'https://swh.tws.enterprises';
+const EDU_APP_URL = 'https://edu.tws.enterprises';
 
 const PRODUCTS = [
   {
@@ -16,7 +16,7 @@ const PRODUCTS = [
       </svg>
     ),
     color: 'blue',
-    href: productUrl('edu'),
+    href: EDU_APP_URL,
   },
   {
     id: 'hospital',
@@ -122,7 +122,7 @@ const COLOR_MAP = {
   violet: { icon: 'bg-violet-600', badge: 'bg-violet-100 text-violet-700', ring: 'ring-violet-100' },
 };
 
-export default function PortfolioPage() {
+export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -156,7 +156,7 @@ export default function PortfolioPage() {
               Software House ERP
             </a>
             <a
-              href={productUrl('edu')}
+              href={EDU_APP_URL}
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-bold transition-colors shadow shadow-amber-500/20"
             >
               EduStack PK →
@@ -185,7 +185,7 @@ export default function PortfolioPage() {
             <a href={SWH_APP_URL} className="mt-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-center font-semibold hover:bg-gray-50">
               Software House ERP
             </a>
-            <a href={productUrl('edu')} className="px-4 py-2.5 rounded-xl bg-amber-500 text-white text-center font-bold">
+            <a href={EDU_APP_URL} className="px-4 py-2.5 rounded-xl bg-amber-500 text-white text-center font-bold">
               EduStack PK →
             </a>
           </div>
@@ -442,7 +442,7 @@ export default function PortfolioPage() {
               Software House ERP →
             </a>
             <a
-              href={productUrl('edu')}
+              href={EDU_APP_URL}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl border-2 border-amber-500 text-amber-600 font-bold hover:bg-amber-50 transition-colors"
             >
               Try EduStack PK →
@@ -464,11 +464,11 @@ export default function PortfolioPage() {
           </div>
 
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-            <a href={SWH_APP_URL}      className="hover:text-white transition-colors">Software House ERP</a>
-            <a href={productUrl('edu')} className="hover:text-white transition-colors">EduStack PK</a>
-            <a href="#services"        className="hover:text-white transition-colors">Services</a>
-            <a href="#about"           className="hover:text-white transition-colors">About</a>
-            <a href="#contact"         className="hover:text-white transition-colors">Contact</a>
+            <a href={SWH_APP_URL} className="hover:text-white transition-colors">Software House ERP</a>
+            <a href={EDU_APP_URL} className="hover:text-white transition-colors">EduStack PK</a>
+            <a href="#services"   className="hover:text-white transition-colors">Services</a>
+            <a href="#about"      className="hover:text-white transition-colors">About</a>
+            <a href="#contact"    className="hover:text-white transition-colors">Contact</a>
           </nav>
 
           <p className="text-xs text-gray-600">

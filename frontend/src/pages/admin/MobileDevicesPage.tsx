@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { ApiResponse } from '../../types';
+import { schoolUrl } from '../../utils/tenant';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -293,7 +294,7 @@ export default function MobileDevicesPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-slate-500">{selectedOrg.slug}.tws.enterprises</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500">{schoolUrl(selectedOrg.slug).replace('https://', '')}</p>
                   </div>
                 </div>
 

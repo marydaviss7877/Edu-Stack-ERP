@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import type { Organization, ApiResponse, SiteConfig, SiteNewsPost, PublicSiteData } from '../../types';
 import SchoolSitePage from '../public/SchoolSitePage';
 import { cn } from '../../lib/utils';
+import { schoolUrl } from '../../utils/tenant';
 
 // ── Types + constants ────────────────────────────────────────
 
@@ -632,13 +633,13 @@ export default function WebsiteEditorPage() {
           {site.published && org?.slug && (
             <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-800 flex-shrink-0">
               <a
-                href={`https://${org.slug}.tws.enterprises`}
+                href={schoolUrl(org.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline truncate"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                {org.slug}.tws.enterprises
+                {schoolUrl(org.slug).replace('https://', '')}
                 <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>

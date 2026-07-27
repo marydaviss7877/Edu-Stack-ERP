@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
 import { formatDate } from '../../lib/utils';
+import { schoolUrl } from '../../utils/tenant';
 
 const PLAN_LABELS = { starter: 'Starter', growth: 'Growth', scale: 'Scale' };
 const STATUS_STYLES: Record<string, string> = {
@@ -83,7 +84,7 @@ export default function OrgDetailPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">{org.name}</h1>
-              <p className="text-sm text-gray-400 dark:text-slate-500 mt-0.5">{org.slug}.tws.enterprises</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500 mt-0.5">{schoolUrl(org.slug).replace('https://', '')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -191,7 +192,7 @@ export default function OrgDetailPage() {
           {[
             { label: 'Contact Email', value: org.contactEmail },
             { label: 'Contact Phone', value: org.contactPhone ?? '—' },
-            { label: 'Slug', value: `${org.slug}.tws.enterprises` },
+            { label: 'Slug', value: schoolUrl(org.slug).replace('https://', '') },
             { label: 'Trial Ends', value: org.trialEndsAt ? formatDate(org.trialEndsAt) : '—' },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-slate-700/50 last:border-0">

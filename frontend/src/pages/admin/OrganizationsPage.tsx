@@ -4,6 +4,7 @@ import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
 import Modal from '../../components/ui/Modal';
 import { formatDate } from '../../lib/utils';
+import { schoolUrl } from '../../utils/tenant';
 
 function StatusBadge({ status }: { status: Organization['status'] }) {
   const cls = status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : status === 'trial' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
@@ -108,7 +109,7 @@ export default function OrganizationsPage() {
               <tr key={org._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900 dark:text-slate-100">{org.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{org.slug}.tws.enterprises</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{schoolUrl(org.slug).replace('https://', '')}</p>
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400 capitalize">{org.plan}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{org.usageBilling.activeStudents ?? 0}</td>
@@ -157,7 +158,7 @@ export default function OrganizationsPage() {
               <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Slug *</label>
               <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" value={form.slug}
                 onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} required placeholder="my-school" />
-              <p className="text-xs text-gray-400 mt-0.5">{form.slug}.tws.enterprises</p>
+              <p className="text-xs text-gray-400 mt-0.5">{schoolUrl(form.slug).replace('https://', '')}</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">Contact Email *</label>

@@ -5,6 +5,7 @@ import { downloadOfferLetterPdf } from '../../lib/offerLetterPdf';
 import { downloadProvisionalCertPdf } from '../../lib/provisionalCertPdf';
 import { downloadStudentIdCardPdf } from '../../lib/studentIdCardPdf';
 import { useAuthStore } from '../../stores/authStore';
+import { schoolUrl } from '../../utils/tenant';
 import api from '../../services/api';
 import type { ApiResponse } from '../../types';
 import type { Branch } from '../../types';
@@ -771,7 +772,7 @@ export default function AdmissionPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Admission Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Public portal: <a href={`http://${slug}.tws.enterprises/admission`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{slug}.tws.enterprises/admission</a>
+            Public portal: <a href={schoolUrl(slug, '/admission')} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{schoolUrl(slug, '/admission').replace('https://', '')}</a>
           </p>
         </div>
       </div>
