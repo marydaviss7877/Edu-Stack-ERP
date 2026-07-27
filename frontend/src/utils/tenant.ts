@@ -1,4 +1,9 @@
-const BASE = import.meta.env.VITE_BASE_DOMAIN ?? 'edu.tws.enterprises';
+// Strip any accidental protocol/trailing slash — VITE_BASE_DOMAIN must be a bare domain (e.g. "edu.tws.enterprises"),
+// but env vars occasionally get set to a full URL by mistake, which would otherwise corrupt every tenant URL built below.
+const BASE = (import.meta.env.VITE_BASE_DOMAIN ?? 'edu.tws.enterprises')
+  .trim()
+  .replace(/^https?:\/\//, '')
+  .replace(/\/+$/, '');
 
 export const BASE_DOMAIN = BASE;
 
