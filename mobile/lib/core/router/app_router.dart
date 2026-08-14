@@ -51,6 +51,7 @@ import '../../screens/admin/qr/generate_qr_screen.dart';
 import '../../screens/shared/profile_screen.dart';
 import '../../screens/shared/settings_screen.dart';
 import '../../screens/shared/no_internet_screen.dart';
+import '../../screens/shared/inventory/inventory_screen.dart';
 
 import '../../core/storage/local_storage.dart';
 import '../../models/org.dart';
@@ -193,6 +194,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: '/principal/results',
               builder: (_, __) => const ResultsScreen()),
           GoRoute(
+              path: '/principal/inventory',
+              builder: (_, __) => const InventoryScreen()),
+          GoRoute(
               path: '/principal/notifications',
               builder: (_, __) => const NotificationsScreen()),
         ],
@@ -231,6 +235,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: '/accountant/reports',
               builder: (_, __) => const _AccountantReportsPlaceholder()),
           GoRoute(
+              path: '/accountant/inventory',
+              builder: (_, __) => const InventoryScreen()),
+          GoRoute(
               path: '/accountant/notifications',
               builder: (_, __) => const NotificationsScreen()),
         ],
@@ -246,6 +253,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/group/users',
               builder: (_, __) => const UserManagementScreen()),
+          GoRoute(
+              path: '/group/inventory',
+              builder: (_, __) => const InventoryScreen()),
           GoRoute(
               path: '/group/qr', builder: (_, __) => const GenerateQrScreen()),
           GoRoute(

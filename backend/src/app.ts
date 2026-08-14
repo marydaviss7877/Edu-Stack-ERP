@@ -37,6 +37,7 @@ import branchHeaderRoutes from './routes/branchHeader';
 import examScheduleRoutes from './routes/examSchedules';
 import admissionRoutes from './routes/admission';
 import paymentGatewaySettingsRoutes from './routes/paymentGatewaySettings';
+import inventoryRoutes from './routes/inventory';
 
 const app = express();
 
@@ -109,6 +110,7 @@ app.use('/api/branch-header', branchHeaderRoutes);
 app.use('/api/exam-schedules', examScheduleRoutes);
 app.use('/api/admission', admissionRoutes);
 app.use('/api/gateway-settings', paymentGatewaySettingsRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

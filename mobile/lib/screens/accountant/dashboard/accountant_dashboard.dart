@@ -8,6 +8,8 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/accountant_providers.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../providers/inventory_providers.dart';
+import '../../shared/inventory/financial_overview_card.dart';
 
 class AccountantDashboard extends ConsumerWidget {
   const AccountantDashboard({super.key});
@@ -26,6 +28,8 @@ class AccountantDashboard extends ConsumerWidget {
           ref.invalidate(overdueCountProvider);
           ref.invalidate(allChallansProvider(null));
           ref.invalidate(accountantUnreadCountProvider);
+          ref.invalidate(financeSummaryProvider);
+          ref.invalidate(inventoryDashboardProvider);
         },
         child: CustomScrollView(
           slivers: [
@@ -86,6 +90,10 @@ class AccountantDashboard extends ConsumerWidget {
                     // ── Stats row ──────────────────────────────
                     _StatsRow(),
 
+                    const SizedBox(height: 20),
+
+                    const _AccountantFinanceOverview(),
+
                     const SizedBox(height: 24),
 
                     // ── Overdue alert ─────────────────────────
@@ -115,6 +123,12 @@ class AccountantDashboard extends ConsumerWidget {
                           onTap: () => context.go('/accountant/reports'),
                         ),
                         _ActionCard(
+                          icon: Icons.inventory_2_rounded,
+                          label: 'Assets & Expenses',
+                          color: Colors.indigo,
+                          onTap: () => context.go('/accountant/inventory'),
+                        ),
+                        _ActionCard(
                           icon: Icons.warning_rounded,
                           label: 'Overdue',
                           color: cs.error,
@@ -138,6 +152,43 @@ class AccountantDashboard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AccountantFinanceOverview extends ConsumerWidget {
+  const _AccountantFinanceOverview();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final finance = ref.watch(financeSummaryProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('Income & expenditure',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800)),
+            ),
+            TextButton(
+              onPressed: () => context.go('/accountant/inventory'),
+              child: const Text('Open ledger'),
+            ),
+          ],
+        ),
+        finance.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (_, __) => const Card(
+              child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Financial summary unavailable'))),
+          data: (data) => FinancialOverviewCard(data: data),
+        ),
+      ],
     );
   }
 }

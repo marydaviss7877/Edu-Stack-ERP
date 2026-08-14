@@ -20,6 +20,11 @@ class AccountantShell extends StatelessWidget {
       path: '/accountant/reports'
     ),
     (
+      icon: Icons.inventory_2_rounded,
+      label: 'Assets',
+      path: '/accountant/inventory'
+    ),
+    (
       icon: Icons.notifications_outlined,
       label: 'Alerts',
       path: '/accountant/notifications'

@@ -8,6 +8,8 @@ import { useThemeStore } from '../../stores/themeStore';
 import { feeService } from '../../services/feeService';
 import { notificationService } from '../../services/notificationService';
 import { admissionService } from '../../services/admissionService';
+import { inventoryService } from '../../services/inventoryService';
+import FinanceSnapshot from '../../components/inventory/FinanceSnapshot';
 import { formatCurrency } from '../../lib/utils';
 import api from '../../services/api';
 import type { ApiResponse, Organization } from '../../types';
@@ -165,6 +167,13 @@ function BranchCard({ branch, onEnter }: { branch: BranchStat; onEnter: () => vo
 
 const QUICK_LINKS = [
   {
+    to: '/group/inventory',
+    label: 'Assets & Finance',
+    desc: 'Surplus, expenses & inventory',
+    iconD: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+    color: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:group-hover:bg-emerald-900/50',
+  },
+  {
     to: '/group/branches',
     label: 'Manage Branches',
     desc: 'Add, edit, and configure branches',
@@ -257,7 +266,7 @@ const STATUS_BADGE: Record<string, { label: string; dot: string; chip: string }>
 
 // ── Main Component ─────────────────────────────────────────
 export default function GroupAdminDashboard() {
-  const { user, setActiveBranch } = useAuthStore();
+  const { user, activeBranch, setActiveBranch } = useAuthStore();
   const { isDark } = useThemeStore();
   const navigate = useNavigate();
 
@@ -302,6 +311,15 @@ export default function GroupAdminDashboard() {
   const { data: notifCount = 0 } = useQuery({
     queryKey: ['notif-count'],
     queryFn: notificationService.getUnreadCount,
+  });
+
+  const { data: finance } = useQuery({
+    queryKey: ['inventory-finance', activeBranch?.id ?? 'all'],
+    queryFn: () => inventoryService.finance(),
+  });
+  const { data: inventory } = useQuery({
+    queryKey: ['inventory-dashboard', activeBranch?.id ?? 'all'],
+    queryFn: inventoryService.dashboard,
   });
 
   // ── Org-wide admission pipeline ──
@@ -462,6 +480,13 @@ export default function GroupAdminDashboard() {
           }
         />
       </div>
+
+      <FinanceSnapshot
+        finance={finance}
+        inventory={inventory}
+        href="/group/inventory"
+        scopeLabel={activeBranch?.name ?? 'All campuses'}
+      />
 
       {/* ── Notifications pill (if unread) ──────────────── */}
       {notifCount > 0 && (

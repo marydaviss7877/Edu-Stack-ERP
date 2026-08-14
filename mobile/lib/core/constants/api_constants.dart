@@ -38,5 +38,6 @@ class ApiConstants {
   static const String assignments = '/assignments';
   static const String fees = '/fees/challans';
   static const String notifications = '/notifications';
+  static const String inventory = '/inventory';
   static const String unreadCount = '/notifications/unread-count';
 }

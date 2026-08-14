@@ -20,6 +20,11 @@ class PrincipalShell extends StatelessWidget {
       path: '/principal/results'
     ),
     (
+      icon: Icons.inventory_2_rounded,
+      label: 'Assets',
+      path: '/principal/inventory'
+    ),
+    (
       icon: Icons.notifications_outlined,
       label: 'Alerts',
       path: '/principal/notifications'

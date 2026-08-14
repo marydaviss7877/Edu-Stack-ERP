@@ -54,6 +54,7 @@ import AdmissionPortalPage from './pages/public/AdmissionPortalPage';
 import AdmissionPage from './pages/admission/AdmissionPage';
 import DeleteAccountPage from './pages/legal/DeleteAccountPage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
+import InventoryPage from './pages/inventory/InventoryPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ function TenantRouter() {
         <Route path="academic"       element={<AcademicSetupPage />} />
         <Route path="fees"           element={<FeesPage />} />
         <Route path="payroll"        element={<PayrollPage />} />
+        <Route path="inventory"      element={<InventoryPage />} />
         <Route path="notifications"  element={<NotificationsPage />} />
         <Route path="sops"           element={<SopsPage />} />
         <Route path="resources"      element={<ResourcesPage />} />
@@ -266,6 +268,7 @@ function TenantRouter() {
         <Route path="academic"       element={<AcademicSetupPage />} />
         <Route path="fees"           element={<FeesPage />} />
         <Route path="payroll"        element={<PayrollPage />} />
+        <Route path="inventory"      element={<InventoryPage />} />
         <Route path="notifications"  element={<NotificationsPage />} />
         <Route path="sops"           element={<SopsPage />} />
         <Route path="resources"      element={<ResourcesPage />} />

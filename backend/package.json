@@ -7,7 +7,7 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest --forceExit",
+    "test": "npm run build && jest --forceExit",
     "test:watch": "jest --watch",
     "lint": "tsc --noEmit",
     "seed:admin": "ts-node --transpile-only scripts/seedSuperAdmin.ts",
@@ -15,6 +15,8 @@
     "seed:mphss": "node scripts/seedMphssOrg.js",
     "seed:mphss-extras": "node scripts/seedMphssExtras.js",
     "fix:attendance-index": "node scripts/fixAttendanceIndex.js",
+    "init:inventory-indexes": "ts-node --transpile-only scripts/createInventoryIndexes.ts",
+    "seed:inventory-mphss": "node scripts/seedMphssInventory.js --apply",
     "fix:collection-names": "node scripts/fixCollectionNames.js"
   },
   "keywords": [],

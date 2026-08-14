@@ -12,6 +12,8 @@ import { feeService } from '../../services/feeService';
 import { academicService } from '../../services/academicService';
 import { notificationService } from '../../services/notificationService';
 import { formatCurrency } from '../../lib/utils';
+import { inventoryService } from '../../services/inventoryService';
+import FinanceSnapshot from '../../components/inventory/FinanceSnapshot';
 
 const today = new Date();
 const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -58,6 +60,14 @@ function StatCard({ label, value, sub, gradient, icon }: StatCardProps) {
 }
 
 const QUICK_LINKS = [
+  {
+    to: '/dashboard/inventory',
+    label: 'Assets & Finance',
+    desc: 'Expenses, stock & surplus',
+    roles: ['accountant', 'branch_principal', 'it_admin'],
+    icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+    color: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:group-hover:bg-emerald-900/50',
+  },
   {
     to: '/dashboard/attendance',
     label: 'Mark Attendance',
@@ -129,6 +139,7 @@ export default function BranchDashboard() {
   const user = useAuthStore((s) => s.user);
   const { isDark } = useThemeStore();
   const isAccountant = user?.role === 'accountant';
+  const canViewFinance = user?.role === 'accountant' || user?.role === 'branch_principal';
 
   const { data: years = [] } = useQuery({
     queryKey: ['years'],
@@ -151,6 +162,17 @@ export default function BranchDashboard() {
   const { data: notifCount = 0 } = useQuery({
     queryKey: ['notif-count'],
     queryFn: notificationService.getUnreadCount,
+  });
+
+  const { data: finance } = useQuery({
+    queryKey: ['inventory-finance', user?.branchId],
+    queryFn: () => inventoryService.finance(),
+    enabled: canViewFinance,
+  });
+  const { data: inventory } = useQuery({
+    queryKey: ['inventory-dashboard', user?.branchId],
+    queryFn: inventoryService.dashboard,
+    enabled: canViewFinance,
   });
 
   const months = last6Months();
@@ -257,6 +279,15 @@ export default function BranchDashboard() {
             }
           />
         </div>
+
+      {canViewFinance && (
+        <FinanceSnapshot
+          finance={finance}
+          inventory={inventory}
+          href="/dashboard/inventory"
+          scopeLabel="Campus"
+        />
+      )}
 
       {/* Charts row */}
       {(feeHistory.length > 0 || pieData.length > 0) && (

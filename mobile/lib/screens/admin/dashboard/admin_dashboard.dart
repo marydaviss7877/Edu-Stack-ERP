@@ -7,6 +7,8 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../providers/inventory_providers.dart';
+import '../../shared/inventory/financial_overview_card.dart';
 
 class AdminDashboard extends ConsumerWidget {
   final bool isSuperAdmin;
@@ -26,6 +28,8 @@ class AdminDashboard extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(orgStatsProvider);
           ref.invalidate(branchesProvider);
+          ref.invalidate(financeSummaryProvider);
+          ref.invalidate(inventoryDashboardProvider);
           if (isSuperAdmin) ref.invalidate(allOrgsProvider);
         },
         child: CustomScrollView(
@@ -79,6 +83,11 @@ class AdminDashboard extends ConsumerWidget {
 
                     // ── Stats ─────────────────────────────────
                     _OrgStatsCards(),
+
+                    if (!isSuperAdmin) ...[
+                      const SizedBox(height: 20),
+                      const _GroupFinancialOverview(),
+                    ],
 
                     const SizedBox(height: 24),
 
@@ -277,6 +286,12 @@ class _QuickActions extends StatelessWidget {
         path: '$base/qr'
       ),
       (
+        icon: Icons.inventory_2_rounded,
+        label: 'Assets & Expenses',
+        color: Colors.indigo,
+        path: '$base/inventory'
+      ),
+      (
         icon: Icons.settings_rounded,
         label: 'Settings',
         color: cs.tertiary,
@@ -316,6 +331,60 @@ class _QuickActions extends StatelessWidget {
                 ),
               ))
           .toList(),
+    );
+  }
+}
+
+class _GroupFinancialOverview extends ConsumerWidget {
+  const _GroupFinancialOverview();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final finance = ref.watch(financeSummaryProvider);
+    final inventory = ref.watch(inventoryDashboardProvider);
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Group financial control',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 10),
+        finance.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (_, __) => const Card(
+              child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Financial data is unavailable'))),
+          data: (data) => FinancialOverviewCard(data: data, showBranches: true),
+        ),
+        const SizedBox(height: 8),
+        inventory.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (data) => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Chip(
+                  avatar: Icon(Icons.inventory_2_rounded,
+                      size: 18, color: cs.primary),
+                  label: Text('${data['fixedAssets'] ?? 0} fixed assets')),
+              Chip(
+                  avatar: Icon(Icons.warning_amber_rounded,
+                      size: 18, color: cs.error),
+                  label: Text('${data['lowStock'] ?? 0} low-stock items')),
+              Chip(
+                  avatar: Icon(Icons.approval_rounded,
+                      size: 18, color: cs.secondary),
+                  label: Text(
+                      '${(data['pendingExpenses'] ?? 0) + (data['pendingProcurements'] ?? 0)} approvals')),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

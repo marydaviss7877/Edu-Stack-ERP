@@ -21,7 +21,12 @@ type Module =
   | 'system_settings'
   | 'sop'
   | 'academic_intelligence'
-  | 'exam_paper';
+  | 'exam_paper'
+  | 'inventory'
+  | 'procurement'
+  | 'expense_management'
+  | 'income_management'
+  | 'finance_dashboard';
 
 type PermissionRule = {
   roles: UserRole[];
@@ -176,6 +181,38 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
     { roles: ['coordinator'], actions: ['read', 'create', 'update', 'delete', 'submit', 'approve'] },
     { roles: ['teacher'], actions: ['read', 'create', 'update', 'delete', 'submit'] },
     { roles: ['it_admin'], actions: ['read', 'configure'] },
+  ],
+
+  inventory: [
+    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete', 'approve', 'export'] },
+    { roles: ['branch_principal'], actions: ['create', 'read', 'update', 'approve', 'export'] },
+    { roles: ['accountant'], actions: ['create', 'read', 'update', 'export'] },
+    { roles: ['it_admin'], actions: ['create', 'read', 'update'] },
+  ],
+
+  procurement: [
+    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete', 'approve', 'export'] },
+    { roles: ['branch_principal'], actions: ['create', 'read', 'update', 'approve', 'export'] },
+    { roles: ['accountant'], actions: ['create', 'read', 'update', 'export'] },
+    { roles: ['it_admin'], actions: ['create', 'read'] },
+  ],
+
+  expense_management: [
+    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete', 'approve', 'export'] },
+    { roles: ['branch_principal'], actions: ['read', 'update', 'approve', 'export'] },
+    { roles: ['accountant'], actions: ['create', 'read', 'update', 'export'] },
+  ],
+
+  income_management: [
+    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete', 'approve', 'export'] },
+    { roles: ['branch_principal'], actions: ['read', 'export'] },
+    { roles: ['accountant'], actions: ['create', 'read', 'update', 'export'] },
+  ],
+
+  finance_dashboard: [
+    { roles: ['group_admin'], actions: ['read', 'export'] },
+    { roles: ['branch_principal'], actions: ['read', 'export'] },
+    { roles: ['accountant'], actions: ['read', 'export'] },
   ],
 };
 

@@ -7,6 +7,8 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/principal_providers.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../providers/inventory_providers.dart';
+import '../../shared/inventory/financial_overview_card.dart';
 
 class PrincipalDashboard extends ConsumerWidget {
   const PrincipalDashboard({super.key});
@@ -27,6 +29,8 @@ class PrincipalDashboard extends ConsumerWidget {
           ref.invalidate(upcomingExamsPrincipalProvider);
           ref.invalidate(lowAttendanceStudentsProvider);
           ref.invalidate(principalUnreadCountProvider);
+          ref.invalidate(financeSummaryProvider);
+          ref.invalidate(inventoryDashboardProvider);
         },
         child: CustomScrollView(
           slivers: [
@@ -84,6 +88,10 @@ class PrincipalDashboard extends ConsumerWidget {
 
                     const SizedBox(height: 20),
 
+                    const _PrincipalFinanceOverview(),
+
+                    const SizedBox(height: 20),
+
                     // ── Today's overview cards ────────────────
                     _TodayOverviewCards(),
 
@@ -124,6 +132,56 @@ class PrincipalDashboard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PrincipalFinanceOverview extends ConsumerWidget {
+  const _PrincipalFinanceOverview();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final finance = ref.watch(financeSummaryProvider);
+    final inventory = ref.watch(inventoryDashboardProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('Financial position',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800)),
+            ),
+            TextButton.icon(
+              onPressed: () => context.go('/principal/inventory'),
+              icon: const Icon(Icons.inventory_2_rounded, size: 18),
+              label: const Text('Assets'),
+            ),
+          ],
+        ),
+        finance.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (_, __) => const Card(
+              child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Financial data is unavailable'))),
+          data: (data) => FinancialOverviewCard(data: data),
+        ),
+        const SizedBox(height: 8),
+        inventory.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (data) => Text(
+            'Asset book value ${formatPkr(data['netBookValue'])} · '
+            '${data['maintenanceDue'] ?? 0} maintenance · '
+            '${data['verificationOverdue'] ?? 0} verification due',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+      ],
     );
   }
 }

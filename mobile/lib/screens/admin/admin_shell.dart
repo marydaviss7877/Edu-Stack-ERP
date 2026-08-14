@@ -42,6 +42,11 @@ class GroupAdminShell extends StatelessWidget {
   static const _tabs = [
     (icon: Icons.dashboard_rounded, label: 'Dashboard', path: '/group'),
     (icon: Icons.people_rounded, label: 'Users', path: '/group/users'),
+    (
+      icon: Icons.inventory_2_rounded,
+      label: 'Inventory',
+      path: '/group/inventory'
+    ),
     (icon: Icons.qr_code_rounded, label: 'QR Code', path: '/group/qr'),
     (icon: Icons.settings_rounded, label: 'Settings', path: '/group/settings'),
   ];

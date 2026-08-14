@@ -1,6 +1,7 @@
 import 'package:edustack_mobile/core/layout/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:edustack_mobile/screens/shared/inventory/financial_overview_card.dart';
 
 void main() {
   final destinations = <AppNavigationItem>[
@@ -122,4 +123,56 @@ void main() {
     expect(delegate.crossAxisCount, 1);
     expect(tester.takeException(), isNull);
   });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('financial overview fits 320px at ${scale}x text',
+        (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 900);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              size: const Size(320, 900),
+              textScaler: TextScaler.linear(scale),
+            ),
+            child: const Scaffold(
+              body: SingleChildScrollView(
+                child: FinancialOverviewCard(
+                  showBranches: true,
+                  data: {
+                    'month': '2026-08',
+                    'operatingSurplus': 125000,
+                    'operatingMargin': 18.4,
+                    'totalRevenue': 900000,
+                    'feeRevenue': 800000,
+                    'otherIncome': 100000,
+                    'operatingExpenses': 250000,
+                    'payroll': 500000,
+                    'depreciation': 25000,
+                    'cashSurplus': 150000,
+                    'outstandingFees': 75000,
+                    'branchPerformance': [
+                      {
+                        'name': 'Main Campus',
+                        'revenue': 900000,
+                        'cashSurplus': 150000,
+                      }
+                    ],
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Net operating surplus'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
