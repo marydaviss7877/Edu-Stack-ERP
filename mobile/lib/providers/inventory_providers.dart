@@ -12,6 +12,20 @@ final financeSummaryProvider = FutureProvider<Map<String, dynamic>>((ref) {
   return ref.watch(inventoryServiceProvider).getFinanceSummary();
 });
 
+final financeHistoryProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final service = ref.watch(inventoryServiceProvider);
+  final now = DateTime.now();
+  final months = List.generate(6, (index) {
+    final date = DateTime(now.year, now.month - (5 - index), 1);
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+  });
+  return Future.wait(months.map((month) => service.getFinanceSummary(
+        month: month,
+        includeBenchmarks: false,
+      )));
+});
+
 final inventoryItemsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(inventoryServiceProvider).getItems();
@@ -37,6 +51,7 @@ final inventoryBranchesProvider =
 void invalidateInventory(WidgetRef ref) {
   ref.invalidate(inventoryDashboardProvider);
   ref.invalidate(financeSummaryProvider);
+  ref.invalidate(financeHistoryProvider);
   ref.invalidate(inventoryItemsProvider);
   ref.invalidate(expensesProvider);
   ref.invalidate(incomeProvider);

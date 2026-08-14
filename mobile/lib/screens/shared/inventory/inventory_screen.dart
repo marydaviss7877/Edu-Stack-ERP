@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../core/layout/responsive.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/inventory_providers.dart';
+import 'finance_operations_overview.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -77,7 +77,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assets & Finance'),
+        title: const Text('Finance & Operations'),
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
@@ -93,7 +93,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       body: TabBarView(
         controller: _tabs,
         children: [
-          _OverviewTab(onRefresh: _refresh),
+          _OverviewTab(
+            onRefresh: _refresh,
+            onOpenTab: (index) => _tabs.animateTo(index),
+          ),
           _ItemsTab(onRefresh: _refresh),
           _ExpensesTab(onRefresh: _refresh),
           _IncomeTab(onRefresh: _refresh),
@@ -122,176 +125,69 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 }
 
 class _OverviewTab extends ConsumerWidget {
-  const _OverviewTab({required this.onRefresh});
+  const _OverviewTab({required this.onRefresh, required this.onOpenTab});
   final Future<void> Function() onRefresh;
+  final ValueChanged<int> onOpenTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inventory = ref.watch(inventoryDashboardProvider);
     final finance = ref.watch(financeSummaryProvider);
+    final history = ref.watch(financeHistoryProvider);
+    final items = ref.watch(inventoryItemsProvider);
+    final expenses = ref.watch(expensesProvider);
+    final procurements = ref.watch(procurementsProvider);
+    final user = ref.watch(currentUserProvider);
+    final error = inventory.error ??
+        finance.error ??
+        history.error ??
+        items.error ??
+        expenses.error ??
+        procurements.error;
+    final loading = inventory.isLoading ||
+        finance.isLoading ||
+        history.isLoading ||
+        items.isLoading ||
+        expenses.isLoading ||
+        procurements.isLoading;
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
             context.pageGutter, 16, context.pageGutter, 110),
         children: [
-          finance.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (e, _) => _ErrorCard(message: e.toString()),
-            data: (d) => _FinanceSummary(data: d),
-          ),
-          const SizedBox(height: 18),
-          Text('Inventory health',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 10),
-          inventory.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (e, _) => _ErrorCard(message: e.toString()),
-            data: (d) => ResponsiveGrid(
-              childAspectRatio: context.isNarrowPhone ? 1.55 : 1.7,
-              narrowChildAspectRatio: 2.8,
-              children: [
-                _MetricCard('Net book value', _pkr(d['netBookValue']),
-                    Icons.account_balance_rounded, Colors.indigo),
-                _MetricCard('Fixed assets', '${d['fixedAssets'] ?? 0}',
-                    Icons.domain_rounded, Colors.teal),
-                _MetricCard('Low stock', '${d['lowStock'] ?? 0}',
-                    Icons.inventory_2_rounded, Colors.orange),
-                _MetricCard('Maintenance', '${d['maintenanceDue'] ?? 0}',
-                    Icons.build_circle_rounded, Colors.redAccent),
-                _MetricCard(
-                    'Verification due',
-                    '${d['verificationOverdue'] ?? 0}',
-                    Icons.fact_check_rounded,
-                    Colors.deepPurple),
-                _MetricCard(
-                    'Pending approvals',
-                    '${(d['pendingExpenses'] ?? 0) + (d['pendingProcurements'] ?? 0)}',
-                    Icons.approval_rounded,
-                    Colors.blueGrey),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FinanceSummary extends StatelessWidget {
-  const _FinanceSummary({required this.data});
-  final Map<String, dynamic> data;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final surplus = (data['operatingSurplus'] as num?)?.toDouble() ?? 0;
-    final positive = surplus >= 0;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF172554), cs.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('${data['month'] ?? 'Current month'} · Financial position',
-              style: const TextStyle(color: Colors.white70)),
-          const SizedBox(height: 8),
-          Text(
-            '${positive ? 'Operating surplus' : 'Operating deficit'}  ${_pkr(surplus.abs())}',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 18,
-            runSpacing: 10,
-            children: [
-              _FinanceValue('Total income', _pkr(data['totalRevenue'])),
-              _FinanceValue('Other income', _pkr(data['otherIncome'])),
-              _FinanceValue('Expenses', _pkr(data['operatingExpenses'])),
-              _FinanceValue('Payroll', _pkr(data['payroll'])),
-              _FinanceValue('Depreciation', _pkr(data['depreciation'])),
-              _FinanceValue('Cash surplus', _pkr(data['cashSurplus'])),
-              _FinanceValue('Margin', '${data['operatingMargin'] ?? 0}%'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Profit is shown as surplus/deficit for public or nonprofit institutions.',
-            style: TextStyle(color: Colors.white60, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FinanceValue extends StatelessWidget {
-  const _FinanceValue(this.label, this.value);
-  final String label;
-  final String value;
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 128,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
-            Text(label,
-                style: const TextStyle(color: Colors.white60, fontSize: 11)),
-          ],
-        ),
-      );
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard(this.label, this.value, this.icon, this.color);
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          color: color,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
+          if (loading) const LinearProgressIndicator(),
+          if (error != null) _ErrorCard(message: error.toString()),
+          if (!loading && error == null)
+            FinanceOperationsOverview(
+              finance: finance.requireValue,
+              inventory: inventory.requireValue,
+              history: history.requireValue,
+              items: items.requireValue,
+              expenses: expenses.requireValue,
+              procurements: procurements.requireValue,
+              role: user?.role ?? '',
+              branchLabel: _overviewBranchLabel(
+                user?.role ?? '',
+                items.requireValue,
               ),
-            ],
-          ),
-        ),
-      );
+              onOpenTab: onOpenTab,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _overviewBranchLabel(String role, List<Map<String, dynamic>> items) {
+  if (role == 'group_admin') return 'All campuses';
+  if (items.isNotEmpty && items.first['branchId'] is Map) {
+    final branch = Map<String, dynamic>.from(items.first['branchId'] as Map);
+    final name = branch['name']?.toString();
+    if (name != null && name.isNotEmpty) return name;
+  }
+  return role == 'branch_principal' ? 'Your branch' : 'Current campus';
 }
 
 class _ItemsTab extends ConsumerWidget {

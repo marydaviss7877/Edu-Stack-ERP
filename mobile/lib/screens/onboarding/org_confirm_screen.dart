@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import '../../models/org.dart';
 import '../../providers/org_provider.dart';
@@ -98,7 +97,7 @@ class _OrgConfirmScreenState extends ConsumerState<OrgConfirmScreen> {
 
                   const SizedBox(height: 28),
 
-                  Text('onboarding.isThisYourSchool'.tr(),
+                  Text('Is this your school?',
                       style:
                           tt.titleMedium?.copyWith(color: cs.onSurfaceVariant)),
                   const SizedBox(height: 8),
@@ -143,7 +142,7 @@ class _OrgConfirmScreenState extends ConsumerState<OrgConfirmScreen> {
                       context.go('/login');
                     },
                     icon: const Icon(Icons.check_circle_outline_rounded),
-                    label: Text('onboarding.confirmSchool'.tr()),
+                    label: const Text('Yes, connect this school'),
                   ),
 
                   const SizedBox(height: 12),
@@ -151,7 +150,7 @@ class _OrgConfirmScreenState extends ConsumerState<OrgConfirmScreen> {
                   OutlinedButton.icon(
                     onPressed: () => context.go('/onboarding/scan'),
                     icon: const Icon(Icons.qr_code_scanner_rounded),
-                    label: Text('onboarding.scanDifferent'.tr()),
+                    label: const Text('Scan a different QR'),
                   ),
                 ],
               ),

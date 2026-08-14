@@ -5,7 +5,7 @@ class AppUser {
   final String role;
   final String? orgId;
   final String? branchId;
-  final String? profilePhotoUrl;
+  final String? photoUrl;
 
   const AppUser({
     required this.id,
@@ -14,7 +14,7 @@ class AppUser {
     required this.role,
     this.orgId,
     this.branchId,
-    this.profilePhotoUrl,
+    this.photoUrl,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -24,7 +24,7 @@ class AppUser {
         role: json['role'] as String,
         orgId: json['orgId']?.toString(),
         branchId: json['branchId']?.toString(),
-        profilePhotoUrl: json['profilePhotoUrl'] as String?,
+        photoUrl: json['photoUrl'] as String?,
       );
 
   bool get isStudent => role == 'student';

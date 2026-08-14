@@ -99,6 +99,7 @@ class _UserList extends ConsumerWidget {
               final email = u['email'] as String? ?? '';
               final userRole = u['role'] as String? ?? '';
               final isActive = u['isActive'] as bool? ?? true;
+              final photoUrl = u['photoUrl'] as String?;
 
               return Card(
                 child: ListTile(
@@ -106,15 +107,20 @@ class _UserList extends ConsumerWidget {
                     backgroundColor: isActive
                         ? cs.primaryContainer
                         : cs.surfaceContainerHighest,
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        color: isActive
-                            ? cs.onPrimaryContainer
-                            : cs.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: photoUrl == null || photoUrl.isEmpty
+                        ? Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: TextStyle(
+                              color: isActive
+                                  ? cs.onPrimaryContainer
+                                  : cs.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
                   ),
                   title: Text(name,
                       style:

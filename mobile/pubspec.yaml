@@ -1,7 +1,7 @@
 name: edustack_mobile
 description: EduStack PK — School ERP for students, teachers and staff.
 publish_to: none
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -25,7 +25,7 @@ dependencies:
   # Secure token storage (keychain / keystore)
   flutter_secure_storage: ^9.2.2
 
-  # Preferences (org slug, theme, language)
+  # Preferences (org slug and theme)
   shared_preferences: ^2.3.2
 
   # Local offline database
@@ -53,9 +53,8 @@ dependencies:
   # Image picker
   image_picker: ^1.1.2
 
-  # Localization
+  # Date and number formatting
   intl: ^0.20.2
-  easy_localization: ^3.0.7
 
   # Connectivity
   connectivity_plus: ^6.0.3
@@ -83,27 +82,28 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/translations/en.json
-    - assets/translations/ur.json
     - assets/images/
 
   fonts:
-    - family: NotoNastaliqUrdu
+    - family: PlusJakartaSans
       fonts:
-        - asset: assets/fonts/NotoNastaliqUrdu-Regular.ttf
+        - asset: assets/fonts/PlusJakartaSans-Variable.ttf
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
 
 flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/images/icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0343A0"
+  adaptive_icon_background: "#4F378A"
   adaptive_icon_foreground: "assets/images/icon_foreground.png"
 
 flutter_native_splash:
-  color: "#0343A0"
+  color: "#4F378A"
   image: assets/images/splash_logo.png
   android_12:
-    color: "#0343A0"
+    color: "#4F378A"
     image: assets/images/splash_logo.png
   fullscreen: false

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../providers/teacher_providers.dart';
 import '../../../models/attendance.dart';
 
@@ -237,6 +236,7 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                     final name =
                         (s['profile']?['name'] as String?) ?? 'Unknown';
                     final rollNo = s['rollNo'] as String? ?? '';
+                    final photoUrl = s['profile']?['photoUrl'] as String?;
                     final status = _statusMap[id] ?? 'present';
 
                     return Card(
@@ -249,12 +249,20 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: cs.primaryContainer,
-                              child: Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                style: TextStyle(
-                                    color: cs.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold),
-                              ),
+                              backgroundImage:
+                                  photoUrl != null && photoUrl.isNotEmpty
+                                      ? NetworkImage(photoUrl)
+                                      : null,
+                              child: photoUrl == null || photoUrl.isEmpty
+                                  ? Text(
+                                      name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : '?',
+                                      style: TextStyle(
+                                          color: cs.onPrimaryContainer,
+                                          fontWeight: FontWeight.bold),
+                                    )
+                                  : null,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -374,23 +382,11 @@ class _StatusToggle extends StatelessWidget {
       ),
       selected: {status},
       onSelectionChanged: (s) => onChanged(s.first),
-      segments: [
-        ButtonSegment(
-            value: 'present',
-            label: const Text('P'),
-            tooltip: 'attendance.present'.tr()),
-        ButtonSegment(
-            value: 'absent',
-            label: const Text('A'),
-            tooltip: 'attendance.absent'.tr()),
-        ButtonSegment(
-            value: 'late',
-            label: const Text('L'),
-            tooltip: 'attendance.late'.tr()),
-        ButtonSegment(
-            value: 'excused',
-            label: const Text('E'),
-            tooltip: 'attendance.excused'.tr()),
+      segments: const [
+        ButtonSegment(value: 'present', label: Text('P'), tooltip: 'Present'),
+        ButtonSegment(value: 'absent', label: Text('A'), tooltip: 'Absent'),
+        ButtonSegment(value: 'late', label: Text('L'), tooltip: 'Late'),
+        ButtonSegment(value: 'excused', label: Text('E'), tooltip: 'Excused'),
       ],
     );
   }

@@ -22,10 +22,15 @@ export interface ClearanceDoc {
 }
 
 export interface ClearanceSummary {
+  total: number;
   pending_approval: number;
   scheduled: number;
   completed: number;
   waived: number;
+  passed: number;
+  failed: number;
+  passRate: number;
+  averagePercentage: number;
 }
 
 export const clearanceService = {

@@ -372,15 +372,21 @@ class _SubmissionsSheet extends ConsumerWidget {
               final profile =
                   student is Map ? student['profile'] as Map? : null;
               final name = (profile?['name'] as String?) ?? 'Unknown';
+              final photoUrl = profile?['photoUrl'] as String?;
               final submittedAt = s['submittedAt'] as String?;
               final grade = s['grade'] as String?;
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: cs.primaryContainer,
-                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                          color: cs.onPrimaryContainer,
-                          fontWeight: FontWeight.bold)),
+                  backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: photoUrl == null || photoUrl.isEmpty
+                      ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: TextStyle(
+                              color: cs.onPrimaryContainer,
+                              fontWeight: FontWeight.bold))
+                      : null,
                 ),
                 title: Text(name,
                     style:

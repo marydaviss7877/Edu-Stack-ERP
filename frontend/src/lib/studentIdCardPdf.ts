@@ -14,6 +14,7 @@ export interface IdCardStudent {
     emergencyContact?: string;
     photoUrl?: string;
   };
+  documents?: { photo?: { url?: string } };
   guardianInfo?: { fatherName: string; emergencyContact?: string };
   admissionNo?: string;
   rollNo?: string;
@@ -26,7 +27,24 @@ export interface IdCardStudent {
 const PRIMARY: [number, number, number] = [30, 58, 95];
 const ACCENT: [number, number, number] = [245, 158, 11];
 
-export function downloadStudentIdCardPdf(student: IdCardStudent, orgName: string): void {
+async function loadPhoto(photoUrl?: string): Promise<string | null> {
+  if (!photoUrl) return null;
+  try {
+    const response = await fetch(photoUrl);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadStudentIdCardPdf(student: IdCardStudent, orgName: string): Promise<void> {
   // Credit-card size: 85.6 mm × 54 mm — print 2 per A4 row
   const cardW = 85.6;
   const cardH = 54;
@@ -43,6 +61,8 @@ export function downloadStudentIdCardPdf(student: IdCardStudent, orgName: string
   const rollNo = student.rollNo ?? '—';
   const bloodGroup = student.profile?.bloodGroup ?? student.personal?.bloodGroup ?? '—';
   const emergency = student.guardianInfo?.emergencyContact ?? student.personal?.emergencyContact ?? '—';
+  const photoUrl = student.profile?.photoUrl ?? student.personal?.photoUrl ?? student.documents?.photo?.url;
+  const photo = await loadPhoto(photoUrl);
   const qrText = `${window?.location?.origin ?? ''}/verify/${grNo}`;
 
   function drawCard(doc: jsPDF, startX: number, startY: number) {
@@ -78,10 +98,15 @@ export function downloadStudentIdCardPdf(student: IdCardStudent, orgName: string
     doc.setFillColor(240, 244, 252);
     doc.setDrawColor(200, 210, 230);
     doc.rect(photoX, photoY, photoW, photoH, 'FD');
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(5);
-    doc.setTextColor(180, 190, 210);
-    doc.text('PHOTO', photoX + photoW / 2, photoY + photoH / 2 + 1, { align: 'center' });
+    if (photo) {
+      const format = photo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(photo, format, photoX, photoY, photoW, photoH);
+    } else {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(5);
+      doc.setTextColor(180, 190, 210);
+      doc.text('PHOTO', photoX + photoW / 2, photoY + photoH / 2 + 1, { align: 'center' });
+    }
 
     // Info area (right of photo)
     const infoX = photoX + photoW + 4;

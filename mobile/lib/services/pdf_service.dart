@@ -15,7 +15,7 @@ class PdfService {
   }) async {
     final pdf = pw.Document();
 
-    final primaryColor = _hexColor(org.primaryColor);
+    final primaryColor = _hexColor('#4F378A');
     final resultColor = result.isPassed ? PdfColors.green700 : PdfColors.red700;
 
     pdf.addPage(

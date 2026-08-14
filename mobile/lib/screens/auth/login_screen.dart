@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/org_provider.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/layout/responsive.dart';
+import '../../core/theme/app_design.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -84,9 +84,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF1565C0),
-                          Color(0xFF1E88E5),
-                          Color(0xFF42A5F5),
+                          AppColors.identityStart,
+                          AppColors.identityMid,
+                          AppColors.primary,
                         ],
                         stops: [0.0, 0.55, 1.0],
                       ),
@@ -156,7 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       color: cs.primary, size: 26),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'auth.switchSchool'.tr(),
+                                    'Switch school',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -187,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'auth.signInToContinue'.tr(),
+                              'Sign in to continue',
                               style: tt.bodyLarge?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.85),
                                 fontWeight: FontWeight.w400,
@@ -245,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         textInputAction: TextInputAction.next,
                         style: tt.bodyLarge,
                         decoration: InputDecoration(
-                          hintText: 'auth.email'.tr(),
+                          hintText: 'Email address',
                           prefixIcon: Icon(Icons.email_outlined,
                               color: cs.onSurfaceVariant),
                           border: OutlineInputBorder(
@@ -263,9 +263,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'auth.emailRequired'.tr();
+                            return 'Email is required';
                           }
-                          if (!v.contains('@')) return 'auth.emailInvalid'.tr();
+                          if (!v.contains('@')) return 'Enter a valid email';
                           return null;
                         },
                       ),
@@ -280,7 +280,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onFieldSubmitted: (_) => _submit(),
                         style: tt.bodyLarge,
                         decoration: InputDecoration(
-                          hintText: 'auth.password'.tr(),
+                          hintText: 'Password',
                           prefixIcon: Icon(Icons.lock_outline_rounded,
                               color: cs.onSurfaceVariant),
                           suffixIcon: IconButton(
@@ -308,9 +308,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
-                            return 'auth.passwordRequired'.tr();
+                            return 'Password is required';
                           }
-                          if (v.length < 6) return 'auth.passwordTooShort'.tr();
+                          if (v.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
                           return null;
                         },
                       ),
@@ -355,7 +357,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          backgroundColor: const Color(0xFF1565C0),
+                          backgroundColor: AppColors.primary,
                         ),
                         child: _loading
                             ? const SizedBox(
@@ -364,9 +366,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2.5, color: Colors.white),
                               )
-                            : Text(
-                                'auth.signIn'.tr(),
-                                style: const TextStyle(
+                            : const Text(
+                                'Sign in',
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -411,9 +413,9 @@ class _RoleSelector extends StatelessWidget {
   const _RoleSelector({required this.selected, required this.onChanged});
 
   static const _roleColors = [
-    Color(0xFF6C3FD6), // admin — deep violet
-    Color(0xFF00897B), // teacher — teal
-    Color(0xFF1565C0), // student — navy blue
+    AppColors.primary,
+    AppColors.success,
+    AppColors.info,
   ];
 
   static const _roleIcons = [
@@ -426,9 +428,9 @@ class _RoleSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final roleLabels = [
-      'auth.admin'.tr(),
-      'auth.teacher'.tr(),
-      'auth.student'.tr(),
+      'Admin',
+      'Teacher',
+      'Student',
     ];
 
     return Row(
@@ -536,7 +538,7 @@ class _OrgLogo extends StatelessWidget {
                       width: 28,
                       height: 28,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: Color(0xFF1565C0)),
+                          strokeWidth: 2.5, color: AppColors.primary),
                     ),
                   ),
                 ),
@@ -544,7 +546,7 @@ class _OrgLogo extends StatelessWidget {
                   color: Colors.white,
                   child: Center(
                     child: Icon(Icons.school_rounded,
-                        color: Color(0xFF1565C0), size: 50),
+                        color: AppColors.primary, size: 50),
                   ),
                 ),
               )
@@ -552,7 +554,7 @@ class _OrgLogo extends StatelessWidget {
                 color: Colors.white,
                 child: Center(
                   child: Icon(Icons.school_rounded,
-                      color: Color(0xFF1565C0), size: 50),
+                      color: AppColors.primary, size: 50),
                 ),
               ),
       ),

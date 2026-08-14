@@ -142,7 +142,7 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 
 export async function updateUser(req: Request, res: Response): Promise<void> {
   const callerRole = req.user!.role as UserRole;
-  const allowed = ['name', 'phone', 'profilePhotoUrl', 'active', 'branchId'];
+  const allowed = ['name', 'phone', 'photoUrl', 'active', 'branchId'];
   const update: Record<string, unknown> = {};
   for (const key of allowed) {
     if (req.body[key] !== undefined) update[key] = req.body[key];

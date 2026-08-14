@@ -380,6 +380,7 @@ class _GenericProfile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final photoUrl = user?.photoUrl as String?;
 
     return ListView(
       padding: EdgeInsets.zero,
@@ -399,10 +400,10 @@ class _GenericProfile extends ConsumerWidget {
               CircleAvatar(
                 radius: 44,
                 backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
-                child: user?.profilePhotoUrl != null
+                child: photoUrl != null && photoUrl.isNotEmpty
                     ? ClipOval(
                         child: CachedNetworkImage(
-                          imageUrl: user!.profilePhotoUrl!,
+                          imageUrl: photoUrl,
                           width: 88,
                           height: 88,
                           fit: BoxFit.cover,

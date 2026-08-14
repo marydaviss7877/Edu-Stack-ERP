@@ -59,6 +59,10 @@ export interface BranchPerformance {
   revenue: number;
   cashExpenses: number;
   cashSurplus: number;
+  depreciation: number;
+  operatingSurplus: number;
+  operatingMargin: number;
+  outstandingFees: number;
 }
 
 export interface FinanceSummary {
@@ -74,8 +78,18 @@ export interface FinanceSummary {
   operatingSurplus: number;
   operatingMargin: number;
   outstandingFees: number;
+  feeRecoveryRate: number;
+  feeBilled: number;
+  feeCollected: number;
+  receivableAgeing: {
+    current: { amount: number; accounts: number };
+    days31to60: { amount: number; accounts: number };
+    over60: { amount: number; accounts: number };
+  };
   terminology: string;
+  dataAsOf: string;
   branchPerformance: BranchPerformance[];
+  peerBenchmark: { rank: number; branchCount: number; groupAverageMargin: number; branchMargin: number } | null;
 }
 
 export type ExpenseStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'paid' | 'void';
@@ -98,6 +112,8 @@ export interface Expense {
   fundingSource?: string;
   status: ExpenseStatus;
   rejectionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IncomeEntry {
@@ -134,6 +150,8 @@ export interface ProcurementRequest {
   requiredBy?: string;
   status: ProcurementStatus;
   rejectionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Vendor {
@@ -161,7 +179,7 @@ export interface InventoryMetadata {
 export const inventoryService = {
   metadata: () => api.get<ApiResponse<InventoryMetadata>>('/inventory/metadata').then(r => r.data.data!),
   dashboard: () => api.get<ApiResponse<InventoryDashboard>>('/inventory/dashboard').then(r => r.data.data!),
-  finance: (month?: string) => api.get<ApiResponse<FinanceSummary>>('/inventory/finance-summary', { params: { month } }).then(r => r.data.data!),
+  finance: (month?: string, includeBenchmarks = true) => api.get<ApiResponse<FinanceSummary>>('/inventory/finance-summary', { params: { month, includeBenchmarks } }).then(r => r.data.data!),
   items: (params?: Record<string, string>) => api.get<ApiResponse<InventoryItem[]>>('/inventory/items', { params }).then(r => r.data.data ?? []),
   createItem: (data: Partial<InventoryItem> & { branchId?: string }) => api.post<ApiResponse<InventoryItem>>('/inventory/items', data).then(r => r.data.data!),
   updateItem: (id: string, data: Partial<InventoryItem>) => api.put<ApiResponse<InventoryItem>>(`/inventory/items/${id}`, data).then(r => r.data.data!),

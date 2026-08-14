@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../core/storage/local_storage.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -34,40 +32,6 @@ class SettingsScreen extends ConsumerWidget {
                   trailing:
                       const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                   onTap: () => _showThemePicker(context, ref, themeMode),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ── Language ─────────────────────────────────────────
-          Text('Language',
-              style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 8),
-          Card(
-            child: Column(
-              children: [
-                _LocaleTile(
-                  locale: 'en',
-                  label: 'English',
-                  subtitle: 'Left to right',
-                  isSelected: context.locale.languageCode == 'en',
-                  onTap: () {
-                    context.setLocale(const Locale('en'));
-                    LocalStorageService.setLocale('en');
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                _LocaleTile(
-                  locale: 'ur',
-                  label: 'اردو',
-                  subtitle: 'دائیں سے بائیں',
-                  isSelected: context.locale.languageCode == 'ur',
-                  onTap: () {
-                    context.setLocale(const Locale('ur'));
-                    LocalStorageService.setLocale('ur');
-                  },
                 ),
               ],
             ),
@@ -186,45 +150,6 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
         ],
       ),
-    );
-  }
-}
-
-class _LocaleTile extends StatelessWidget {
-  const _LocaleTile(
-      {required this.locale,
-      required this.label,
-      required this.subtitle,
-      required this.onTap,
-      this.isSelected = false});
-  final String locale;
-  final String label;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return ListTile(
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-            color: cs.primaryContainer, borderRadius: BorderRadius.circular(8)),
-        alignment: Alignment.center,
-        child: Text(locale.toUpperCase(),
-            style: TextStyle(
-                color: cs.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
-                fontSize: 12)),
-      ),
-      title: Text(label),
-      subtitle: Text(subtitle),
-      trailing: isSelected
-          ? Icon(Icons.check_rounded, color: cs.primary)
-          : const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-      onTap: onTap,
     );
   }
 }

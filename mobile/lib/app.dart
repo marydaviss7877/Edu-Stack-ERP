@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'providers/org_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'services/fcm_service.dart';
@@ -49,24 +48,26 @@ class _EduStackAppState extends ConsumerState<EduStackApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final primaryColor = ref.watch(primaryColorProvider);
 
     return MaterialApp.router(
       title: 'EduStack',
       debugShowCheckedModeBanner: false,
 
-      // Material 3 + per-school color
-      theme: AppTheme.light(primaryColor),
-      darkTheme: AppTheme.dark(primaryColor),
+      // Finalized EduStack design system. Tenant colors do not recolor the UI.
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: themeMode,
 
       // GoRouter
       routerConfig: router,
 
-      // easy_localization takes over localization delegates
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
+      locale: const Locale('en'),
+      supportedLocales: const [Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

@@ -15,7 +15,7 @@ export interface AuthUser {
   role: UserRole;
   orgId?: string;
   branchId?: string;
-  profilePhotoUrl?: string;
+  photoUrl?: string;
   emailVerifiedAt?: string | null;
 }
 
@@ -142,5 +142,5 @@ export interface User {
   email: string;
   phone?: string;
   active: boolean;
-  profilePhotoUrl?: string;
+  photoUrl?: string;
 }

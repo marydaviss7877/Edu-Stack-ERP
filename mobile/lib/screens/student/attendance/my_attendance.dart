@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../providers/student_providers.dart';
 import '../../../models/attendance.dart';
 import '../../../models/timetable.dart' show AttendanceSummary;
@@ -41,7 +40,7 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text('nav.attendance'.tr())),
+      appBar: AppBar(title: const Text('Attendance')),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myAttendanceSummaryProvider);
@@ -179,15 +178,15 @@ class _SummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _StatPill(
-                    label: 'attendance.present'.tr(),
+                    label: 'Present',
                     value: '${summary.presentDays}',
                     color: cs.primary),
                 _StatPill(
-                    label: 'attendance.absent'.tr(),
+                    label: 'Absent',
                     value: '${summary.absentDays}',
                     color: cs.error),
                 _StatPill(
-                    label: 'attendance.late'.tr(),
+                    label: 'Late',
                     value: '${summary.lateDays}',
                     color: cs.tertiary),
                 _StatPill(
@@ -357,10 +356,10 @@ class _Legend extends StatelessWidget {
       spacing: 16,
       runSpacing: 8,
       children: [
-        _LegendDot(color: cs.primary, label: 'attendance.present'.tr()),
-        _LegendDot(color: cs.error, label: 'attendance.absent'.tr()),
-        _LegendDot(color: cs.tertiary, label: 'attendance.late'.tr()),
-        _LegendDot(color: cs.secondary, label: 'attendance.excused'.tr()),
+        _LegendDot(color: cs.primary, label: 'Present'),
+        _LegendDot(color: cs.error, label: 'Absent'),
+        _LegendDot(color: cs.tertiary, label: 'Late'),
+        _LegendDot(color: cs.secondary, label: 'Excused'),
       ],
     );
   }

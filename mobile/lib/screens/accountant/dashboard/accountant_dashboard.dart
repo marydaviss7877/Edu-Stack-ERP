@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
@@ -10,6 +9,7 @@ import '../../../providers/accountant_providers.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../providers/inventory_providers.dart';
 import '../../shared/inventory/financial_overview_card.dart';
+import '../../../core/theme/app_design.dart';
 
 class AccountantDashboard extends ConsumerWidget {
   const AccountantDashboard({super.key});
@@ -17,140 +17,80 @@ class AccountantDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final photoUrl = user?.photoUrl;
     final org = ref.watch(orgProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final unread = ref.watch(accountantUnreadCountProvider).valueOrNull ?? 0;
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(accountantDashboardStatsProvider);
-          ref.invalidate(overdueCountProvider);
-          ref.invalidate(allChallansProvider(null));
-          ref.invalidate(accountantUnreadCountProvider);
-          ref.invalidate(financeSummaryProvider);
-          ref.invalidate(inventoryDashboardProvider);
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              backgroundColor: cs.surface,
-              title: Row(
+      body: Column(
+        children: [
+          AppIdentityHeader(
+            organization: org?.name ?? 'EduStack',
+            name: user?.name ?? 'Accountant',
+            subtitle: 'Accountant · Fee management',
+            photoUrl: photoUrl,
+            notificationCount: unread,
+            onProfile: () => context.push('/profile'),
+            onNotifications: () => context.go('/accountant/notifications'),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(accountantDashboardStatsProvider);
+                ref.invalidate(overdueCountProvider);
+                ref.invalidate(allChallansProvider(null));
+                ref.invalidate(accountantUnreadCountProvider);
+                ref.invalidate(financeSummaryProvider);
+                ref.invalidate(inventoryDashboardProvider);
+              },
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                    context.pageGutter, 18, context.pageGutter, 100),
                 children: [
-                  if (org?.logoUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                          imageUrl: org!.logoUrl!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain),
-                    )
-                  else
-                    Icon(Icons.school_rounded, color: cs.primary, size: 26),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      org?.name ?? 'EduStack',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
+                  Text('Fee management',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text('Collection progress and work requiring follow-up.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 16),
+                  const _AccountantFinanceOverview(),
+                  const SizedBox(height: 14),
+                  _StatsRow(),
+                  const SizedBox(height: 14),
+                  _OverdueBanner(),
+                  const AppSectionHeader(title: 'Quick actions'),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 1.05,
+                    children: [
+                      AppQuickAction(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Challans',
+                          onTap: () => context.go('/accountant/challans')),
+                      AppQuickAction(
+                          icon: Icons.bar_chart_rounded,
+                          label: 'Reports',
+                          color: AppColors.info,
+                          onTap: () => context.go('/accountant/reports')),
+                      AppQuickAction(
+                          icon: Icons.inventory_2_rounded,
+                          label: 'Ledger',
+                          color: AppColors.achievement,
+                          onTap: () => context.go('/accountant/inventory')),
+                    ],
                   ),
+                  AppSectionHeader(
+                      title: 'Needs follow-up',
+                      actionLabel: 'See all',
+                      onAction: () => context.go('/accountant/challans')),
+                  _RecentUnpaid(),
                 ],
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_rounded),
-                  tooltip: 'Profile',
-                  onPressed: () => context.push('/profile'),
-                ),
-                _UnreadBadge(),
-                const SizedBox(width: 8),
-              ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  context.pageGutter,
-                  16,
-                  context.pageGutter,
-                  100,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Welcome ────────────────────────────────
-                    _WelcomeBanner(name: user?.name ?? 'Accountant'),
-
-                    const SizedBox(height: 20),
-
-                    // ── Stats row ──────────────────────────────
-                    _StatsRow(),
-
-                    const SizedBox(height: 20),
-
-                    const _AccountantFinanceOverview(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Overdue alert ─────────────────────────
-                    _OverdueBanner(),
-
-                    // ── Quick actions ─────────────────────────
-                    const _SectionHeader(title: 'Quick Actions'),
-                    const SizedBox(height: 10),
-                    GridView.count(
-                      crossAxisCount: context.isCompactPhone ? 2 : 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: context.isCompactPhone ? 1.8 : 1.35,
-                      children: [
-                        _ActionCard(
-                          icon: Icons.receipt_long_rounded,
-                          label: 'All Challans',
-                          color: cs.primary,
-                          onTap: () => context.go('/accountant/challans'),
-                        ),
-                        _ActionCard(
-                          icon: Icons.bar_chart_rounded,
-                          label: 'Monthly Report',
-                          color: cs.secondary,
-                          onTap: () => context.go('/accountant/reports'),
-                        ),
-                        _ActionCard(
-                          icon: Icons.inventory_2_rounded,
-                          label: 'Assets & Expenses',
-                          color: Colors.indigo,
-                          onTap: () => context.go('/accountant/inventory'),
-                        ),
-                        _ActionCard(
-                          icon: Icons.warning_rounded,
-                          label: 'Overdue',
-                          color: cs.error,
-                          onTap: () => context.go('/accountant/challans'),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // ── Recent unpaid challans ────────────────
-                    _SectionHeader(
-                        title: 'Recent Unpaid',
-                        onSeeAll: () => context.go('/accountant/challans')),
-                    const SizedBox(height: 10),
-                    _RecentUnpaid(),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -189,58 +129,6 @@ class _AccountantFinanceOverview extends ConsumerWidget {
           data: (data) => FinancialOverviewCard(data: data),
         ),
       ],
-    );
-  }
-}
-
-class _WelcomeBanner extends StatelessWidget {
-  const _WelcomeBanner({required this.name});
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cs.secondary, cs.primary.withValues(alpha: 0.9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Fee Management',
-                    style: TextStyle(
-                        color: cs.onSecondary.withValues(alpha: 0.8),
-                        fontSize: 13)),
-                Text(name,
-                    style: TextStyle(
-                        color: cs.onSecondary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text('Accountant',
-                    style: TextStyle(
-                        color: cs.onSecondary.withValues(alpha: 0.7),
-                        fontSize: 12)),
-              ],
-            ),
-          ),
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: cs.onSecondary.withValues(alpha: 0.15),
-            child: Icon(Icons.account_balance_wallet_rounded,
-                color: cs.onSecondary, size: 28),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -364,43 +252,6 @@ class _OverdueBanner extends ConsumerWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  const _ActionCard(
-      {required this.icon,
-      required this.label,
-      required this.color,
-      required this.onTap});
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 10, color: color, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _RecentUnpaid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -464,55 +315,6 @@ class _RecentUnpaid extends ConsumerWidget {
               .toList(),
         );
       },
-    );
-  }
-}
-
-class _UnreadBadge extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(accountantUnreadCountProvider);
-    return IconButton(
-      icon: Badge(
-        isLabelVisible:
-            count.maybeWhen(data: (c) => c > 0, orElse: () => false),
-        label: count.maybeWhen(data: (c) => Text('$c'), orElse: () => null),
-        child: const Icon(Icons.notifications_outlined),
-      ),
-      onPressed: () => context.go('/accountant/notifications'),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.onSeeAll});
-  final String title;
-  final VoidCallback? onSeeAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-        ),
-        if (onSeeAll != null)
-          TextButton(
-            onPressed: onSeeAll,
-            child: Text('See all',
-                style: TextStyle(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13)),
-          ),
-      ],
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
@@ -9,6 +8,7 @@ import '../../../providers/admin_providers.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../providers/inventory_providers.dart';
 import '../../shared/inventory/financial_overview_card.dart';
+import '../../../core/theme/app_design.dart';
 
 class AdminDashboard extends ConsumerWidget {
   final bool isSuperAdmin;
@@ -17,172 +17,58 @@ class AdminDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final photoUrl = user?.photoUrl;
     final org = ref.watch(orgProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final base = isSuperAdmin ? '/admin' : '/group';
 
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(orgStatsProvider);
-          ref.invalidate(branchesProvider);
-          ref.invalidate(financeSummaryProvider);
-          ref.invalidate(inventoryDashboardProvider);
-          if (isSuperAdmin) ref.invalidate(allOrgsProvider);
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              backgroundColor: cs.surface,
-              title: Row(
+      body: Column(
+        children: [
+          AppIdentityHeader(
+            organization:
+                isSuperAdmin ? 'EduStack Platform' : org?.name ?? 'EduStack',
+            name: user?.name ?? 'Admin',
+            subtitle: isSuperAdmin
+                ? 'Super Admin · Administration'
+                : 'Administration',
+            photoUrl: photoUrl,
+            onProfile: () => context.push('/profile'),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(orgStatsProvider);
+                ref.invalidate(branchesProvider);
+                ref.invalidate(financeSummaryProvider);
+                ref.invalidate(inventoryDashboardProvider);
+                if (isSuperAdmin) ref.invalidate(allOrgsProvider);
+              },
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                    context.pageGutter, 18, context.pageGutter, 100),
                 children: [
-                  if (org?.logoUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                          imageUrl: org!.logoUrl!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain),
-                    )
-                  else
-                    Icon(Icons.admin_panel_settings_rounded,
-                        color: cs.primary, size: 26),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      org?.name ?? 'EduStack Admin',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                  ),
+                  Text('Administration panel',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text('Organizations, users, and system configuration.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 16),
+                  _QuickActions(base: base),
+                  const SizedBox(height: 16),
+                  _OrgStatsCards(),
+                  if (!isSuperAdmin) ...[
+                    const AppSectionHeader(title: 'Financial position'),
+                    const _GroupFinancialOverview(),
+                    const AppSectionHeader(title: 'Branches'),
+                    _BranchList(),
+                  ],
+                  if (isSuperAdmin) ...[
+                    const AppSectionHeader(title: 'Organizations'),
+                    _OrgList(),
+                  ],
                 ],
               ),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  context.pageGutter,
-                  16,
-                  context.pageGutter,
-                  100,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Welcome ────────────────────────────────
-                    _WelcomeBanner(
-                        name: user?.name ?? 'Admin', role: user?.role ?? ''),
-
-                    const SizedBox(height: 20),
-
-                    // ── Stats ─────────────────────────────────
-                    _OrgStatsCards(),
-
-                    if (!isSuperAdmin) ...[
-                      const SizedBox(height: 20),
-                      const _GroupFinancialOverview(),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    // ── Quick actions ─────────────────────────
-                    Text('Quick Actions',
-                        style: tt.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 10),
-                    _QuickActions(base: base),
-
-                    const SizedBox(height: 24),
-
-                    // ── Branches (group admin) ─────────────────
-                    if (!isSuperAdmin) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Branches',
-                              style: tt.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _BranchList(),
-                    ],
-
-                    // ── All organizations (super admin) ────────
-                    if (isSuperAdmin) ...[
-                      Text('Organizations',
-                          style: tt.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 10),
-                      _OrgList(),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WelcomeBanner extends StatelessWidget {
-  const _WelcomeBanner({required this.name, required this.role});
-  final String name;
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final roleLabel = switch (role) {
-      'super_admin' => 'Super Admin',
-      'group_admin' => 'Group Admin',
-      'it_admin' => 'IT Admin',
-      _ => 'Admin',
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF1e3a5f), cs.primary.withValues(alpha: 0.85)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(roleLabel,
-                    style:
-                        const TextStyle(color: Colors.white70, fontSize: 13)),
-                Text(name,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                const Text('Administration Panel',
-                    style: TextStyle(color: Colors.white60, fontSize: 12)),
-              ],
-            ),
-          ),
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.white.withValues(alpha: 0.15),
-            child: const Icon(Icons.admin_panel_settings_rounded,
-                color: Colors.white, size: 28),
           ),
         ],
       ),
@@ -287,8 +173,8 @@ class _QuickActions extends StatelessWidget {
       ),
       (
         icon: Icons.inventory_2_rounded,
-        label: 'Assets & Expenses',
-        color: Colors.indigo,
+        label: 'Finance & Operations',
+        color: AppColors.info,
         path: '$base/inventory'
       ),
       (

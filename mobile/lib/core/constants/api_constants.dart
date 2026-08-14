@@ -4,7 +4,7 @@ class ApiConstants {
   // Change this to your Railway backend URL for production
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.tws.enterprises/api',
+    defaultValue: 'https://api.edu.tws.enterprises/api',
   );
 
   // Headers sent with every mobile request

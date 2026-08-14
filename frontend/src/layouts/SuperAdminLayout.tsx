@@ -118,7 +118,7 @@ export default function SuperAdminLayout() {
         {/* User footer */}
         <div className="border-t border-white/6 p-4 shrink-0">
           <div className="flex items-center gap-3 mb-3">
-            <UserAvatar name={user?.name ?? 'SA'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
+            <UserAvatar name={user?.name ?? 'SA'} photoUrl={user?.photoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
               <p className="text-xs text-white/40">WolfStack Admin</p>

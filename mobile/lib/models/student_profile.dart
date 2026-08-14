@@ -45,6 +45,6 @@ class StudentProfile {
         id: j['id']?.toString() ?? j['_id']?.toString() ?? '',
         name: j['name'] as String? ?? '',
         email: j['email'] as String? ?? '',
-        photoUrl: j['profilePhotoUrl'] as String?,
+        photoUrl: j['photoUrl'] as String?,
       );
 }

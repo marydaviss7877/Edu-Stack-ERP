@@ -218,6 +218,7 @@ class _EnterMarksState extends ConsumerState<EnterMarksScreen> {
                   final id = s['_id'] as String? ?? '';
                   final name = (s['profile']?['name'] as String?) ?? 'Unknown';
                   final rollNo = s['rollNo'] as String? ?? '';
+                  final photoUrl = s['profile']?['photoUrl'] as String?;
                   final ctrl = _controllers[id] ?? TextEditingController();
 
                   return Card(
@@ -229,13 +230,21 @@ class _EnterMarksState extends ConsumerState<EnterMarksScreen> {
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: cs.primaryContainer,
-                            child: Text(
-                              name.isNotEmpty ? name[0].toUpperCase() : '?',
-                              style: TextStyle(
-                                  color: cs.onPrimaryContainer,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold),
-                            ),
+                            backgroundImage:
+                                photoUrl != null && photoUrl.isNotEmpty
+                                    ? NetworkImage(photoUrl)
+                                    : null,
+                            child: photoUrl == null || photoUrl.isEmpty
+                                ? Text(
+                                    name.isNotEmpty
+                                        ? name[0].toUpperCase()
+                                        : '?',
+                                    style: TextStyle(
+                                        color: cs.onPrimaryContainer,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  )
+                                : null,
                           ),
                           const SizedBox(width: 10),
                           Expanded(

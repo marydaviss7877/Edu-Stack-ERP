@@ -4,6 +4,7 @@ import { Types, PipelineStage } from 'mongoose';
 import { Paper } from '../models/Paper';
 import { PaperResult } from '../models/PaperResult';
 import { Branch } from '../models/Branch';
+import { Student } from '../models/Student';
 import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createPaperValidators = [
@@ -156,7 +157,14 @@ export async function getWeakTopics(req: Request, res: Response): Promise<void> 
   const { studentId, month, year, subjectId } = req.query;
 
   const rawStudentId = Array.isArray(studentId) ? studentId[0] : studentId;
-  const targetStudentId = role === 'student' ? userId : (typeof rawStudentId === 'string' ? rawStudentId : undefined);
+  let targetStudentId = typeof rawStudentId === 'string' ? rawStudentId : undefined;
+  if (role === 'student') {
+    const student = await Student.findOne({
+      ...orgBranchScope({ orgId, branchId }),
+      userId,
+    }).select('_id').lean();
+    targetStudentId = student?._id.toString();
+  }
   if (!targetStudentId) {
     res.status(400).json({ success: false, message: 'studentId is required' });
     return;
@@ -164,12 +172,16 @@ export async function getWeakTopics(req: Request, res: Response): Promise<void> 
 
   const rawSubjectId = Array.isArray(subjectId) ? subjectId[0] : subjectId;
   const subjectIdStr = typeof rawSubjectId === 'string' ? rawSubjectId : undefined;
+  const aggregateScope = {
+    orgId: new Types.ObjectId(orgId),
+    ...(branchId ? { branchId: new Types.ObjectId(branchId) } : {}),
+  };
 
   // Aggregate through papers to get topic info
   const pipeline = [
     {
       $match: {
-        ...orgBranchScope({ orgId, branchId }),
+        ...aggregateScope,
         studentId: new Types.ObjectId(targetStudentId),
         isWeak: true,
         ...(subjectIdStr ? { subjectId: new Types.ObjectId(subjectIdStr) } : {}),
@@ -177,7 +189,7 @@ export async function getWeakTopics(req: Request, res: Response): Promise<void> 
     },
     {
       $lookup: {
-        from: 'papers',
+        from: 'paper',
         localField: 'paperId',
         foreignField: '_id',
         as: 'paper',
@@ -265,9 +277,31 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
 
   const branch = branchId ? await Branch.findOne({ _id: branchId, orgId }).lean() : null;
   const weakThreshold = branch?.academicThresholds?.weakThreshold ?? 50;
+  const aggregateScope = {
+    orgId: new Types.ObjectId(orgId),
+    ...(branchId ? { branchId: new Types.ObjectId(branchId) } : {}),
+  };
 
   const agg = await PaperResult.aggregate([
-    { $match: { ...orgBranchScope({ orgId, branchId }), paperId: { $in: paperIds } } },
+    { $match: { ...aggregateScope, paperId: { $in: paperIds } } },
+    {
+      $lookup: {
+        from: 'paper',
+        localField: 'paperId',
+        foreignField: '_id',
+        as: 'paper',
+      },
+    },
+    { $unwind: '$paper' },
+    {
+      $lookup: {
+        from: 'subjecttopics',
+        localField: 'paper.topicId',
+        foreignField: '_id',
+        as: 'topic',
+      },
+    },
+    { $unwind: { path: '$topic', preserveNullAndEmptyArrays: true } },
     {
       $group: {
         _id: { studentId: '$studentId', subjectId: '$subjectId' },
@@ -275,6 +309,11 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
         weakCount: { $sum: { $cond: ['$isWeak', 1, 0] } },
         totalPapers: { $sum: 1 },
         absentCount: { $sum: { $cond: ['$isAbsent', 1, 0] } },
+        weakTopics: {
+          $addToSet: {
+            $cond: ['$isWeak', '$topic.topicName', '$$REMOVE'],
+          },
+        },
       },
     },
     {
@@ -313,6 +352,7 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
         weakCount: 1,
         totalPapers: 1,
         absentCount: 1,
+        weakTopics: 1,
         isWeak: 1,
       },
     },

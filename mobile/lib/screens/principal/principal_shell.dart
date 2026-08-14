@@ -21,7 +21,7 @@ class PrincipalShell extends StatelessWidget {
     ),
     (
       icon: Icons.inventory_2_rounded,
-      label: 'Assets',
+      label: 'Finance',
       path: '/principal/inventory'
     ),
     (

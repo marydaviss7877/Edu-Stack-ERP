@@ -44,7 +44,7 @@ class GroupAdminShell extends StatelessWidget {
     (icon: Icons.people_rounded, label: 'Users', path: '/group/users'),
     (
       icon: Icons.inventory_2_rounded,
-      label: 'Inventory',
+      label: 'Finance',
       path: '/group/inventory'
     ),
     (icon: Icons.qr_code_rounded, label: 'QR Code', path: '/group/qr'),

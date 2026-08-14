@@ -332,7 +332,7 @@ function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStudent: bo
     );
   }
 
-  const rows = report?.data ?? [];
+  const rows = (report?.data ?? []).filter(r => r.isWeak || r.weakCount > 0);
   return (
     <div>
       {MonthYearPicker}
@@ -342,20 +342,24 @@ function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStudent: bo
             <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Student</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Subject</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Weak Topics</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Avg %</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Weak / Total</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-            {loadingReport && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>}
+            {loadingReport && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>}
             {!loadingReport && rows.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">No weekly test results for this period.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No weak topics for this period.</td></tr>
             )}
             {rows.map((r, i) => (
               <tr key={i} className={cn(r.isWeak ? 'bg-red-50 dark:bg-red-900/20' : '')}>
                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{r.rollNo} — {r.studentName}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{r.subjectName}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
+                  {r.weakTopics?.length ? r.weakTopics.join(', ') : 'General subject weakness'}
+                </td>
                 <td className="px-4 py-3 text-center font-medium">{r.avgPercentage}%</td>
                 <td className="px-4 py-3 text-center text-gray-500">{r.weakCount}/{r.totalPapers}</td>
                 <td className="px-4 py-3 text-center">{r.isWeak && <Badge variant="danger">Weak</Badge>}</td>
@@ -379,11 +383,20 @@ const CLEARANCE_VARIANT: Record<ClearanceStatus, 'warning' | 'info' | 'success' 
 
 function ClearanceTab({ role }: { role?: string }) {
   const qc = useQueryClient();
+  const now = new Date();
+  const [month, setMonth] = useState(String(now.getMonth() + 1));
+  const [year, setYear] = useState(String(now.getFullYear()));
   const [approving, setApproving] = useState<ClearanceDoc | null>(null);
   const [grading, setGrading] = useState<ClearanceDoc | null>(null);
 
-  const { data: summary } = useQuery({ queryKey: ['clearance-summary'], queryFn: () => clearanceService.getSummary() });
-  const { data: clearances = [], isLoading } = useQuery({ queryKey: ['clearances'], queryFn: () => clearanceService.list() });
+  const { data: summary } = useQuery({
+    queryKey: ['clearance-summary', month, year],
+    queryFn: () => clearanceService.getSummary({ month, year }),
+  });
+  const { data: clearances = [], isLoading } = useQuery({
+    queryKey: ['clearances', month, year],
+    queryFn: () => clearanceService.list({ month, year }),
+  });
 
   const waive = useMutation({
     mutationFn: (id: string) => clearanceService.waive(id),
@@ -392,12 +405,29 @@ function ClearanceTab({ role }: { role?: string }) {
 
   return (
     <div>
+      <div className="flex gap-3 mb-4">
+        <select value={month} onChange={e => setMonth(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+          {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
+        </select>
+        <select value={year} onChange={e => setYear(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+          {[2024, 2025, 2026, 2027].map(y => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+      </div>
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          {(['pending_approval', 'scheduled', 'completed', 'waived'] as ClearanceStatus[]).map(s => (
-            <div key={s} className="card p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">{summary[s]}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{CLEARANCE_LABEL[s]}</div>
+          {[
+            ['Total Cases', summary.total],
+            ['Pending Approval', summary.pending_approval],
+            ['Scheduled', summary.scheduled],
+            ['Completed', summary.completed],
+            ['Waived', summary.waived],
+            ['Passed', summary.passed],
+            ['Pass Rate', `${summary.passRate}%`],
+            ['Avg Score', `${summary.averagePercentage}%`],
+          ].map(([label, value]) => (
+            <div key={label} className="card p-4 text-center">
+              <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">{value}</div>
+              <div className="text-xs text-gray-400 mt-0.5">{label}</div>
             </div>
           ))}
         </div>

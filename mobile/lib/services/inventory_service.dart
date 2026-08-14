@@ -10,9 +10,14 @@ class InventoryService {
     return _dataMap(res);
   }
 
-  Future<Map<String, dynamic>> getFinanceSummary({String? month}) async {
-    final res = await _dio.get('/inventory/finance-summary',
-        queryParameters: {if (month != null) 'month': month});
+  Future<Map<String, dynamic>> getFinanceSummary({
+    String? month,
+    bool includeBenchmarks = true,
+  }) async {
+    final res = await _dio.get('/inventory/finance-summary', queryParameters: {
+      if (month != null) 'month': month,
+      'includeBenchmarks': includeBenchmarks,
+    });
     return _dataMap(res);
   }
 

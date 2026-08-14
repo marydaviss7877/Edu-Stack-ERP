@@ -51,6 +51,7 @@ export interface MonthlyWeakReportRow {
   weakCount: number;
   totalPapers: number;
   absentCount: number;
+  weakTopics: string[];
   isWeak: boolean;
 }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/layout/responsive.dart';
 
@@ -26,13 +25,7 @@ class TeacherShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = [
-      'nav.home'.tr(),
-      'nav.attendance'.tr(),
-      'nav.marks'.tr(),
-      'nav.assignments'.tr(),
-      'nav.notifications'.tr(),
-    ];
+    const labels = ['Home', 'Attendance', 'Marks', 'Assignments', 'Alerts'];
 
     final location = GoRouterState.of(context).matchedLocation;
     final idx = _paths.indexWhere((p) => location.startsWith(p));

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:easy_localization/easy_localization.dart' hide DateFormat;
 import '../../../providers/student_providers.dart';
 import '../../../models/challan.dart';
+import '../../../core/theme/app_design.dart';
 
 class MyChallans extends ConsumerWidget {
   const MyChallans({super.key});
@@ -13,7 +13,7 @@ class MyChallans extends ConsumerWidget {
     final challansAsync = ref.watch(myChallansProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text('fees.challan'.tr())),
+      appBar: AppBar(title: const Text('Financial Center')),
       body: challansAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorRetry(
@@ -36,8 +36,12 @@ class MyChallans extends ConsumerWidget {
                 // ── Balance summary ───────────────────────────
                 if (unpaid.isNotEmpty)
                   _BalanceBanner(
-                      balance: balance,
-                      overdueCount: unpaid.where((c) => c.isOverdue).length),
+                    balance: balance,
+                    overdueCount: unpaid.where((c) => c.isOverdue).length,
+                    nextDue: unpaid
+                        .map((c) => c.dueDate)
+                        .reduce((a, b) => a.isBefore(b) ? a : b),
+                  ),
 
                 if (unpaid.isNotEmpty) ...[
                   const SizedBox(height: 20),
@@ -68,57 +72,77 @@ class MyChallans extends ConsumerWidget {
 }
 
 class _BalanceBanner extends StatelessWidget {
-  const _BalanceBanner({required this.balance, required this.overdueCount});
+  const _BalanceBanner({
+    required this.balance,
+    required this.overdueCount,
+    required this.nextDue,
+  });
   final double balance;
   final int overdueCount;
+  final DateTime nextDue;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final fmt = NumberFormat('#,##0', 'en_PK');
 
-    return Card(
-      color: overdueCount > 0 ? cs.errorContainer : cs.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            Icon(
-              overdueCount > 0
-                  ? Icons.warning_rounded
-                  : Icons.account_balance_wallet_rounded,
-              color: overdueCount > 0 ? cs.error : cs.primary,
-              size: 32,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total Outstanding',
-                      style:
-                          tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
-                  Text(
-                    'PKR ${fmt.format(balance)}',
-                    style: tt.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: overdueCount > 0 ? cs.error : cs.onSurface,
-                    ),
-                  ),
-                  if (overdueCount > 0)
-                    Text(
-                      '$overdueCount challan(s) overdue',
-                      style: tt.bodySmall?.copyWith(color: cs.error),
-                    ),
-                ],
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Total outstanding',
+              style: tt.labelMedium?.copyWith(color: Colors.white70)),
+          const SizedBox(height: 4),
+          Text('PKR ${fmt.format(balance)}',
+              style: tt.headlineMedium?.copyWith(color: Colors.white)),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _FinanceDatum(
+                  label: 'Due date',
+                  value: DateFormat('d MMM').format(nextDue)),
+              _FinanceDatum(
+                  label: 'Status',
+                  value: overdueCount > 0 ? 'Overdue' : 'Unpaid'),
+              _FinanceDatum(label: 'Outstanding', value: '${overdueCount + 1}'),
+            ],
+          ),
+        ],
       ),
     );
   }
+}
+
+class _FinanceDatum extends StatelessWidget {
+  const _FinanceDatum({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: const TextStyle(color: Colors.white60, fontSize: 10)),
+            const SizedBox(height: 3),
+            Text(value,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700)),
+          ],
+        ),
+      );
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -146,11 +170,11 @@ class _ChallanCard extends StatelessWidget {
     final fmt = NumberFormat('#,##0', 'en_PK');
 
     final (statusLabel, statusColor) = switch (challan.status) {
-      'paid' => ('fees.paid'.tr(), cs.primary),
+      'paid' => ('Paid', cs.primary),
       'waived' => ('Waived', cs.secondary),
-      'overdue' => ('fees.overdue'.tr(), cs.error),
-      'partial' => ('fees.partial'.tr(), cs.tertiary),
-      _ => ('fees.unpaid'.tr(), cs.error),
+      'overdue' => ('Overdue', cs.error),
+      'partial' => ('Partially paid', cs.tertiary),
+      _ => ('Unpaid', cs.error),
     };
 
     return Card(
@@ -195,18 +219,16 @@ class _ChallanCard extends StatelessWidget {
               Row(
                 children: [
                   _AmountChip(
-                      label: 'fees.totalAmount'.tr(),
+                      label: 'Total amount',
                       amount: challan.netAmount,
                       fmt: fmt),
                   const SizedBox(width: 12),
                   if (challan.paidAmount > 0)
                     _AmountChip(
-                        label: 'fees.paid'.tr(),
-                        amount: challan.paidAmount,
-                        fmt: fmt),
+                        label: 'Paid', amount: challan.paidAmount, fmt: fmt),
                   if (!challan.isPaid)
                     _AmountChip(
-                        label: 'fees.balance'.tr(),
+                        label: 'Balance',
                         amount: challan.balance,
                         fmt: fmt,
                         highlight: true),

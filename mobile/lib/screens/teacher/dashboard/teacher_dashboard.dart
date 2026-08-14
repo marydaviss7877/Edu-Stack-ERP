@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/teacher_providers.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/theme/app_design.dart';
 
 class TeacherDashboard extends ConsumerWidget {
   const TeacherDashboard({super.key});
@@ -14,205 +14,60 @@ class TeacherDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final photoUrl = user?.photoUrl;
     final org = ref.watch(orgProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final unread = ref.watch(unreadCountProvider).valueOrNull ?? 0;
+    final periods = ref.watch(todayPeriodsProvider).valueOrNull ?? const [];
 
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(todayPeriodsProvider);
-          ref.invalidate(teacherDashboardStatsProvider);
-          ref.invalidate(unreadCountProvider);
-        },
-        child: CustomScrollView(
-          slivers: [
-            // ── App Bar ─────────────────────────────────────
-            SliverAppBar(
-              floating: true,
-              backgroundColor: cs.surface,
-              title: Row(
-                children: [
-                  if (org?.logoUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                          imageUrl: org!.logoUrl!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain),
-                    )
-                  else
-                    Icon(Icons.school_rounded, color: cs.primary, size: 26),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      org?.name ?? 'EduStack',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_rounded),
-                  tooltip: 'Profile',
-                  onPressed: () => context.push('/profile'),
-                ),
-                _UnreadBadge(),
-                const SizedBox(width: 8),
-              ],
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
+      body: Column(
+        children: [
+          AppIdentityHeader(
+            organization: org?.name ?? 'EduStack',
+            name: user?.name ?? 'Teacher',
+            subtitle: 'Teacher · ${periods.length} classes today',
+            photoUrl: photoUrl,
+            notificationCount: unread,
+            onProfile: () => context.push('/profile'),
+            onNotifications: () => context.go('/teacher/notifications'),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(todayPeriodsProvider);
+                ref.invalidate(teacherDashboardStatsProvider);
+                ref.invalidate(unreadCountProvider);
+              },
+              child: ListView(
                 padding: EdgeInsets.fromLTRB(
                   context.pageGutter,
-                  16,
+                  18,
                   context.pageGutter,
                   100,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Welcome ──────────────────────────────
-                    _WelcomeBanner(name: user?.name ?? 'Teacher'),
-
-                    const SizedBox(height: 20),
-
-                    // ── Quick action tiles ───────────────────
-                    _QuickActions(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Offline queue warning ─────────────────
-                    _OfflineQueueBanner(),
-
-                    // ── Today's schedule ──────────────────────
-                    const _SectionHeader(title: "Today's Classes"),
-                    const SizedBox(height: 10),
-                    _TodaySchedule(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Pending items ─────────────────────────
-                    const _SectionHeader(title: 'Pending Actions'),
-                    const SizedBox(height: 10),
-                    _PendingActions(),
-                  ],
-                ),
+                children: [
+                  Text("Today's teaching plan",
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${periods.length} classes and your open actions at a glance.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  _QuickActions(),
+                  const SizedBox(height: 16),
+                  _OfflineQueueBanner(),
+                  const AppSectionHeader(title: "Today's agenda"),
+                  _TodaySchedule(),
+                  const AppSectionHeader(title: 'Actions required'),
+                  _PendingActions(),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Welcome Banner ──────────────────────────────────────────
-class _WelcomeBanner extends StatelessWidget {
-  const _WelcomeBanner({required this.name});
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final now = DateTime.now();
-    final greeting = now.hour < 12
-        ? 'Good morning'
-        : now.hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cs.primary, cs.secondary.withValues(alpha: 0.9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$greeting,',
-                    style: TextStyle(
-                        color: cs.onPrimary.withValues(alpha: 0.8),
-                        fontSize: 13)),
-                const SizedBox(height: 2),
-                Text(name,
-                    style: TextStyle(
-                        color: cs.onPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today_rounded,
-                        size: 14, color: cs.onPrimary.withValues(alpha: 0.7)),
-                    const SizedBox(width: 4),
-                    Text(
-                      _dayLabel(now),
-                      style: TextStyle(
-                          color: cs.onPrimary.withValues(alpha: 0.7),
-                          fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : 'T',
-              style: TextStyle(
-                  color: cs.onPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
     );
-  }
-
-  String _dayLabel(DateTime dt) {
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]}';
   }
 }
 
@@ -220,83 +75,35 @@ class _WelcomeBanner extends StatelessWidget {
 class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final items = [
-      _ActionTile(
+      AppQuickAction(
         icon: Icons.how_to_reg_rounded,
-        label: 'Mark\nAttendance',
-        color: cs.primary,
+        label: 'Mark attendance',
+        color: AppColors.primary,
         onTap: () => context.go('/teacher/attendance'),
       ),
-      _ActionTile(
+      AppQuickAction(
         icon: Icons.edit_note_rounded,
-        label: 'Enter\nMarks',
-        color: cs.secondary,
+        label: 'Enter marks',
+        color: AppColors.info,
         onTap: () => context.go('/teacher/marks'),
       ),
-      _ActionTile(
+      AppQuickAction(
         icon: Icons.assignment_rounded,
-        label: 'My\nAssignments',
-        color: cs.tertiary,
+        label: 'Assignment',
+        color: AppColors.achievement,
         onTap: () => context.go('/teacher/assignments'),
       ),
-      _ActionTile(
-        icon: Icons.notifications_rounded,
-        label: 'Alerts',
-        color: cs.error,
-        onTap: () => context.go('/teacher/notifications'),
-      ),
     ];
-    final columns = context.isCompactPhone ? 2 : 4;
+    final columns = context.isNarrowPhone ? 1 : 3;
     return GridView.count(
       crossAxisCount: columns,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: columns == 2 ? 1.8 : 0.95,
+      childAspectRatio: columns == 1 ? 3.4 : 1.15,
       children: items,
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w600, color: color),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -521,35 +328,6 @@ class _PendingTile extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Unread Badge ──────────────────────────────────────────────
-class _UnreadBadge extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(unreadCountProvider);
-    return IconButton(
-      icon: Badge(
-        isLabelVisible:
-            count.maybeWhen(data: (c) => c > 0, orElse: () => false),
-        label: count.maybeWhen(data: (c) => Text('$c'), orElse: () => null),
-        child: const Icon(Icons.notifications_outlined),
-      ),
-      onPressed: () => context.go('/teacher/notifications'),
-    );
-  }
-}
-
-// ── Shared helpers ─────────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Text(
-        title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      );
 }
 
 class _EmptyCard extends StatelessWidget {

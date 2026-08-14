@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import '../../models/org.dart';
 
@@ -38,7 +37,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'onboarding.invalidQr'.tr();
+        _error = 'Invalid QR code. Please scan your school EduStack QR.';
         _scanned = false;
         _picking = false;
       });
@@ -81,7 +80,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       if (raw == null) {
         if (!mounted) return;
         setState(() {
-          _error = 'onboarding.noQrInImage'.tr();
+          _error = 'No QR code found in the image. Try a clearer photo.';
           _picking = false;
         });
         _controller.start();
@@ -92,7 +91,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'onboarding.imageReadError'.tr();
+        _error = 'Could not read the image. Please try again.';
         _picking = false;
       });
       _controller.start();
@@ -118,41 +117,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
               child: Row(
                 children: [
                   const Spacer(),
-                  // Upload from gallery button
-                  GestureDetector(
-                    onTap: _pickAndScanImage,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade600,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _picking
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.photo_library_rounded,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Upload QR',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   // Torch toggle
                   Container(
                     decoration: BoxDecoration(
@@ -170,47 +134,101 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
             ),
           ),
 
-          // Bottom instructions
+          // Trust and alternate-action sheet
           Align(
             alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'onboarding.scanQr'.tr(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, MediaQuery.paddingOf(context).bottom + 18),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'onboarding.scanInstructions'.tr(),
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 13),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade900.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(_error!,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 13)),
+                    child: Icon(Icons.account_balance_rounded,
+                        color: Theme.of(context).colorScheme.primary),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Connect to your school',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your code securely selects the correct EduStack organization. It does not sign you in.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
+                      child: Text(_error!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
+                              fontSize: 12)),
+                    ),
                   ],
-                ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: _picking ? null : _pickAndScanImage,
+                    icon: _picking
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.image_rounded),
+                    label: const Text('Upload QR from gallery'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          Positioned(
+            left: 20,
+            right: 20,
+            top: MediaQuery.paddingOf(context).top + 64,
+            child: IgnorePointer(
+              child: Column(
+                children: [
+                  const Text(
+                    'Scan your school QR',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Outfit',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Position the school-issued QR code inside the frame',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: .72),
+                        fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ),

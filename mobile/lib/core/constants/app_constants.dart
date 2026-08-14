@@ -8,7 +8,7 @@ class AppConstants {
   static const int inactivityDays = 10;
 
   // Default Navy Blue (matches web app)
-  static const String defaultPrimaryColor = '#1e3a5f';
+  static const String defaultPrimaryColor = '#4F378A';
 
   // Attendance threshold warning
   static const double attendanceThreshold = 75.0;

@@ -115,7 +115,7 @@ export async function listSubmissions(req: Request, res: Response): Promise<void
   const { orgId } = req.user!;
   const { assignmentId } = req.params;
   const submissions = await Submission.find({ assignmentId, orgId })
-    .populate('studentId', 'profile.name rollNo')
+    .populate('studentId', 'profile.name profile.photoUrl rollNo')
     .sort({ submittedAt: -1 })
     .lean();
   res.json({ success: true, data: submissions });

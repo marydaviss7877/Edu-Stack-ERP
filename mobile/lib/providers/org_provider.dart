@@ -36,7 +36,3 @@ class OrgNotifier extends StateNotifier<OrgConfig?> {
 final orgProvider = StateNotifierProvider<OrgNotifier, OrgConfig?>(
   (_) => OrgNotifier(),
 );
-
-final primaryColorProvider = Provider<String>((ref) {
-  return ref.watch(orgProvider)?.primaryColor ?? '#1e3a5f';
-});

@@ -333,7 +333,7 @@ export default function AppLayout() {
             <>
               {user?.role === 'student' ? (
               <Link to={`${base}/profile`} className="flex items-center gap-3 mb-3 rounded-xl hover:bg-gray-50 transition-colors p-1 -m-1">
-                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.photoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
                   <p className="text-xs text-gray-400 truncate">{roleLabel(user.role)}</p>
@@ -341,7 +341,7 @@ export default function AppLayout() {
               </Link>
             ) : (
               <div className="flex items-center gap-3 mb-3">
-                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.photoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-400 truncate">{roleLabel(user?.role ?? '')}</p>
@@ -380,7 +380,7 @@ export default function AppLayout() {
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs cursor-pointer" fallbackClassName="bg-amber-500 text-navy-950" />
+              <UserAvatar name={user?.name ?? '?'} photoUrl={user?.photoUrl} className="w-9 h-9 rounded-xl text-xs cursor-pointer" fallbackClassName="bg-amber-500 text-navy-950" />
               <button
                 onClick={toggleDark}
                 title={isDark ? 'Light mode' : 'Dark mode'}
@@ -437,10 +437,10 @@ export default function AppLayout() {
 
           {user?.role === 'student' ? (
             <Link to={`${base}/profile`} className="shrink-0 hover:opacity-90 transition-opacity" title="My Profile">
-              <UserAvatar name={user.name ?? '?'} photoUrl={user.profilePhotoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
+              <UserAvatar name={user.name ?? '?'} photoUrl={user.photoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
             </Link>
           ) : (
-            <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
+            <UserAvatar name={user?.name ?? '?'} photoUrl={user?.photoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
           )}
         </header>
 
@@ -615,7 +615,7 @@ export default function AppLayout() {
             {/* User footer */}
             <div className="border-t border-gray-100 p-4 shrink-0">
               <div className="flex items-center gap-3 mb-3">
-                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-10 h-10 rounded-xl text-sm" fallbackClassName="bg-amber-500 text-navy-950" />
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.photoUrl} className="w-10 h-10 rounded-xl text-sm" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-400">{roleLabel(user?.role ?? '')}</p>

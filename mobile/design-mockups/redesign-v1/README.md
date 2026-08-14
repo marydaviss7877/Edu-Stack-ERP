@@ -7,7 +7,7 @@ Open `index.html` directly or serve this directory locally. The redesign is self
 ## Adopted
 
 - Deep indigo academic identity
-- Hanken Grotesk display typography with Inter UI text
+- Outfit display typography with Plus Jakarta Sans UI text, matching the web app
 - Action-first dashboards
 - Teacher agenda timeline
 - Student fee alert and next-class priority
@@ -16,7 +16,7 @@ Open `index.html` directly or serve this directory locally. The redesign is self
 
 ## Corrected
 
-- Uses Noto Nastaliq Urdu rather than Noto Serif
+- Uses a single English-only product language
 - Preserves role-specific mobile navigation
 - Separates semantic colors from decorative brand gold
 - Keeps tenant branding constrained to safe component roles

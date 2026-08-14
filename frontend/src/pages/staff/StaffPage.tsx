@@ -175,7 +175,7 @@ export default function StaffPage() {
                   <div className="flex items-center gap-3">
                     <UserAvatar
                       name={s.name}
-                      photoUrl={s.profilePhotoUrl}
+                      photoUrl={s.photoUrl}
                       className="h-9 w-9 rounded-xl text-xs"
                       fallbackClassName="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
                     />

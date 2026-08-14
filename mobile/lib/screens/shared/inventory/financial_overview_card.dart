@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_design.dart';
 
 class FinancialOverviewCard extends StatelessWidget {
   const FinancialOverviewCard({
@@ -27,9 +28,9 @@ class FinancialOverviewCard extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF172554), cs.primary],
+                colors: [AppColors.identityStart, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

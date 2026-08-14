@@ -302,7 +302,7 @@ export default function TeacherDashboard() {
       <div className="flex items-start gap-3 sm:gap-4">
         <UserAvatar
           name={user?.name ?? '?'}
-          photoUrl={user?.profilePhotoUrl}
+          photoUrl={user?.photoUrl}
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-lg shadow-md"
           fallbackClassName="bg-linear-to-br from-blue-500 to-blue-700 text-white"
         />

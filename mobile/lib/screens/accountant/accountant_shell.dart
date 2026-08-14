@@ -21,7 +21,7 @@ class AccountantShell extends StatelessWidget {
     ),
     (
       icon: Icons.inventory_2_rounded,
-      label: 'Assets',
+      label: 'Finance',
       path: '/accountant/inventory'
     ),
     (

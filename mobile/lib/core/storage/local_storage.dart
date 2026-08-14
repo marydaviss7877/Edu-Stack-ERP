@@ -32,7 +32,7 @@ class LocalStorageService {
   static String? get orgName => _p.getString(StorageKeys.orgName);
   static String? get orgLogoUrl => _p.getString(StorageKeys.orgLogoUrl);
   static String get orgPrimaryColor =>
-      _p.getString(StorageKeys.orgPrimaryColor) ?? '#1e3a5f';
+      _p.getString(StorageKeys.orgPrimaryColor) ?? '#4F378A';
 
   static bool get hasOrg => orgSlug != null;
 
@@ -61,7 +61,4 @@ class LocalStorageService {
       _p.getString(StorageKeys.themeMode) ?? 'system';
   static void setThemeMode(String mode) =>
       _p.setString(StorageKeys.themeMode, mode);
-
-  static String get locale => _p.getString(StorageKeys.locale) ?? 'en';
-  static void setLocale(String loc) => _p.setString(StorageKeys.locale, loc);
 }

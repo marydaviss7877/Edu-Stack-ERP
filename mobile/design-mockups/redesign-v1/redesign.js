@@ -23,7 +23,7 @@ const screenChangeNotes = {
   users: 'Retains role tabs and search, with clearer account state and safer row-level actions.',
   qr: 'Uses the finalized institutional identity and keeps QR sharing separate from onboarding scanning.',
   profile: 'Applies the indigo identity while retaining readable account and organization details.',
-  settings: 'Adds the finalized typography, larger targets, and explicit English/Urdu treatment.',
+  settings: 'Adds the finalized typography and larger targets. Language switching is removed because the product is English-only.',
   offline: 'Uses a quieter, recognizable system state and one obvious recovery action.'
 };
 

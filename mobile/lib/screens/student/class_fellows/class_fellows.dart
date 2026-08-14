@@ -115,7 +115,7 @@ class _TopperBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final name = (fellow['profile']?['name'] as String?) ?? 'Unknown';
-    final avatar = fellow['profile']?['avatarUrl'] as String?;
+    final photoUrl = fellow['profile']?['photoUrl'] as String?;
 
     return Card(
       color: const Color(0xFFFFF8E1),
@@ -141,7 +141,7 @@ class _TopperBanner extends StatelessWidget {
                 ],
               ),
             ),
-            _Avatar(url: avatar, name: name, radius: 28),
+            _Avatar(url: photoUrl, name: name, radius: 28),
           ],
         ),
       ),
@@ -199,7 +199,7 @@ class _FellowCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final name = (fellow['profile']?['name'] as String?) ?? 'Unknown';
     final rollNo = fellow['rollNo'] as String? ?? '—';
-    final avatar = fellow['profile']?['avatarUrl'] as String?;
+    final photoUrl = fellow['profile']?['photoUrl'] as String?;
     final status = fellow['todayStatus'] as String?;
     final pct = (fellow['lastResultPercentage'] as num?)?.toDouble();
 
@@ -224,7 +224,7 @@ class _FellowCard extends StatelessWidget {
               ),
             ),
             // Avatar
-            _Avatar(url: avatar, name: name, radius: 20),
+            _Avatar(url: photoUrl, name: name, radius: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

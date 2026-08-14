@@ -19,7 +19,7 @@ The direction is worth adopting selectively. It is substantially stronger than t
 | Mobile usability | 7.1 | 7.4 | Several screens remain desktop-first and some mobile controls are too dense. |
 | Accessibility | 7.0 | 7.2 | Contrast is mostly sound, but labels, touch targets, color semantics, and motion need correction. |
 | Consistency | 6.4 | 8.0 | Tokens are repeated consistently, although component use varies between documents. |
-| Localization / RTL | 6.1 | 5.5 | Noto Serif is not an appropriate replacement for Noto Nastaliq Urdu. RTL behavior is not demonstrated. |
+| Product language | 6.1 | 7.0 | The finalized application is intentionally English-only. |
 | Implementation readiness | 7.0 | 6.8 | Ten standalone Tailwind documents duplicate configuration and are not a reusable app system. |
 
 ## Strong ideas adopted
@@ -40,7 +40,7 @@ The direction is worth adopting selectively. It is substantially stronger than t
 3. **Desktop-first generation:** large 12-column layouts do not translate directly into the Flutter mobile application. The implementation is designed around a 390×844 viewport.
 4. **Tenant-brand collision:** a permanent EduStack identity and a school-supplied color require separate token layers. Tenant colors are now restricted to safe accent roles.
 5. **Semantic color confusion:** achievement gold must not represent success, paid, or present. Dedicated teal, warning, and error colors are used instead.
-6. **Urdu typography:** Noto Nastaliq Urdu is restored with increased line height; Noto Serif is not used as an Urdu font.
+6. **Product language:** language switching is removed and the application ships in English only.
 7. **Navigation labels:** generated 12px uppercase label tokens create cramped bottom navigation. The implementation uses readable sentence-case role destinations and larger targets.
 8. **Duplicated code:** repeated Tailwind configurations across ten HTML documents are converted into one token layer and shared components.
 9. **Oversized responsive scope:** desktop navigation is not treated as a mobile requirement. The redesigned artifact remains a mobile implementation reference.
@@ -58,7 +58,7 @@ The direction is worth adopting selectively. It is substantially stronger than t
 - Canvas: `#FBF9FE`
 - Headings: Hanken Grotesk 600–700
 - Interface/body: Inter 400–700
-- Urdu: Noto Nastaliq Urdu with expanded line height
+- Product language: English only
 
 ## Implementation scope
 

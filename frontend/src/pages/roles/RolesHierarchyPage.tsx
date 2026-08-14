@@ -14,7 +14,7 @@ interface UserRow {
   active: boolean;
   branchId?: { name: string } | string;
   lastLoginAt?: string;
-  profilePhotoUrl?: string;
+  photoUrl?: string;
 }
 
 interface UsersResponse {
@@ -412,7 +412,7 @@ export default function RolesHierarchyPage() {
                       <div className="flex items-center gap-3">
                         <UserAvatar
                           name={u.name}
-                          photoUrl={u.profilePhotoUrl}
+                          photoUrl={u.photoUrl}
                           className="w-8 h-8 rounded-lg text-xs"
                           fallbackClassName={cn('text-white', AVATAR_COLORS[u.role] ?? 'bg-slate-500')}
                         />

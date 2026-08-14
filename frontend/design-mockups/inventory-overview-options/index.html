@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduStack Inventory Overview — Design Proposals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">E</span><span><strong>EduStack</strong><small>Pakistan</small></span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#"><span>⌂</span>Dashboard</a><a href="#"><span>⌘</span>Branches</a><a href="#"><span>♙</span>Staff</a><a href="#"><span>♟</span>Students</a><a href="#"><span>▤</span>Fee Management</a><a href="#"><span>₨</span>Payroll</a><a class="active" href="#"><span>◇</span>Assets &amp; Inventory</a><a href="#"><span>⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-user"><span class="avatar">SA</span><span><strong>Subhan Ali</strong><small>Group Administrator</small></span><button aria-label="More">•••</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar"><button class="mobile-menu" aria-label="Menu">☰</button><div class="campus"><span class="pulse"></span><span><small>Viewing</small><strong>All 5 campuses</strong></span><b>⌄</b></div><div class="top-actions"><button aria-label="Search">⌕</button><button aria-label="Notifications">♢<i></i></button><span class="top-avatar">SA</span></div></header>
+
+      <div class="content">
+        <section class="page-heading">
+          <div><div class="eyebrow">Design study / Inventory overview</div><h1>Choose the executive overview</h1><p>Five one-screen directions using the same live-ready metrics. No production screen has been changed.</p></div>
+          <div class="heading-actions"><button class="button secondary">August 2026⌄</button><button class="button primary">↗ Export report</button></div>
+        </section>
+
+        <section class="proposal-switcher" aria-label="Overview proposals">
+          <button class="proposal" data-view="pulse"><span class="proposal-no">01</span><span><b>Executive Pulse</b><small>Executive summary</small></span></button>
+          <button class="proposal" data-view="story"><span class="proposal-no">02</span><span><b>Financial Story</b><small>Profit explained</small></span></button>
+          <button class="proposal" data-view="campus"><span class="proposal-no">03</span><span><b>Campus Benchmark</b><small>Compare branches</small></span></button>
+          <button class="proposal" data-view="control"><span class="proposal-no">04</span><span><b>Control Tower</b><small>Exceptions first</small></span></button>
+          <button class="proposal" data-view="scorecard"><span class="proposal-no">05</span><span><b>Balanced Scorecard</b><small>Board governance</small></span></button>
+          <button class="proposal" data-view="blueprint"><span class="proposal-no">06</span><span><b>Blueprint 10/10</b><small>Group Admin truth</small></span></button>
+          <button class="proposal active" data-view="principal"><span class="proposal-no">07</span><span><b>Principal Blueprint</b><small>Branch owner truth</small></span></button>
+        </section>
+
+        <section class="decision-strip">
+          <span class="decision-icon">✦</span><div><strong id="viewTitle">Principal Blueprint</strong><p id="viewSummary">The branch-owner source of truth: result, forecast, collections, budget, assigned decisions, operational impact and audit confidence.</p></div><span class="score" id="viewScore">10 / 10</span>
+        </section>
+
+        <section id="designCanvas" class="overview-canvas" aria-live="polite"></section>
+      </div>
+    </main>
+  </div>
+  <script src="app.js?v=5"></script>
+</body>
+</html>

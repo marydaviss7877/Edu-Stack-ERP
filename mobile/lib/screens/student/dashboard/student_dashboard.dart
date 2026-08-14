@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/student_providers.dart';
 import '../../../models/timetable.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/theme/app_design.dart';
 
 class StudentDashboard extends ConsumerWidget {
   const StudentDashboard({super.key});
@@ -16,209 +15,137 @@ class StudentDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final photoUrl = user?.photoUrl;
     final org = ref.watch(orgProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final profile = ref.watch(studentProfileProvider);
+    final unread = ref.watch(unreadCountProvider).valueOrNull ?? 0;
+    final studentName = profile.valueOrNull?.name.isNotEmpty == true
+        ? profile.valueOrNull!.name
+        : user?.name ?? 'Student';
+    final studentSubtitle = profile.maybeWhen(
+      data: (p) => [
+        if ((p.className ?? '').isNotEmpty) p.className!,
+        if ((p.sectionName ?? '').isNotEmpty) 'Section ${p.sectionName}',
+      ].join(' · '),
+      orElse: () => 'Student',
+    );
 
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(studentProfileProvider);
-          ref.invalidate(todayTimetableProvider);
-          ref.invalidate(latestResultProvider);
-          ref.invalidate(myChallansProvider);
-          ref.invalidate(unreadCountProvider);
-        },
-        child: CustomScrollView(
-          slivers: [
-            // ── App Bar ─────────────────────────────────────
-            SliverAppBar(
-              floating: true,
-              backgroundColor: cs.surface,
-              title: Row(
-                children: [
-                  if (org?.logoUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                          imageUrl: org!.logoUrl!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain),
-                    )
-                  else
-                    Icon(Icons.school_rounded, color: cs.primary, size: 26),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      org?.name ?? 'EduStack',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_rounded),
-                  tooltip: 'Profile',
-                  onPressed: () => context.push('/profile'),
-                ),
-                _UnreadBadge(),
-                const SizedBox(width: 8),
-              ],
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
+      body: Column(
+        children: [
+          AppIdentityHeader(
+            organization: org?.name ?? 'EduStack',
+            name: studentName,
+            subtitle: studentSubtitle.isEmpty ? 'Student' : studentSubtitle,
+            photoUrl: profile.valueOrNull?.photoUrl ?? photoUrl,
+            notificationCount: unread,
+            onProfile: () => context.push('/profile'),
+            onNotifications: () => context.go('/student/notifications'),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(studentProfileProvider);
+                ref.invalidate(todayTimetableProvider);
+                ref.invalidate(latestResultProvider);
+                ref.invalidate(myChallansProvider);
+                ref.invalidate(unreadCountProvider);
+              },
+              child: ListView(
                 padding: EdgeInsets.fromLTRB(
                   context.pageGutter,
-                  16,
+                  18,
                   context.pageGutter,
                   100,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Welcome banner ──────────────────────
-                    _WelcomeBanner(userName: user?.name ?? ''),
-
-                    const SizedBox(height: 20),
-
-                    // ── Stat cards ──────────────────────────
-                    _StatCards(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Today's timetable ───────────────────
-                    _SectionHeader(
-                        title: 'dashboard.todaySchedule'.tr(),
-                        onSeeAll: () => context.go('/student/timetable')),
-                    const SizedBox(height: 10),
-                    _TodayTimetable(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Upcoming exams ──────────────────────
-                    _SectionHeader(
-                        title: 'dashboard.nextExam'.tr(),
-                        onSeeAll: () => context.go('/student/results')),
-                    const SizedBox(height: 10),
-                    _UpcomingExams(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Pending assignments ─────────────────
-                    _SectionHeader(
-                        title: 'nav.assignments'.tr(),
-                        onSeeAll: () => context.go('/student/assignments')),
-                    const SizedBox(height: 10),
-                    _PendingAssignments(),
-                  ],
-                ),
+                children: [
+                  Text('Today at a glance',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text('Here is what needs your attention today.',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 16),
+                  const _FeePriorityAlert(),
+                  AppSectionHeader(
+                    title: 'Next class',
+                    actionLabel: 'Full timetable',
+                    onAction: () => context.go('/student/timetable'),
+                  ),
+                  _TodayTimetable(),
+                  const SizedBox(height: 12),
+                  _StatCards(),
+                  AppSectionHeader(
+                    title: 'Upcoming deadlines',
+                    actionLabel: 'Assignments',
+                    onAction: () => context.go('/student/assignments'),
+                  ),
+                  _PendingAssignments(),
+                  AppSectionHeader(
+                    title: 'Upcoming exams',
+                    actionLabel: 'Results',
+                    onAction: () => context.go('/student/results'),
+                  ),
+                  _UpcomingExams(),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Welcome Banner ─────────────────────────────────────────
-class _WelcomeBanner extends ConsumerWidget {
-  final String userName;
-  const _WelcomeBanner({required this.userName});
+class _FeePriorityAlert extends ConsumerWidget {
+  const _FeePriorityAlert();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final profile = ref.watch(studentProfileProvider);
-
+    final challans = ref.watch(myChallansProvider);
+    final unpaid = challans.valueOrNull
+        ?.where((challan) => !challan.isPaid)
+        .toList()
+      ?..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    if (challans.isLoading) return const _SkeletonCard();
+    if (unpaid == null || unpaid.isEmpty) return const SizedBox.shrink();
+    final first = unpaid.first;
+    final total = unpaid.fold<double>(0, (sum, item) => sum + item.balance);
+    final days = first.dueDate.difference(DateTime.now()).inDays;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cs.primary, cs.primary.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.error.withValues(alpha: .07),
+        border: Border.all(color: AppColors.error.withValues(alpha: .25)),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
       child: Row(
         children: [
+          const Icon(Icons.account_balance_wallet_rounded,
+              color: AppColors.error),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${'dashboard.welcome'.tr()},',
-                    style: TextStyle(
-                        color: cs.onPrimary.withValues(alpha: 0.8),
-                        fontSize: 13)),
-                const SizedBox(height: 2),
                 Text(
-                  profile.when(
-                    data: (p) => p.name.isNotEmpty ? p.name : userName,
-                    loading: () => userName,
-                    error: (_, __) => userName,
-                  ),
-                  style: TextStyle(
-                      color: cs.onPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800),
+                  'PKR ${total.toStringAsFixed(0)} is due${days >= 0 ? ' in $days days' : ''}',
+                  style: Theme.of(context).textTheme.labelLarge,
                 ),
-                const SizedBox(height: 8),
-                profile.when(
-                  data: (p) {
-                    final cls = p.className ?? '';
-                    final sec = p.sectionName ?? '';
-                    final roll = p.rollNo ?? '';
-                    final label = [
-                      if (cls.isNotEmpty) cls,
-                      if (sec.isNotEmpty) 'Sec $sec',
-                      if (roll.isNotEmpty) 'Roll #$roll',
-                    ].join(' · ');
-                    return Text(
-                      label,
-                      style: TextStyle(
-                          color: cs.onPrimary.withValues(alpha: 0.75),
-                          fontSize: 12),
-                    );
-                  },
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
+                const SizedBox(height: 2),
+                Text('${first.month} fee challan · ${first.challanNo}',
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
-            child: profile.when(
-              data: (p) {
-                return p.photoUrl != null
-                    ? ClipOval(
-                        child: CachedNetworkImage(
-                            imageUrl: p.photoUrl!,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover))
-                    : Text(
-                        p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
-                        style: TextStyle(
-                            color: cs.onPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700),
-                      );
-              },
-              loading: () =>
-                  Icon(Icons.person_rounded, color: cs.onPrimary, size: 28),
-              error: (_, __) =>
-                  Icon(Icons.person_rounded, color: cs.onPrimary, size: 28),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: () => context.go('/student/fees'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              minimumSize: const Size(44, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
+            child: const Text('View fee'),
           ),
         ],
       ),
@@ -232,28 +159,27 @@ class _StatCards extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final attendance = ref.watch(myAttendanceSummaryProvider);
     final result = ref.watch(latestResultProvider);
-    final challans = ref.watch(myChallansProvider);
-    final exams = ref.watch(upcomingExamsProvider);
 
     return ResponsiveGrid(
       childAspectRatio: context.isNarrowPhone ? 1.25 : 1.4,
       children: [
         _StatCard(
           icon: Icons.check_circle_outline_rounded,
-          label: 'dashboard.attendance'.tr(),
+          label: 'Attendance',
           value: attendance.when(
             data: (v) => '${v.percentage.toStringAsFixed(0)}%',
             loading: () => '—',
             error: (_, __) => '—',
           ),
           color: attendance.maybeWhen(
-            data: (v) => v.percentage >= 75 ? Colors.green : Colors.red,
+            data: (v) =>
+                v.percentage >= 75 ? AppColors.success : AppColors.error,
             orElse: () => Colors.grey,
           ),
         ),
         _StatCard(
           icon: Icons.grade_rounded,
-          label: 'dashboard.lastGrade'.tr(),
+          label: 'Last grade',
           value: result.when(
             data: (r) => r?.grade ?? '—',
             loading: () => '—',
@@ -261,54 +187,8 @@ class _StatCards extends ConsumerWidget {
           ),
           color: result.maybeWhen(
             data: (r) => r != null
-                ? (r.isPassed ? Colors.green : Colors.red)
+                ? (r.isPassed ? AppColors.success : AppColors.error)
                 : Colors.grey,
-            orElse: () => Colors.grey,
-          ),
-        ),
-        _StatCard(
-          icon: Icons.account_balance_wallet_rounded,
-          label: 'dashboard.feeDue'.tr(),
-          value: challans.when(
-            data: (list) {
-              final due = list
-                  .where((c) => !c.isPaid)
-                  .fold(0.0, (s, c) => s + c.balance);
-              return due > 0 ? 'Rs ${due.toStringAsFixed(0)}' : 'Clear';
-            },
-            loading: () => '—',
-            error: (_, __) => '—',
-          ),
-          color: challans.maybeWhen(
-            data: (list) =>
-                list.any((c) => !c.isPaid) ? Colors.orange : Colors.green,
-            orElse: () => Colors.grey,
-          ),
-        ),
-        _StatCard(
-          icon: Icons.event_rounded,
-          label: 'dashboard.nextExam'.tr(),
-          value: exams.when(
-            data: (list) {
-              if (list.isEmpty) return 'None';
-              final days =
-                  list.first.startDate.difference(DateTime.now()).inDays;
-              return days <= 0 ? 'Today!' : '${days}d left';
-            },
-            loading: () => '—',
-            error: (_, __) => '—',
-          ),
-          color: exams.maybeWhen(
-            data: (list) {
-              if (list.isEmpty) return Colors.grey;
-              final days =
-                  list.first.startDate.difference(DateTime.now()).inDays;
-              return days <= 3
-                  ? Colors.red
-                  : days <= 7
-                      ? Colors.orange
-                      : Colors.blue;
-            },
             orElse: () => Colors.grey,
           ),
         ),
@@ -387,7 +267,7 @@ class _TodayTimetable extends ConsumerWidget {
       error: (e, _) => const _EmptyCard(message: 'Could not load timetable'),
       data: (slots) {
         if (slots.isEmpty) {
-          return _EmptyCard(message: 'dashboard.noClassToday'.tr());
+          return const _EmptyCard(message: 'No classes scheduled today.');
         }
         return Column(
           children: slots.map((slot) => _PeriodTile(slot: slot)).toList(),
@@ -493,12 +373,12 @@ class _UpcomingExams extends ConsumerWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     color: urgent
-                        ? Colors.red.withValues(alpha: 0.1)
+                        ? AppColors.error.withValues(alpha: 0.1)
                         : cs.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.assignment_rounded,
-                      color: urgent ? Colors.red : cs.primary, size: 22),
+                      color: urgent ? AppColors.error : cs.primary, size: 22),
                 ),
                 title: Text(e.name,
                     style: const TextStyle(
@@ -512,14 +392,14 @@ class _UpcomingExams extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: urgent
-                        ? Colors.red.withValues(alpha: 0.1)
+                        ? AppColors.error.withValues(alpha: 0.1)
                         : cs.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     days <= 0 ? 'Today!' : '${days}d',
                     style: TextStyle(
-                      color: urgent ? Colors.red : cs.onSurfaceVariant,
+                      color: urgent ? AppColors.error : cs.onSurfaceVariant,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -558,13 +438,13 @@ class _PendingAssignments extends ConsumerWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: overdue
-                        ? Colors.red.withValues(alpha: 0.1)
+                        ? AppColors.error.withValues(alpha: 0.1)
                         : cs.tertiaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.task_alt_rounded,
-                    color: overdue ? Colors.red : cs.tertiary,
+                    color: overdue ? AppColors.error : cs.tertiary,
                     size: 20,
                   ),
                 ),
@@ -580,7 +460,7 @@ class _PendingAssignments extends ConsumerWidget {
                       ? 'Overdue'
                       : 'Due ${a.dueDate.day}/${a.dueDate.month}',
                   style: TextStyle(
-                    color: overdue ? Colors.red : cs.onSurfaceVariant,
+                    color: overdue ? AppColors.error : cs.onSurfaceVariant,
                     fontWeight: overdue ? FontWeight.w700 : FontWeight.normal,
                     fontSize: 11,
                   ),
@@ -590,57 +470,6 @@ class _PendingAssignments extends ConsumerWidget {
           }).toList(),
         );
       },
-    );
-  }
-}
-
-// ── Unread notification badge ──────────────────────────────
-class _UnreadBadge extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(unreadCountProvider);
-    return IconButton(
-      icon: Badge(
-        isLabelVisible:
-            count.maybeWhen(data: (c) => c > 0, orElse: () => false),
-        label: count.maybeWhen(data: (c) => Text('$c'), orElse: () => null),
-        child: const Icon(Icons.notifications_outlined),
-      ),
-      onPressed: () => context.go('/student/notifications'),
-    );
-  }
-}
-
-// ── Shared helpers ─────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final VoidCallback onSeeAll;
-  const _SectionHeader({required this.title, required this.onSeeAll});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-        ),
-        const SizedBox(width: 8),
-        TextButton(
-          onPressed: onSeeAll,
-          child: Text(
-            'See all',
-            style: TextStyle(
-                fontSize: 13, color: cs.primary, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import api from './api';
 import type { ApiResponse } from '../types';
 
-export interface UserDoc { _id: string; name: string; email: string; role: string; orgId?: string; branchId?: string; phone?: string; profilePhotoUrl?: string; active: boolean; }
+export interface UserDoc { _id: string; name: string; email: string; role: string; orgId?: string; branchId?: string; phone?: string; photoUrl?: string; active: boolean; }
 
 export const userService = {
   list: (params?: Record<string, string>) =>

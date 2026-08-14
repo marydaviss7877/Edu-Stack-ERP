@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
@@ -9,6 +8,7 @@ import '../../../providers/principal_providers.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../providers/inventory_providers.dart';
 import '../../shared/inventory/financial_overview_card.dart';
+import '../../../core/theme/app_design.dart';
 
 class PrincipalDashboard extends ConsumerWidget {
   const PrincipalDashboard({super.key});
@@ -16,121 +16,65 @@ class PrincipalDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final photoUrl = user?.photoUrl;
     final org = ref.watch(orgProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final unread = ref.watch(principalUnreadCountProvider).valueOrNull ?? 0;
 
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(todayAttendanceOverviewProvider);
-          ref.invalidate(staffAttendanceTodayProvider);
-          ref.invalidate(upcomingExamsPrincipalProvider);
-          ref.invalidate(lowAttendanceStudentsProvider);
-          ref.invalidate(principalUnreadCountProvider);
-          ref.invalidate(financeSummaryProvider);
-          ref.invalidate(inventoryDashboardProvider);
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              backgroundColor: cs.surface,
-              title: Row(
-                children: [
-                  if (org?.logoUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                          imageUrl: org!.logoUrl!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain),
-                    )
-                  else
-                    Icon(Icons.school_rounded, color: cs.primary, size: 26),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      org?.name ?? 'EduStack',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_rounded),
-                  tooltip: 'Profile',
-                  onPressed: () => context.push('/profile'),
-                ),
-                _UnreadBadge(),
-                const SizedBox(width: 8),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
+      body: Column(
+        children: [
+          AppIdentityHeader(
+            organization: org?.name ?? 'EduStack',
+            name: user?.name ?? 'Principal',
+            subtitle: 'Principal · School overview',
+            photoUrl: photoUrl,
+            notificationCount: unread,
+            onProfile: () => context.push('/profile'),
+            onNotifications: () => context.go('/principal/notifications'),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(todayAttendanceOverviewProvider);
+                ref.invalidate(staffAttendanceTodayProvider);
+                ref.invalidate(upcomingExamsPrincipalProvider);
+                ref.invalidate(lowAttendanceStudentsProvider);
+                ref.invalidate(principalUnreadCountProvider);
+                ref.invalidate(financeSummaryProvider);
+                ref.invalidate(inventoryDashboardProvider);
+              },
+              child: ListView(
                 padding: EdgeInsets.fromLTRB(
                   context.pageGutter,
-                  16,
+                  18,
                   context.pageGutter,
                   100,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Welcome ──────────────────────────────
-                    _WelcomeBanner(name: user?.name ?? 'Principal'),
-
-                    const SizedBox(height: 20),
-
-                    const _PrincipalFinanceOverview(),
-
-                    const SizedBox(height: 20),
-
-                    // ── Today's overview cards ────────────────
-                    _TodayOverviewCards(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Attendance by class ───────────────────
-                    _SectionHeader(
-                      title: "Today's Attendance",
-                      actionLabel: 'Full Report',
-                      onAction: () => context.go('/principal/attendance'),
-                    ),
-                    const SizedBox(height: 10),
-                    _AttendanceByClass(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Low attendance warnings ───────────────
-                    const _SectionHeader(
-                        title: 'Low Attendance Alerts',
-                        actionLabel: null,
-                        onAction: null),
-                    const SizedBox(height: 10),
-                    _LowAttendanceWarnings(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Upcoming exams ───────────────────────
-                    const _SectionHeader(
-                        title: 'Upcoming Exams',
-                        actionLabel: null,
-                        onAction: null),
-                    const SizedBox(height: 10),
-                    _UpcomingExams(),
-                  ],
-                ),
+                children: [
+                  Text('School overview',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text("Today's school-wide performance and exceptions.",
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 16),
+                  _TodayOverviewCards(),
+                  AppSectionHeader(
+                    title: 'School health',
+                    actionLabel: 'Full report',
+                    onAction: () => context.go('/principal/attendance'),
+                  ),
+                  _AttendanceByClass(),
+                  const AppSectionHeader(title: 'Low attendance'),
+                  _LowAttendanceWarnings(),
+                  const AppSectionHeader(title: 'Financial position'),
+                  const _PrincipalFinanceOverview(),
+                  const AppSectionHeader(title: 'Upcoming exams'),
+                  _UpcomingExams(),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -158,7 +102,7 @@ class _PrincipalFinanceOverview extends ConsumerWidget {
             TextButton.icon(
               onPressed: () => context.go('/principal/inventory'),
               icon: const Icon(Icons.inventory_2_rounded, size: 18),
-              label: const Text('Assets'),
+              label: const Text('Finance & Operations'),
             ),
           ],
         ),
@@ -182,65 +126,6 @@ class _PrincipalFinanceOverview extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _WelcomeBanner extends StatelessWidget {
-  const _WelcomeBanner({required this.name});
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final now = DateTime.now();
-    final greeting = now.hour < 12
-        ? 'Good morning'
-        : now.hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cs.primary, cs.secondary.withValues(alpha: 0.9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$greeting,',
-                    style: TextStyle(
-                        color: cs.onPrimary.withValues(alpha: 0.8),
-                        fontSize: 13)),
-                Text(name,
-                    style: TextStyle(
-                        color: cs.onPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text('Principal',
-                    style: TextStyle(
-                        color: cs.onPrimary.withValues(alpha: 0.7),
-                        fontSize: 12)),
-              ],
-            ),
-          ),
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
-            child: Icon(Icons.manage_accounts_rounded,
-                color: cs.onPrimary, size: 28),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -492,57 +377,6 @@ class _UpcomingExams extends ConsumerWidget {
           }).toList(),
         );
       },
-    );
-  }
-}
-
-class _UnreadBadge extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(principalUnreadCountProvider);
-    return IconButton(
-      icon: Badge(
-        isLabelVisible:
-            count.maybeWhen(data: (c) => c > 0, orElse: () => false),
-        label: count.maybeWhen(data: (c) => Text('$c'), orElse: () => null),
-        child: const Icon(Icons.notifications_outlined),
-      ),
-      onPressed: () => context.go('/principal/notifications'),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(
-      {required this.title, required this.actionLabel, required this.onAction});
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-        ),
-        if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(actionLabel!,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: cs.primary,
-                    fontWeight: FontWeight.w600)),
-          ),
-      ],
     );
   }
 }

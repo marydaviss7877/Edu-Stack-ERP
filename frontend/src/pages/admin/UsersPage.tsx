@@ -89,7 +89,7 @@ export default function UsersPage() {
                   <div className="flex items-center gap-3">
                     <UserAvatar
                       name={u.name}
-                      photoUrl={u.profilePhotoUrl}
+                      photoUrl={u.photoUrl}
                       className="h-9 w-9 rounded-xl text-xs"
                       fallbackClassName="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                     />

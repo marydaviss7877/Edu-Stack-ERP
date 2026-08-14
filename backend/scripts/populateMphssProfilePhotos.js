@@ -89,9 +89,10 @@ async function main() {
           filter: { _id: user._id, orgId: owner.orgId },
           update: {
             $set: {
-              profilePhotoUrl: userPhotoById.get(user._id.toString()),
+              photoUrl: userPhotoById.get(user._id.toString()),
               updatedAt: new Date(),
             },
+            $unset: { profilePhotoUrl: '' },
           },
         },
       })),

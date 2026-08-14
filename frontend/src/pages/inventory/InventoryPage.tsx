@@ -59,113 +59,102 @@ const statusVariant = (status: string): 'default' | 'success' | 'warning' | 'dan
   return 'default';
 };
 
-function MetricCard({ label, value, hint, icon, tone }: {
-  label: string; value: string; hint?: string; icon: React.ReactNode; tone: string;
-}) {
-  return (
-    <div className="card p-4 sm:p-5 min-w-0">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">{label}</p>
-          <p className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white mt-1 truncate">{value}</p>
-          {hint && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{hint}</p>}
-        </div>
-        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', tone)}>{icon}</div>
-      </div>
-    </div>
-  );
+type OverviewStats = { total: number; alerts: number; verified: number; verificationPct: number; overdue: number; maintenance: number; lowStock: number };
+type OverviewProps = {
+  finance?: FinanceSummary; inventory?: InventoryDashboard; history?: FinanceSummary[];
+  items: InventoryItem[]; expenses: Expense[]; procurements: ProcurementRequest[];
+  stats: OverviewStats; role: string; branchLabel: string; onOpenTab: (tab: Tab) => void;
+};
+
+function OverviewCard({ label, value, hint, icon, tone = 'blue' }: { label: string; value: string; hint: string; icon: React.ReactNode; tone?: 'blue' | 'emerald' | 'amber' | 'red' }) {
+  const tones = { blue: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30', emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30', amber: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30', red: 'bg-red-50 text-red-600 dark:bg-red-900/30' };
+  return <article className="card p-4 sm:p-5 min-w-0 border-l-3 border-l-blue-500"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-gray-400">{label}</p><p className="text-xl sm:text-2xl font-extrabold text-gray-950 dark:text-white mt-1 truncate">{value}</p><p className="text-[11px] text-gray-400 mt-1 truncate">{hint}</p></div><span className={cn('w-10 h-10 rounded-xl grid place-items-center shrink-0', tones[tone])}>{icon}</span></div></article>;
 }
 
-function FinanceHero({ data }: { data: FinanceSummary }) {
-  const positive = data.operatingSurplus >= 0;
-  return (
-    <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-navy-950 via-blue-950 to-blue-700 text-white p-5 sm:p-7 shadow-xl">
-      <div className="absolute -right-16 -top-20 w-56 h-56 bg-blue-400/20 rounded-full blur-2xl" />
-      <div className="relative grid lg:grid-cols-[1.1fr_1.9fr] gap-6 items-end">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-blue-200 font-semibold">{data.month} financial position</p>
-          <p className="text-sm text-white/65 mt-3">{positive ? 'Net operating surplus' : 'Net operating deficit'}</p>
-          <div className="flex items-center gap-2 mt-1">
-            {positive ? <ArrowUpRight className="w-6 h-6 text-emerald-300" /> : <ArrowDownRight className="w-6 h-6 text-red-300" />}
-            <p className="text-2xl sm:text-4xl font-extrabold tracking-tight">{formatCurrency(Math.abs(data.operatingSurplus))}</p>
-          </div>
-          <p className="text-sm text-blue-100 mt-2">{data.operatingMargin.toFixed(1)}% operating margin</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-          {[
-            ['Total income', data.totalRevenue],
-            ['Fee receipts', data.feeRevenue],
-            ['Other income', data.otherIncome],
-            ['Operating expenses', data.operatingExpenses],
-            ['Payroll', data.payroll],
-            ['Depreciation', data.depreciation],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-2xl bg-white/10 border border-white/10 px-3 py-3 backdrop-blur-sm min-w-0">
-              <p className="text-[10px] text-white/55 uppercase tracking-wide truncate">{label}</p>
-              <p className="text-sm font-bold mt-1 truncate">{formatCurrency(Number(value))}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+function BlueprintHero({ finance, principal = false, previous }: { finance: FinanceSummary; principal?: boolean; previous?: FinanceSummary }) {
+  const positive = finance.operatingSurplus >= 0;
+  const change = previous && Math.abs(previous.operatingSurplus) > 0 ? ((finance.operatingSurplus - previous.operatingSurplus) / Math.abs(previous.operatingSurplus)) * 100 : null;
+  return <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-navy-950 via-blue-950 to-blue-700 text-white p-5 sm:p-7 shadow-xl">
+    <div className="absolute -right-20 -top-24 w-72 h-72 bg-blue-400/20 rounded-full blur-2xl" />
+    <div className="relative flex flex-col xl:flex-row xl:items-end justify-between gap-7">
+      <div className="min-w-0"><p className="text-[10px] uppercase tracking-[.2em] text-blue-200 font-bold">{finance.month} · {principal ? 'Branch operating result' : 'Organization operating result'}</p><p className="text-sm text-white/60 mt-4">{positive ? 'Operating surplus' : 'Operating deficit'}</p><div className="flex items-center gap-2 mt-1">{positive ? <ArrowUpRight className="w-6 h-6 text-emerald-300" /> : <ArrowDownRight className="w-6 h-6 text-red-300" />}<p className="text-3xl sm:text-5xl font-extrabold tracking-tight">{formatCurrency(Math.abs(finance.operatingSurplus))}</p></div><div className="flex flex-wrap gap-2 mt-3"><span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">{finance.operatingMargin.toFixed(1)}% margin</span>{change !== null && <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', change >= 0 ? 'bg-emerald-400/15 text-emerald-200' : 'bg-red-400/15 text-red-200')}>{change >= 0 ? '↑' : '↓'} {Math.abs(change).toFixed(1)}% vs previous month</span>}</div></div>
+      <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 w-full xl:w-auto"><HeroFigure label="Cash surplus" value={finance.cashSurplus} /><span className="text-white/35 font-bold">−</span><HeroFigure label="Depreciation" value={finance.depreciation} /><span className="text-white/35 font-bold">=</span><HeroFigure label="Final result" value={finance.operatingSurplus} emphasized /></div>
     </div>
-  );
+    <div className="relative grid grid-cols-2 md:grid-cols-4 gap-2 mt-7 pt-5 border-t border-white/10">{[['Total income', finance.totalRevenue], ['Operating expenses', finance.operatingExpenses], ['Payroll', finance.payroll], ['Outstanding fees', finance.outstandingFees]].map(([label, value]) => <div key={String(label)}><p className="text-[9px] uppercase tracking-wide text-white/45">{label}</p><p className="text-sm font-bold mt-1 truncate">{formatCurrency(Number(value))}</p></div>)}</div>
+  </section>;
 }
 
-function Overview({ finance, inventory }: { finance?: FinanceSummary; inventory?: InventoryDashboard }) {
-  if (!finance || !inventory) return <LoadingState />;
-  return (
-    <div className="space-y-5">
-      <FinanceHero data={finance} />
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-        <MetricCard label="Cash surplus" value={formatCurrency(finance.cashSurplus)} hint="Before depreciation" icon={<Banknote className="w-5 h-5" />} tone="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30" />
-        <MetricCard label="Outstanding fees" value={formatCurrency(finance.outstandingFees)} hint="Not counted as income" icon={<WalletCards className="w-5 h-5" />} tone="bg-red-50 text-red-600 dark:bg-red-900/30" />
-        <MetricCard label="Net book value" value={formatCurrency(inventory.netBookValue)} hint={`${inventory.fixedAssets} fixed assets`} icon={<Building2 className="w-5 h-5" />} tone="bg-blue-50 text-blue-600 dark:bg-blue-900/30" />
-        <MetricCard label="Approvals waiting" value={String(inventory.pendingExpenses + inventory.pendingProcurements)} hint="Expenses + procurement" icon={<ClipboardCheck className="w-5 h-5" />} tone="bg-violet-50 text-violet-600 dark:bg-violet-900/30" />
-      </div>
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="card p-5 lg:col-span-1">
-          <h2 className="font-bold text-gray-900 dark:text-white">Inventory health</h2>
-          <div className="space-y-3 mt-4">
-            <HealthRow label="Low-stock items" value={inventory.lowStock} icon={<Package className="w-4 h-4" />} danger={inventory.lowStock > 0} />
-            <HealthRow label="Maintenance required" value={inventory.maintenanceDue} icon={<Wrench className="w-4 h-4" />} danger={inventory.maintenanceDue > 0} />
-            <HealthRow label="Verification overdue" value={inventory.verificationOverdue} icon={<ClipboardCheck className="w-4 h-4" />} danger={inventory.verificationOverdue > 0} />
-            <HealthRow label="Consumable categories" value={inventory.consumables} icon={<Boxes className="w-4 h-4" />} />
-          </div>
-        </div>
-        <div className="card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-bold text-gray-900 dark:text-white">Branch performance</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Cash income less paid expenses and payroll</p>
-            </div>
-            <Badge variant="info">{finance.branchPerformance.length || 1} campus view</Badge>
-          </div>
-          {finance.branchPerformance.length ? (
-            <div className="space-y-4 mt-5">
-              {finance.branchPerformance.map((branch) => {
-                const max = Math.max(branch.revenue, 1);
-                const expensePct = Math.min(100, Math.max(0, (branch.cashExpenses / max) * 100));
-                return (
-                  <div key={branch.branchId}>
-                    <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <div className="min-w-0"><p className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate">{branch.name}</p><p className="text-[11px] text-gray-400">Income {formatCurrency(branch.revenue)}</p></div>
-                      <p className={cn('text-sm font-extrabold shrink-0', branch.cashSurplus >= 0 ? 'text-emerald-600' : 'text-red-600')}>{formatCurrency(branch.cashSurplus)}</p>
-                    </div>
-                    <div className="h-2 rounded-full bg-emerald-100 dark:bg-emerald-900/20 overflow-hidden"><div className="h-full bg-red-400 rounded-full" style={{ width: `${expensePct}%` }} /></div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : <p className="text-sm text-gray-400 mt-8 text-center">Branch-specific comparison appears in organization-wide Group Admin view.</p>}
-        </div>
-      </div>
-      <p className="text-xs text-gray-400 dark:text-slate-500 px-1">For public or nonprofit institutions, profit is presented as operating surplus/deficit. This is a management view, not an audited statutory statement.</p>
-    </div>
-  );
+function HeroFigure({ label, value, emphasized }: { label: string; value: number; emphasized?: boolean }) {
+  return <div className={cn('rounded-xl border px-3 py-3 min-w-0', emphasized ? 'bg-emerald-400/15 border-emerald-300/20' : 'bg-white/8 border-white/10')}><p className="text-[8px] text-white/50 uppercase truncate">{label}</p><p className={cn('text-xs sm:text-sm font-extrabold mt-1 truncate', emphasized && 'text-emerald-200')}>{formatCurrency(value)}</p></div>;
 }
 
-function HealthRow({ label, value, icon, danger }: { label: string; value: number; icon: React.ReactNode; danger?: boolean }) {
-  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 px-3 py-2.5"><span className={danger ? 'text-red-500' : 'text-blue-500'}>{icon}</span><span className="flex-1 text-sm text-gray-600 dark:text-slate-300">{label}</span><span className={cn('font-extrabold', danger ? 'text-red-600' : 'text-gray-900 dark:text-white')}>{value}</span></div>;
+function FinanceTrend({ history = [] }: { history?: FinanceSummary[] }) {
+  const values = history.length ? history : [];
+  const max = Math.max(1, ...values.flatMap(row => [row.totalRevenue, row.operatingExpenses + row.payroll + row.depreciation]));
+  const points = (key: 'income' | 'cost') => values.map((row, index) => {
+    const x = values.length === 1 ? 50 : 4 + (index / (values.length - 1)) * 92;
+    const amount = key === 'income' ? row.totalRevenue : row.operatingExpenses + row.payroll + row.depreciation;
+    return `${x},${92 - (amount / max) * 75}`;
+  }).join(' ');
+  return <section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-start justify-between gap-3"><div><h2 className="font-bold text-gray-950 dark:text-white">Income vs total operating cost</h2><p className="text-xs text-gray-400 mt-0.5">Actual six-month ledger trend</p></div><div className="flex gap-3 text-[10px] text-gray-500"><span><i className="inline-block w-2 h-2 rounded-sm bg-blue-600 mr-1" />Income</span><span><i className="inline-block w-2 h-2 rounded-sm bg-amber-500 mr-1" />Cost</span></div></div><div className="p-4 sm:p-5">{values.length > 1 ? <><svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-44" role="img" aria-label="Six month income and cost trend"><path d="M4 17H96M4 54H96M4 92H96" stroke="currentColor" className="text-gray-100 dark:text-slate-700" strokeWidth=".5" /><polyline points={points('income')} fill="none" stroke="#2563eb" strokeWidth="2.2" vectorEffect="non-scaling-stroke" /><polyline points={points('cost')} fill="none" stroke="#f59e0b" strokeWidth="2.2" vectorEffect="non-scaling-stroke" /></svg><div className="flex justify-between mt-1 text-[10px] text-gray-400">{values.map(row => <span key={row.month}>{new Date(`${row.month}-02`).toLocaleDateString('en-PK', { month: 'short' })}</span>)}</div></> : <div className="h-44 grid place-items-center text-sm text-gray-400">Trend appears after two months of financial data.</div>}</div></section>;
+}
+
+function DecisionQueue({ inventory, expenses, procurements, onOpenTab, embedded = false }: { inventory: InventoryDashboard; expenses: Expense[]; procurements: ProcurementRequest[]; onOpenTab: (tab: Tab) => void; embedded?: boolean }) {
+  const rows = [
+    { label: 'Expense approvals', detail: 'Submitted for decision', value: expenses.filter(row => row.status === 'submitted').length, tab: 'expenses' as Tab, tone: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30', icon: <ReceiptText className="w-4 h-4" /> },
+    { label: 'Procurement approvals', detail: 'Submitted requests', value: procurements.filter(row => row.status === 'submitted').length, tab: 'procurement' as Tab, tone: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30', icon: <ShoppingCart className="w-4 h-4" /> },
+    { label: 'Maintenance required', detail: 'Assets affecting operations', value: inventory.maintenanceDue, tab: 'items' as Tab, tone: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: <Wrench className="w-4 h-4" /> },
+    { label: 'Verification overdue', detail: 'Physical checks past due', value: inventory.verificationOverdue, tab: 'items' as Tab, tone: 'text-red-600 bg-red-50 dark:bg-red-900/30', icon: <ClipboardCheck className="w-4 h-4" /> },
+  ];
+  const body = <div className="divide-y divide-gray-100 dark:divide-slate-700">{rows.map(row => <button key={row.label} onClick={() => onOpenTab(row.tab)} className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 dark:hover:bg-slate-800/60"><span className={cn('w-9 h-9 rounded-xl grid place-items-center', row.tone)}>{row.icon}</span><span className="flex-1 min-w-0"><b className="block text-sm text-gray-800 dark:text-slate-100">{row.label}</b><small className="block text-[10px] text-gray-400 mt-0.5">{row.detail}</small></span><strong className={cn('text-sm', row.value ? 'text-gray-950 dark:text-white' : 'text-emerald-600')}>{row.value}</strong><ChevronRight className="w-4 h-4 text-gray-300" /></button>)}</div>;
+  if (embedded) return body;
+  return <section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between gap-3"><div><h2 className="font-bold text-gray-950 dark:text-white">Decision queue</h2><p className="text-xs text-gray-400 mt-0.5">Only items that need action</p></div><Badge variant={rows.some(row => row.value) ? 'warning' : 'success'}>{rows.reduce((sum, row) => sum + row.value, 0)} open</Badge></div>{body}</section>;
+}
+
+function SourceTruth({ finance, items, expenses, procurements }: { finance: FinanceSummary; items: InventoryItem[]; expenses: Expense[]; procurements: ProcurementRequest[] }) {
+  const updated = [finance.dataAsOf, ...items.map(row => row.updatedAt), ...expenses.map(row => row.updatedAt || ''), ...procurements.map(row => row.updatedAt || '')].filter(Boolean).map(value => new Date(value).getTime()).filter(Number.isFinite);
+  const latest = updated.length ? new Date(Math.max(...updated)) : null;
+  return <section className="card overflow-hidden grid lg:grid-cols-[250px_1fr]"><div className="p-5 bg-linear-to-br from-navy-950 to-blue-900 text-white flex gap-3"><span className="w-10 h-10 rounded-xl bg-emerald-400/15 text-emerald-300 grid place-items-center shrink-0"><ShieldCheck className="w-5 h-5" /></span><div><h2 className="font-bold">Source-of-truth controls</h2><p className="text-xs text-blue-200/70 mt-1">Freshness, formula and completeness are visible.</p></div></div><div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-700"><div className="p-5"><p className="text-[9px] uppercase tracking-wide text-gray-400">Data freshness</p><p className="text-sm font-bold mt-1 dark:text-white">{latest ? latest.toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' }) : 'No activity yet'}</p><p className="text-[10px] text-gray-400 mt-1">Latest record or finance calculation</p></div><div className="p-5"><p className="text-[9px] uppercase tracking-wide text-gray-400">Calculation definition</p><p className="text-sm font-bold mt-1 dark:text-white">Operating surplus</p><p className="text-[10px] text-gray-400 mt-1">Income − expenses − payroll − depreciation</p></div><div className="p-5"><p className="text-[9px] uppercase tracking-wide text-gray-400">Record coverage</p><p className="text-sm font-bold mt-1 dark:text-white">{items.length + expenses.length + procurements.length} loaded records</p><p className="text-[10px] text-gray-400 mt-1">Current role and branch scope</p></div></div></section>;
+}
+
+function GroupBlueprint(props: Required<Pick<OverviewProps, 'finance' | 'inventory'>> & OverviewProps) {
+  const { finance, inventory, history, items, expenses, procurements, stats, branchLabel, onOpenTab } = props;
+  const maxSurplus = Math.max(1, ...finance.branchPerformance.map(branch => Math.abs(branch.operatingSurplus)));
+  return <div className="space-y-5"><div className="grid xl:grid-cols-[1.35fr_.65fr] gap-4"><BlueprintHero finance={finance} principal={branchLabel !== 'All branches'} previous={history?.at(-2)} /><section className="card p-5 flex flex-col"><div className="flex items-center gap-3"><span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 grid place-items-center"><TrendingUp className="w-5 h-5" /></span><div><p className="text-[10px] uppercase tracking-wide text-gray-400">Group Administrator brief</p><h2 className="font-bold dark:text-white">{finance.operatingSurplus >= 0 ? 'Healthy and improving' : 'Deficit needs intervention'}</h2></div></div><p className="text-sm text-gray-500 dark:text-slate-400 leading-6 mt-5">Every PKR 100 received produced <b className="text-gray-900 dark:text-white">PKR {Math.abs(finance.operatingMargin).toFixed(2)}</b> in operating {finance.operatingSurplus >= 0 ? 'surplus' : 'deficit'} after cash costs and depreciation.</p><button onClick={() => onOpenTab('income')} className="mt-auto pt-5 text-left text-xs font-bold text-blue-600">Review income register →</button></section></div>
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3"><OverviewCard label="Outstanding fees" value={formatCurrency(finance.outstandingFees)} hint={`${finance.feeRecoveryRate.toFixed(1)}% current-month recovery`} icon={<WalletCards className="w-5 h-5" />} tone="amber" /><OverviewCard label="Net book value" value={formatCurrency(inventory.netBookValue)} hint={`${inventory.fixedAssets} fixed-asset records`} icon={<Building2 className="w-5 h-5" />} /><OverviewCard label="Assets verified" value={`${stats.verificationPct}%`} hint={`${stats.verified} of ${stats.total} records current`} icon={<ShieldCheck className="w-5 h-5" />} tone="emerald" /><OverviewCard label="Decisions waiting" value={String(inventory.pendingExpenses + inventory.pendingProcurements)} hint="Expense and procurement approvals" icon={<ClipboardCheck className="w-5 h-5" />} tone="red" /></div>
+    <div className="grid xl:grid-cols-[1fr_390px] gap-4"><FinanceTrend history={history} /><DecisionQueue inventory={inventory} expenses={expenses} procurements={procurements} onOpenTab={onOpenTab} /></div>
+    <div className="grid xl:grid-cols-[1.3fr_.7fr] gap-4"><section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between gap-3"><div><h2 className="font-bold dark:text-white">Campus operating performance</h2><p className="text-xs text-gray-400 mt-0.5">Final operating surplus after depreciation</p></div><Badge variant="info">{finance.branchPerformance.length} campuses</Badge></div><div className="divide-y divide-gray-100 dark:divide-slate-700">{finance.branchPerformance.length ? [...finance.branchPerformance].sort((a, b) => b.operatingSurplus - a.operatingSurplus).map((branch, index) => <div key={branch.branchId} className="px-5 py-3.5"><div className="flex items-center gap-3"><span className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 grid place-items-center text-xs font-extrabold">{index + 1}</span><div className="flex-1 min-w-0"><div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate dark:text-white">{branch.name}</p><p className={cn('text-sm font-extrabold', branch.operatingSurplus >= 0 ? 'text-emerald-600' : 'text-red-600')}>{formatCurrency(branch.operatingSurplus)}</p></div><div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 mt-2 overflow-hidden"><div className={cn('h-full rounded-full', branch.operatingSurplus >= 0 ? 'bg-blue-500' : 'bg-red-500')} style={{ width: `${Math.max(3, (Math.abs(branch.operatingSurplus) / maxSurplus) * 100)}%` }} /></div><div className="flex justify-between mt-1 text-[9px] text-gray-400"><span>Income {formatCurrency(branch.revenue)}</span><span>{branch.operatingMargin.toFixed(1)}% margin</span></div></div></div></div>) : <p className="p-8 text-sm text-center text-gray-400">Choose “All branches” to compare campuses.</p>}</div></section><section className="card p-5"><div className="flex justify-between gap-3"><div><h2 className="font-bold dark:text-white">Governance assurance</h2><p className="text-xs text-gray-400 mt-0.5">Asset and workflow controls</p></div><Badge variant={stats.verificationPct >= 90 ? 'success' : 'warning'}>{stats.verificationPct >= 90 ? 'Stable' : 'Watch'}</Badge></div><div className="mt-5 space-y-4"><AssuranceBar label="Asset verification" value={stats.verificationPct} /><AssuranceBar label="Fee recovery" value={finance.feeRecoveryRate} warning={finance.feeRecoveryRate < 85} /><AssuranceBar label="Approval clearance" value={(inventory.pendingExpenses + inventory.pendingProcurements) === 0 ? 100 : Math.max(0, 100 - (inventory.pendingExpenses + inventory.pendingProcurements) * 5)} warning /></div>{(stats.overdue > 0 || inventory.maintenanceDue > 0) && <div className="mt-5 rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200"><b>{stats.overdue + inventory.maintenanceDue} watch items:</b> overdue verification and maintenance need closure.</div>}</section></div>
+    <SourceTruth finance={finance} items={items} expenses={expenses} procurements={procurements} /><p className="px-1 text-xs text-gray-400">{finance.terminology} Management information; not an audited statutory statement.</p></div>;
+}
+
+function AssuranceBar({ label, value, warning }: { label: string; value: number; warning?: boolean }) {
+  const bounded = Math.min(100, Math.max(0, value));
+  return <div><div className="flex justify-between text-xs"><span className="text-gray-500 dark:text-slate-400">{label}</span><b className="dark:text-white">{bounded.toFixed(0)}%</b></div><div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 mt-2 overflow-hidden"><div className={cn('h-full rounded-full', warning && bounded < 85 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${bounded}%` }} /></div></div>;
+}
+
+function PrincipalBlueprint(props: Required<Pick<OverviewProps, 'finance' | 'inventory'>> & OverviewProps) {
+  const { finance, inventory, history, items, expenses, procurements, stats, branchLabel, onOpenTab } = props;
+  const previous = history?.at(-2);
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const daysInMonth = new Date(Number(finance.month.slice(0, 4)), Number(finance.month.slice(5, 7)), 0).getDate();
+  const elapsed = finance.month === currentMonth ? new Date().getDate() : daysInMonth;
+  const forecast = Math.round((finance.operatingSurplus / Math.max(1, elapsed)) * daysInMonth);
+  const committedProcurement = procurements.filter(row => ['approved', 'quotation', 'ordered', 'partially_received'].includes(row.status)).reduce((sum, row) => sum + row.estimatedTotal, 0);
+  const affected = items.filter(item => inventoryAlertReason(item) === 'Maintenance').slice(0, 4);
+  const pending = expenses.filter(row => row.status === 'submitted').length + procurements.filter(row => row.status === 'submitted').length;
+  const latestItems = [...items].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return <div className="space-y-5"><div className="card px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div className="flex items-center gap-2"><Badge variant="info">Principal view</Badge><p className="font-bold text-sm dark:text-white">{branchLabel}</p><span className="text-xs text-gray-400">· {finance.month}</span></div><div className="flex items-center gap-2 text-[10px] text-gray-400"><Badge variant="success">Live scope</Badge><span>Updated {new Date(finance.dataAsOf).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</span></div></div>
+    <div className="grid xl:grid-cols-[1.35fr_.65fr] gap-4"><BlueprintHero finance={finance} principal previous={previous} /><section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between"><div><h2 className="font-bold dark:text-white">Month-end forecast</h2><p className="text-xs text-gray-400 mt-0.5">Directional run-rate projection</p></div><Badge variant={forecast >= 0 ? 'success' : 'danger'}>{elapsed}/{daysInMonth} days</Badge></div><div className="p-5"><p className={cn('text-3xl font-extrabold', forecast >= 0 ? 'text-emerald-600' : 'text-red-600')}>{formatCurrency(forecast)}</p><p className="text-xs text-gray-400 mt-1">Projected operating {forecast >= 0 ? 'surplus' : 'deficit'}</p><div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 mt-5 overflow-hidden"><div className="h-full w-[86%] bg-linear-to-r from-blue-500 to-emerald-500 rounded-full" /></div><p className="rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[10px] text-blue-800 dark:text-blue-200 p-3 mt-4">Forecast extrapolates current month-to-date performance. It is not a configured budget forecast.</p></div></section></div>
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3"><OverviewCard label="Fee recovery" value={`${finance.feeRecoveryRate.toFixed(1)}%`} hint={`${formatCurrency(finance.outstandingFees)} outstanding`} icon={<WalletCards className="w-5 h-5" />} tone={finance.feeRecoveryRate >= 85 ? 'emerald' : 'amber'} /><OverviewCard label="Budget available" value="Not configured" hint="Budget model required" icon={<Banknote className="w-5 h-5" />} tone="amber" /><OverviewCard label="Committed procurement" value={formatCurrency(committedProcurement)} hint="Approved and in-progress requests" icon={<ShoppingCart className="w-5 h-5" />} /><OverviewCard label="Spaces impacted" value={String(new Set(affected.map(item => item.location || 'Unassigned')).size)} hint={`${affected.length} maintenance records`} icon={<MapPin className="w-5 h-5" />} tone={affected.length ? 'red' : 'emerald'} /></div>
+    <div className="grid xl:grid-cols-[1fr_390px] gap-4"><div className="space-y-4"><FinanceTrend history={history} /><section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between gap-3"><div><h2 className="font-bold dark:text-white">Fee collection risk</h2><p className="text-xs text-gray-400 mt-0.5">Outstanding receivables by due-date age</p></div><button onClick={() => onOpenTab('income')} className="text-xs font-bold text-blue-600">Review income →</button></div><div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-700">{[["Current · 0–30 days", finance.receivableAgeing.current, 'bg-emerald-500'], ['Attention · 31–60 days', finance.receivableAgeing.days31to60, 'bg-amber-500'], ['High risk · 61+ days', finance.receivableAgeing.over60, 'bg-red-500']].map(([label, raw, tone]) => { const bucket = raw as { amount: number; accounts: number }; return <div key={String(label)} className="p-5"><div className="flex items-center gap-2"><i className={cn('w-2 h-2 rounded-full', tone)} /><p className="text-[10px] text-gray-500">{String(label)}</p></div><p className="text-lg font-extrabold mt-2 dark:text-white">{formatCurrency(bucket.amount)}</p><p className="text-[10px] text-gray-400 mt-1">{bucket.accounts} fee accounts</p></div>; })}</div>{finance.receivableAgeing.over60.accounts > 0 && <div className="px-5 py-3 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-200"><b>Recommended:</b> prioritize {finance.receivableAgeing.over60.accounts} accounts older than 60 days.</div>}</section></div><section className="card overflow-hidden flex flex-col"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between gap-3"><div><h2 className="font-bold dark:text-white">Your decision queue</h2><p className="text-xs text-gray-400 mt-0.5">Branch-scoped approvals and exceptions</p></div><Badge variant={pending + stats.alerts ? 'warning' : 'success'}>{pending + stats.alerts} open</Badge></div><DecisionQueue inventory={inventory} expenses={expenses} procurements={procurements} onOpenTab={onOpenTab} embedded /></section></div>
+    <div className="grid xl:grid-cols-3 gap-4"><section className="card overflow-hidden"><div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700"><h2 className="font-bold dark:text-white">Operational impact by location</h2><p className="text-xs text-gray-400 mt-0.5">Assets currently affecting service delivery</p></div><div className="divide-y divide-gray-100 dark:divide-slate-700">{affected.length ? affected.map(item => <button key={item._id} onClick={() => onOpenTab('items')} className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 dark:hover:bg-slate-800"><span className="w-1.5 h-9 rounded-full bg-red-500" /><span className="flex-1 min-w-0"><b className="block text-sm truncate dark:text-white">{item.location || 'Unassigned location'}</b><small className="block text-[10px] text-gray-400 truncate">{item.name} · {item.condition.replaceAll('_', ' ')}</small></span><ChevronRight className="w-4 h-4 text-gray-300" /></button>) : <p className="p-8 text-sm text-center text-emerald-600">No learning spaces affected.</p>}</div></section><section className="card p-5"><div className="flex justify-between"><div><h2 className="font-bold dark:text-white">Budget control</h2><p className="text-xs text-gray-400 mt-0.5">Authorized, committed and available</p></div><Badge variant="warning">Setup needed</Badge></div><div className="mt-6 rounded-2xl border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-900/10 p-5 text-center"><Banknote className="w-7 h-7 text-amber-500 mx-auto" /><p className="font-bold text-sm mt-3 dark:text-white">Monthly budget not configured</p><p className="text-[10px] text-gray-500 mt-1">Committed procurement is {formatCurrency(committedProcurement)}. Available budget cannot be calculated safely without an authorized budget.</p></div></section><section className="card p-5"><div className="flex justify-between"><div><h2 className="font-bold dark:text-white">Peer benchmark</h2><p className="text-xs text-gray-400 mt-0.5">Branch versus group</p></div>{finance.peerBenchmark && <Badge variant="info">Rank #{finance.peerBenchmark.rank}/{finance.peerBenchmark.branchCount}</Badge>}</div>{finance.peerBenchmark ? <div className="mt-6"><div className="flex justify-between items-end"><div><p className="text-[10px] text-gray-400">Branch margin</p><p className="text-3xl font-extrabold dark:text-white">{finance.peerBenchmark.branchMargin.toFixed(1)}%</p></div><div className="text-right"><p className="text-[10px] text-gray-400">Group average</p><p className="text-lg font-bold text-blue-600">{finance.peerBenchmark.groupAverageMargin.toFixed(1)}%</p></div></div><div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 mt-5"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, finance.peerBenchmark.branchMargin * 4))}%` }} /></div></div> : <p className="mt-8 text-sm text-gray-400 text-center">Peer benchmark is unavailable for this role.</p>}</section></div>
+    <SourceTruth finance={finance} items={latestItems} expenses={expenses} procurements={procurements} /><p className="px-1 text-xs text-gray-400">{finance.terminology} Forecast is directional; budgets remain unavailable until a budget model is configured.</p></div>;
+}
+
+function Overview(props: OverviewProps) {
+  if (!props.finance || !props.inventory) return <LoadingState />;
+  const readyProps = { ...props, finance: props.finance, inventory: props.inventory };
+  return props.role === 'branch_principal' ? <PrincipalBlueprint {...readyProps} /> : <GroupBlueprint {...readyProps} />;
 }
 
 function LoadingState() {
@@ -206,8 +195,15 @@ export default function InventoryPage() {
   const [itemPage, setItemPage] = useState(1);
   const [recordPage, setRecordPage] = useState(1);
   const scopeKey = activeBranch?.id ?? 'all';
+  const historyMonths = useMemo(() => Array.from({ length: 6 }, (_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - (5 - index));
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }), []);
 
   const financeQuery = useQuery({ queryKey: ['inventory-finance', scopeKey], queryFn: () => inventoryService.finance(), enabled: !isInventoryOnly });
+  const financeHistoryQuery = useQuery({ queryKey: ['inventory-finance-history', scopeKey, historyMonths.join(',')], queryFn: () => Promise.all(historyMonths.map(month => inventoryService.finance(month, false))), enabled: !isInventoryOnly && tab === 'overview' });
   const dashboardQuery = useQuery({ queryKey: ['inventory-dashboard', scopeKey], queryFn: inventoryService.dashboard });
   const metadataQuery = useQuery({ queryKey: ['inventory-metadata'], queryFn: inventoryService.metadata });
   const itemsQuery = useQuery({ queryKey: ['inventory-items', scopeKey], queryFn: () => inventoryService.items({ limit: '2000' }) });
@@ -328,8 +324,8 @@ export default function InventoryPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1500px] mx-auto">
       <PageHeader
-        title="Assets, Inventory & Finance"
-        subtitle="Pakistan-ready asset control, income, expenditure, procurement and campus surplus"
+        title="Finance & Operations"
+        subtitle="Income, expenditure, assets, procurement, vendors and operating surplus"
         actions={<button onClick={() => refresh()} className="btn-secondary px-3" title="Refresh"><RefreshCw className="w-4 h-4" /></button>}
       />
 
@@ -339,7 +335,7 @@ export default function InventoryPage() {
 
       {error && !modalOpen && !transactionItem && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">{error}</div>}
 
-      {tab === 'overview' && <Overview finance={financeQuery.data} inventory={dashboardQuery.data} />}
+      {tab === 'overview' && <Overview finance={financeQuery.data} inventory={dashboardQuery.data} history={financeHistoryQuery.data} items={itemsQuery.data ?? []} expenses={expensesQuery.data ?? []} procurements={procurementQuery.data ?? []} stats={itemStats} role={role} branchLabel={activeBranch?.name || ((itemsQuery.data?.[0] && branchName(itemsQuery.data[0].branchId)) || (role === 'branch_principal' ? 'Your branch' : 'All branches'))} onOpenTab={(nextTab) => { setTab(nextTab); setSearch(''); setError(''); setRecordPage(1); }} />}
 
       {tab !== 'overview' && (
         <div className="space-y-4">

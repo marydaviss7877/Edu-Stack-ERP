@@ -501,7 +501,11 @@ async function calculateDepreciation(scope: Record<string, unknown>, end: Date):
 export async function getFinanceSummary(req: Request, res: Response): Promise<void> {
   const scope = readScope(req);
   const { start, end, month } = reportPeriod(req);
-  const [revenueAgg, otherIncomeAgg, expenseAgg, payrollAgg, depreciation, receivableAgg, branches] = await Promise.all([
+  const includeBenchmarks = req.query.includeBenchmarks !== 'false';
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now); thirtyDaysAgo.setDate(now.getDate() - 30);
+  const sixtyDaysAgo = new Date(now); sixtyDaysAgo.setDate(now.getDate() - 60);
+  const [revenueAgg, otherIncomeAgg, expenseAgg, payrollAgg, depreciation, receivableAgg, feeBillingAgg, receivableAgeAgg, branches] = await Promise.all([
     Challan.aggregate([
       { $match: scope }, { $unwind: '$payments' },
       { $match: { 'payments.paidAt': { $gte: start, $lt: end } } },
@@ -524,7 +528,24 @@ export async function getFinanceSummary(req: Request, res: Response): Promise<vo
       { $match: { ...scope, status: { $in: ['unpaid', 'partial', 'overdue'] } } },
       { $group: { _id: null, outstanding: { $sum: { $subtract: ['$netAmount', '$paidAmount'] } } } },
     ]),
-    req.user!.role === 'group_admin' ? Branch.find({ orgId: orgObjectId(req), status: 'active' }).select('name code').lean() : Promise.resolve([]),
+    Challan.aggregate([
+      { $match: { ...scope, month } },
+      { $group: { _id: null, billed: { $sum: '$netAmount' }, collected: { $sum: '$paidAmount' } } },
+    ]),
+    Challan.aggregate([
+      { $match: { ...scope, status: { $in: ['unpaid', 'partial', 'overdue'] } } },
+      { $project: {
+        outstanding: { $subtract: ['$netAmount', '$paidAmount'] },
+        bucket: { $switch: { branches: [
+          { case: { $lt: ['$dueDate', sixtyDaysAgo] }, then: 'over60' },
+          { case: { $lt: ['$dueDate', thirtyDaysAgo] }, then: 'days31to60' },
+        ], default: 'current' } },
+      } },
+      { $group: { _id: '$bucket', amount: { $sum: '$outstanding' }, accounts: { $sum: 1 } } },
+    ]),
+    includeBenchmarks && ['group_admin', 'branch_principal'].includes(req.user!.role)
+      ? Branch.find({ orgId: orgObjectId(req), status: 'active' }).select('name code').lean()
+      : Promise.resolve([]),
   ]);
 
   const feeRevenue = Number(revenueAgg[0]?.total || 0);
@@ -533,21 +554,50 @@ export async function getFinanceSummary(req: Request, res: Response): Promise<vo
   const payroll = Number(payrollAgg[0]?.total || 0);
   const result = calculateOperatingResult({ feeRevenue, otherIncome, operatingExpenses, payroll, depreciation });
 
-  let branchPerformance: unknown[] = [];
+  let allBranchPerformance: Array<{
+    branchId: Types.ObjectId; name: string; code: string; revenue: number; cashExpenses: number;
+    cashSurplus: number; depreciation: number; operatingSurplus: number; operatingMargin: number; outstandingFees: number;
+  }> = [];
   if (branches.length) {
-    branchPerformance = await Promise.all(branches.map(async (branch) => {
+    allBranchPerformance = await Promise.all(branches.map(async (branch) => {
       const branchScope = { orgId: orgObjectId(req), branchId: branch._id };
-      const [r, oi, e, p] = await Promise.all([
+      const [r, oi, e, p, d, outstanding] = await Promise.all([
         Challan.aggregate([{ $match: branchScope }, { $unwind: '$payments' }, { $match: { 'payments.paidAt': { $gte: start, $lt: end } } }, { $group: { _id: null, total: { $sum: '$payments.amount' } } }]),
         IncomeEntry.aggregate([{ $match: { ...branchScope, status: 'received', receivedAt: { $gte: start, $lt: end } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
         Expense.aggregate([{ $match: { ...branchScope, status: 'paid', paidAt: { $gte: start, $lt: end } } }, { $group: { _id: null, total: { $sum: '$netPaid' } } }]),
         Payroll.aggregate([{ $match: { ...branchScope, status: 'paid', paidAt: { $gte: start, $lt: end } } }, { $group: { _id: null, total: { $sum: '$netPay' } } }]),
+        calculateDepreciation(branchScope, end),
+        Challan.aggregate([{ $match: { ...branchScope, status: { $in: ['unpaid', 'partial', 'overdue'] } } }, { $group: { _id: null, total: { $sum: { $subtract: ['$netAmount', '$paidAmount'] } } } }]),
       ]);
-      const revenue = Number(r[0]?.total || 0) + Number(oi[0]?.total || 0);
-      const costs = Number(e[0]?.total || 0) + Number(p[0]?.total || 0);
-      return { branchId: branch._id, name: branch.name, code: branch.code, revenue, cashExpenses: costs, cashSurplus: revenue - costs };
+      const branchResult = calculateOperatingResult({
+        feeRevenue: Number(r[0]?.total || 0), otherIncome: Number(oi[0]?.total || 0),
+        operatingExpenses: Number(e[0]?.total || 0), payroll: Number(p[0]?.total || 0), depreciation: d,
+      });
+      return {
+        branchId: branch._id, name: branch.name, code: branch.code,
+        revenue: Math.round(branchResult.totalRevenue),
+        cashExpenses: Math.round(Number(e[0]?.total || 0) + Number(p[0]?.total || 0)),
+        cashSurplus: Math.round(branchResult.cashSurplus), depreciation: Math.round(d),
+        operatingSurplus: Math.round(branchResult.operatingSurplus),
+        operatingMargin: Number(branchResult.operatingMargin.toFixed(1)),
+        outstandingFees: Math.round(Number(outstanding[0]?.total || 0)),
+      };
     }));
   }
+
+  const sortedBranches = [...allBranchPerformance].sort((a, b) => b.operatingMargin - a.operatingMargin);
+  const currentBranchIndex = sortedBranches.findIndex((branch) => String(branch.branchId) === String(req.user!.branchId || ''));
+  const peerBenchmark = req.user!.role === 'branch_principal' && currentBranchIndex >= 0 ? {
+    rank: currentBranchIndex + 1,
+    branchCount: sortedBranches.length,
+    groupAverageMargin: sortedBranches.length
+      ? Number((sortedBranches.reduce((sum, branch) => sum + branch.operatingMargin, 0) / sortedBranches.length).toFixed(1))
+      : 0,
+    branchMargin: sortedBranches[currentBranchIndex].operatingMargin,
+  } : null;
+  const ageing = Object.fromEntries(receivableAgeAgg.map((row) => [row._id, { amount: Math.round(row.amount), accounts: row.accounts }]));
+  const billed = Number(feeBillingAgg[0]?.billed || 0);
+  const collected = Number(feeBillingAgg[0]?.collected || 0);
 
   res.json({
     success: true,
@@ -564,8 +614,18 @@ export async function getFinanceSummary(req: Request, res: Response): Promise<vo
       operatingSurplus: Math.round(result.operatingSurplus),
       operatingMargin: Number(result.operatingMargin.toFixed(1)),
       outstandingFees: Math.round(Number(receivableAgg[0]?.outstanding || 0)),
+      feeRecoveryRate: billed > 0 ? Number(((collected / billed) * 100).toFixed(1)) : 0,
+      feeBilled: Math.round(billed),
+      feeCollected: Math.round(collected),
+      receivableAgeing: {
+        current: ageing.current || { amount: 0, accounts: 0 },
+        days31to60: ageing.days31to60 || { amount: 0, accounts: 0 },
+        over60: ageing.over60 || { amount: 0, accounts: 0 },
+      },
       terminology: 'For nonprofit/public institutions, read profit as operating surplus (or deficit).',
-      branchPerformance,
+      dataAsOf: now.toISOString(),
+      branchPerformance: includeBenchmarks && req.user!.role === 'group_admin' ? allBranchPerformance : [],
+      peerBenchmark,
     },
   });
 }

@@ -19,7 +19,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   phone?: string;
-  profilePhotoUrl?: string;
+  photoUrl?: string;
   active: boolean;
   lastLoginAt?: Date;
   passwordChangedAt?: Date;
@@ -50,7 +50,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     phone: String,
-    profilePhotoUrl: String,
+    photoUrl: String,
     active: { type: Boolean, default: true },
     lastLoginAt: Date,
     passwordChangedAt: Date,

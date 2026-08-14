@@ -13,8 +13,6 @@ class StorageKeys {
   static const String orgPrimaryColor = 'org_primary_color';
   static const String lastActiveAt = 'last_active_at';
   static const String themeMode = 'theme_mode'; // 'system'|'light'|'dark'
-  static const String locale = 'locale'; // 'en'|'ur'
-
   // Hive box names
   static const String offlineAttendanceBox = 'offline_attendance';
 }

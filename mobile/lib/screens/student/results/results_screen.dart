@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../providers/student_providers.dart';
 import '../../../providers/org_provider.dart';
 import '../../../models/result.dart';
 import '../../../services/pdf_service.dart';
+import '../../../core/theme/app_design.dart';
 
 class ResultsScreen extends ConsumerWidget {
   const ResultsScreen({super.key});
@@ -14,7 +14,7 @@ class ResultsScreen extends ConsumerWidget {
     final resultsAsync = ref.watch(myResultsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Results')),
+      appBar: AppBar(title: const Text('Academic Ledger')),
       body: resultsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorRetry(
@@ -26,15 +26,117 @@ class ResultsScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(myResultsProvider),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: results.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, i) => _ResultCard(result: results[i]),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+              children: [
+                Text('Your academic progress',
+                    style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 4),
+                Text('Scores are shown by subject for direct comparison.',
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 16),
+                _AcademicLedger(result: results.first),
+                if (results.length > 1) ...[
+                  const AppSectionHeader(title: 'Previous results'),
+                  ...results.skip(1).map((result) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _ResultCard(result: result),
+                      )),
+                ],
+              ],
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _AcademicLedger extends StatelessWidget {
+  const _AcademicLedger({required this.result});
+  final ExamResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final resultColor = result.isPassed ? AppColors.success : AppColors.error;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(result.examName,
+                    style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${result.percentage.toStringAsFixed(1)}%',
+                        style: Theme.of(context).textTheme.displaySmall),
+                    const Spacer(),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: resultColor.withValues(alpha: .1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(result.grade,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(color: resultColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    minHeight: 7,
+                    value: (result.percentage / 100).clamp(0, 1),
+                    color: AppColors.primary,
+                    backgroundColor: cs.surfaceContainerHighest,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${result.totalMarksObtained.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)} marks · ${result.isPassed ? 'Passed' : 'Needs improvement'}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const AppSectionHeader(title: 'Subject ledger'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: result.subjectMarks
+                  .map((mark) => _SubjectRow(mark: mark))
+                  .toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            showDragHandle: true,
+            builder: (_) => _ResultDetail(result: result),
+          ),
+          icon: const Icon(Icons.download_rounded),
+          label: const Text('View details and download PDF'),
+        ),
+      ],
     );
   }
 }
@@ -117,9 +219,7 @@ class _ResultCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      result.isPassed
-                          ? 'results.passed'.tr().toUpperCase()
-                          : 'results.failed'.tr().toUpperCase(),
+                      result.isPassed ? 'PASSED' : 'FAILED',
                       style: tt.labelSmall?.copyWith(
                         color: gradeColor,
                         fontWeight: FontWeight.bold,
@@ -226,7 +326,7 @@ class _ResultDetailState extends ConsumerState<_ResultDetail> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.download_rounded),
-            label: Text('results.downloadPdf'.tr()),
+            label: const Text('Download result PDF'),
           ),
         ],
       ),

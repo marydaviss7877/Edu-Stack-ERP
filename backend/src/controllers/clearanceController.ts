@@ -5,6 +5,7 @@ import { ClearanceExam } from '../models/ClearanceExam';
 import { Paper } from '../models/Paper';
 import { PaperResult } from '../models/PaperResult';
 import { Branch } from '../models/Branch';
+import { Student } from '../models/Student';
 import { orgBranchScope } from '../utils/orgBranchScope';
 
 // ─── List ─────────────────────────────────────────────────────────────────────
@@ -21,9 +22,18 @@ export async function listClearances(req: Request, res: Response): Promise<void>
   if (sectionId) filter.sectionId = sectionId;
   if (subjectId) filter.subjectId = subjectId;
 
-  // Students only see their own clearances
-  if (role === 'student') filter.studentId = userId;
-  else if (studentId) filter.studentId = studentId;
+  // Students authenticate with a User id, while clearances reference Student ids.
+  if (role === 'student') {
+    const student = await Student.findOne({
+      ...orgBranchScope({ orgId, branchId }),
+      userId,
+    }).select('_id').lean();
+    if (!student) {
+      res.json({ success: true, data: [] });
+      return;
+    }
+    filter.studentId = student._id;
+  } else if (studentId) filter.studentId = studentId;
 
   const clearances = await ClearanceExam.find(filter)
     .populate('studentId', 'profile.name rollNo')
@@ -175,27 +185,65 @@ export async function getClearanceSummary(req: Request, res: Response): Promise<
   const { orgId, branchId } = req.user!;
   const { month, year } = req.query;
 
-  const match: Record<string, unknown> = orgBranchScope({ orgId, branchId });
+  const match: Record<string, unknown> = {
+    orgId: new Types.ObjectId(orgId),
+    ...(branchId ? { branchId: new Types.ObjectId(branchId) } : {}),
+  };
   if (month) match.triggerMonth = Number(month);
   if (year) match.triggerYear = Number(year);
 
-  const summary = await ClearanceExam.aggregate([
+  const [summary] = await ClearanceExam.aggregate([
     { $match: match },
     {
       $group: {
-        _id: '$status',
-        count: { $sum: 1 },
+        _id: null,
+        total: { $sum: 1 },
+        pending_approval: { $sum: { $cond: [{ $eq: ['$status', 'pending_approval'] }, 1, 0] } },
+        scheduled: { $sum: { $cond: [{ $eq: ['$status', 'scheduled'] }, 1, 0] } },
+        completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+        waived: { $sum: { $cond: [{ $eq: ['$status', 'waived'] }, 1, 0] } },
+        passed: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$status', 'completed'] }, { $eq: ['$clearancePassed', true] }] },
+              1,
+              0,
+            ],
+          },
+        },
+        failed: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$status', 'completed'] }, { $eq: ['$clearancePassed', false] }] },
+              1,
+              0,
+            ],
+          },
+        },
+        averagePercentage: {
+          $avg: {
+            $cond: [{ $eq: ['$status', 'completed'] }, '$clearancePercentage', '$$REMOVE'],
+          },
+        },
       },
     },
   ]);
 
-  const result: Record<string, number> = {
-    pending_approval: 0,
-    scheduled: 0,
-    completed: 0,
-    waived: 0,
+  const completed = summary?.completed ?? 0;
+  const passed = summary?.passed ?? 0;
+  const result = {
+    total: summary?.total ?? 0,
+    pending_approval: summary?.pending_approval ?? 0,
+    scheduled: summary?.scheduled ?? 0,
+    completed,
+    waived: summary?.waived ?? 0,
+    passed,
+    failed: summary?.failed ?? 0,
+    passRate: completed ? Math.round((passed / completed) * 10000) / 100 : 0,
+    averagePercentage: summary?.averagePercentage
+      ? Math.round(summary.averagePercentage * 100) / 100
+      : 0,
   };
-  for (const s of summary) result[s._id as string] = s.count;
 
   res.json({ success: true, data: result });
 }
