@@ -225,7 +225,19 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     res.status(404).json({ success: false, message: 'User not found' });
     return;
   }
-  res.json({ success: true, data: user });
+  res.json({
+    success: true,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      orgId: user.orgId,
+      branchId: user.branchId,
+      profilePhotoUrl: user.profilePhotoUrl,
+      emailVerifiedAt: user.emailVerifiedAt,
+    },
+  });
 }
 
 export const changePasswordValidators = [

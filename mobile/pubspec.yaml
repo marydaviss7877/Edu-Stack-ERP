@@ -1,7 +1,7 @@
 name: edustack_mobile
 description: EduStack PK — School ERP for students, teachers and staff.
 publish_to: none
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

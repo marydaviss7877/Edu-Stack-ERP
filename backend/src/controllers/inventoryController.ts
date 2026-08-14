@@ -118,7 +118,7 @@ export async function listInventoryItems(req: Request, res: Response): Promise<v
     .populate('custodianId', 'name role')
     .populate('vendorId', 'name ntn')
     .sort({ updatedAt: -1 })
-    .limit(Math.min(Number(req.query.limit) || 100, 500))
+    .limit(Math.min(Number(req.query.limit) || 100, 2000))
     .lean();
   res.json({ success: true, data: items });
 }

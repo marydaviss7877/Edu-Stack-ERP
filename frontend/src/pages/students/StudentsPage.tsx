@@ -12,6 +12,7 @@ import Badge from '../../components/ui/Badge';
 import { formatDate, formatCurrency } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import { useAuthStore } from '../../stores/authStore';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 const STATUS_VARIANTS = { applied: 'warning', enrolled: 'info', active: 'success', leaving: 'warning', graduated: 'default', transferred: 'purple', withdrawn: 'danger' } as const;
 
@@ -40,9 +41,12 @@ function StudentProfileView() {
 
       {/* Identity card */}
       <div className="card p-5 mb-4 flex items-center gap-5">
-        <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shrink-0">
-          {student.profile.name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          name={student.profile.name}
+          photoUrl={student.profile.photoUrl}
+          className="w-16 h-16 rounded-full text-xl"
+          fallbackClassName="bg-blue-100 text-blue-600"
+        />
         <div>
           <h2 className="text-lg font-semibold text-gray-900">{student.profile.name}</h2>
           <p className="text-sm text-gray-500">{className} — Section {sectionName}</p>
@@ -188,7 +192,17 @@ function StaffStudentsView() {
             {students.map((s) => (
               <tr key={s._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
                 <td className="px-4 py-3 font-mono text-gray-600 dark:text-slate-300">{s.rollNo}</td>
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{s.profile.name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={s.profile.name}
+                      photoUrl={s.profile.photoUrl}
+                      className="h-9 w-9 rounded-xl text-xs"
+                      fallbackClassName="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                    />
+                    <span className="font-medium text-gray-900 dark:text-slate-100">{s.profile.name}</span>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   {typeof s.classId === 'object' ? s.classId.name : '—'}
                   {typeof s.sectionId === 'object' ? ` / ${s.sectionId.name}` : ''}

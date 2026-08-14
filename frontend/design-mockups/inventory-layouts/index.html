@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduStack Inventory — Five Layout Proposals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">E</span><span><strong>EduStack</strong><small>Pakistan</small></span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#"><span>⌂</span>Dashboard</a><a href="#"><span>⌘</span>Branches</a><a href="#"><span>♙</span>Staff</a><a href="#"><span>♟</span>Students</a><a href="#"><span>▤</span>Fee Management</a><a href="#"><span>₨</span>Payroll</a><a class="active" href="#"><span>◇</span>Assets & Inventory</a><a href="#"><span>⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-user"><span class="avatar">SA</span><span><strong>Subhan Ali</strong><small>Group Administrator</small></span><button aria-label="More">•••</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar"><button class="mobile-menu" aria-label="Menu">☰</button><div class="campus"><span class="pulse"></span><span><small>Viewing</small><strong>All campuses</strong></span><b>⌄</b></div><div class="top-actions"><button aria-label="Search">⌕</button><button aria-label="Notifications">♢<i></i></button><span class="top-avatar">SA</span></div></header>
+
+      <div class="content">
+        <section class="page-heading">
+          <div><div class="eyebrow">Operations / Inventory</div><h1>Assets &amp; inventory</h1><p>Compare five scalable ways to manage 730 records across 150 rooms.</p></div>
+          <div class="heading-actions"><button class="button secondary">⇩ Export</button><button class="button primary">＋ Add asset</button></div>
+        </section>
+
+        <section class="proposal-switcher" aria-label="Layout proposals">
+          <button class="proposal active" data-view="ledger"><span class="proposal-no">01</span><span><b>Ledger Pro</b><small>Best overall · recommended</small></span></button>
+          <button class="proposal" data-view="split"><span class="proposal-no">02</span><span><b>Split Inspector</b><small>Fast record review</small></span></button>
+          <button class="proposal" data-view="matrix"><span class="proposal-no">03</span><span><b>Room Matrix</b><small>Best for classrooms</small></span></button>
+          <button class="proposal" data-view="tree"><span class="proposal-no">04</span><span><b>Location Tree</b><small>Campus hierarchy</small></span></button>
+          <button class="proposal" data-view="audit"><span class="proposal-no">05</span><span><b>Audit Command</b><small>Exceptions first</small></span></button>
+        </section>
+
+        <section class="decision-strip">
+          <span class="decision-icon">✦</span><div><strong id="viewTitle">Ledger Pro</strong><p id="viewSummary">The strongest default for daily inventory work: high information density, sorting, bulk actions and spreadsheet familiarity.</p></div><span class="score" id="viewScore">9.6 / 10</span>
+        </section>
+
+        <section class="mini-metrics">
+          <div><span class="metric-icon blue">◇</span><span><small>Asset records</small><strong>730</strong></span><em>+600 rooms</em></div>
+          <div><span class="metric-icon emerald">✓</span><span><small>Physical units</small><strong>9,284</strong></span><em>94% verified</em></div>
+          <div><span class="metric-icon amber">!</span><span><small>Needs attention</small><strong>18</strong></span><em>7 overdue</em></div>
+          <div><span class="metric-icon violet">₨</span><span><small>Net book value</small><strong>₨ 84.7M</strong></span><em>5 campuses</em></div>
+        </section>
+
+        <section class="module-tabs"><button class="active">Assets &amp; Stock <span>730</span></button><button>Expenses <span>40</span></button><button>Income <span>25</span></button><button>Procurement <span>20</span></button><button>Vendors <span>8</span></button></section>
+
+        <section class="toolbar">
+          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search asset, code, room or category…"></label>
+          <div class="filter-row"><select id="branchFilter"><option value="all">All campuses</option><option>Faisalabad Campus</option><option>Gulberg Campus</option><option>Garden Town Campus</option><option>Model Town Campus</option><option>Multan Campus</option></select><button class="filter-button">Condition <b>⌄</b></button><button class="filter-button">Category <b>⌄</b></button><button class="filter-button">More filters <span class="filter-count">2</span></button><button class="icon-button" aria-label="Columns">☷</button></div>
+        </section>
+
+        <section id="designCanvas" class="design-canvas" aria-live="polite"></section>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

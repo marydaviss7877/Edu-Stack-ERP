@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
-import { cn, getInitials } from '../lib/utils';
+import { cn } from '../lib/utils';
+import UserAvatar from '../components/ui/UserAvatar';
+import { getMe } from '../services/authService';
 
 const NavIcon = ({ d, d2 }: { d: string; d2?: string }) => (
   <svg className="w-4.5 h-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -47,8 +50,12 @@ const NAV_ITEMS = [
 export default function SuperAdminLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
   const { isDark, toggle: toggleDark } = useThemeStore();
+
+  useEffect(() => {
+    getMe().then(setUser).catch(() => {});
+  }, [setUser]);
 
   const handleLogout = async () => {
     await logout();
@@ -111,9 +118,7 @@ export default function SuperAdminLayout() {
         {/* User footer */}
         <div className="border-t border-white/6 p-4 shrink-0">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold shrink-0">
-              {getInitials(user?.name ?? 'SA')}
-            </div>
+            <UserAvatar name={user?.name ?? 'SA'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
               <p className="text-xs text-white/40">WolfStack Admin</p>

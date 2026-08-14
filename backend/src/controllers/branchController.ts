@@ -5,6 +5,7 @@ import { Branch } from '../models/Branch';
 import { Student } from '../models/Student';
 import { Challan } from '../models/Challan';
 import { User } from '../models/User';
+import { Class } from '../models/Class';
 
 export const createBranchValidators = [
   body('name').trim().notEmpty(),
@@ -163,4 +164,20 @@ export async function getBranchStats(req: Request, res: Response): Promise<void>
   });
 
   res.json({ success: true, data });
+}
+
+export async function getOrganizationSummary(req: Request, res: Response): Promise<void> {
+  const orgId = req.user!.orgId;
+  if (!orgId) {
+    res.status(400).json({ success: false, message: 'Organization context is required' });
+    return;
+  }
+  const [totalStudents, totalTeachers, totalClasses, totalBranches, totalStaff] = await Promise.all([
+    Student.countDocuments({ orgId, status: 'active' }),
+    User.countDocuments({ orgId, role: 'teacher', active: true }),
+    Class.countDocuments({ orgId }),
+    Branch.countDocuments({ orgId, status: 'active' }),
+    User.countDocuments({ orgId, role: { $in: ['branch_principal', 'teacher', 'coordinator', 'accountant', 'it_admin'] }, active: true }),
+  ]);
+  res.json({ success: true, data: { totalStudents, totalTeachers, totalClasses, totalBranches, totalStaff } });
 }

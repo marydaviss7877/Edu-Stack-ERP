@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { Organization, User, ApiResponse } from '../../types';
 import Modal from '../../components/ui/Modal';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 export default function UsersPage() {
   const qc = useQueryClient();
@@ -84,7 +85,17 @@ export default function UsersPage() {
             )}
             {users.map(u => (
               <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{u.name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={u.name}
+                      photoUrl={u.profilePhotoUrl}
+                      className="h-9 w-9 rounded-xl text-xs"
+                      fallbackClassName="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                    />
+                    <span className="font-medium text-gray-900 dark:text-slate-100">{u.name}</span>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{u.email}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400 text-sm">{orgName(u.orgId)}</td>
                 <td className="px-4 py-3">

@@ -13,6 +13,7 @@ const { MongoClient } = require('mongodb');
 const MONGO_URI = process.env.MONGODB_URI;
 const TARGET_EMAIL = 'subhan@gmail.com';
 const APPLY = process.argv.includes('--apply');
+const REPORT = process.argv.includes('--report');
 if (!MONGO_URI) { console.error('MONGODB_URI not set'); process.exit(1); }
 
 const now = new Date();
@@ -82,6 +83,15 @@ const incomeTemplates = [
   ['ACTIVITY', 'Events & Activities', 'Student activity and event receipts', 48000, 'cash'],
 ];
 
+const ROOM_COUNT = 30;
+const roomAssetTemplates = [
+  // key, name, category, quantity per room, unit cost, useful life months, vendor index
+  ['AC', 'Split Air Conditioner 1.5 Ton', 'Electrical & HVAC', 2, 185000, 96, 3],
+  ['WHITEBOARD', 'Classroom Whiteboard 4x8 ft', 'Teaching Aids', 2, 28000, 60, 6],
+  ['FAN', 'Ceiling Fan 56 inch', 'Electrical & HVAC', 4, 18500, 84, 3],
+  ['CHAIR', 'Student Classroom Chair', 'Furniture & Fixtures', 50, 6800, 120, 6],
+];
+
 const procurementTemplates = [
   ['ITLAB', 'Computer lab workstation refresh', 'Computers & IT Equipment', 10, 'unit', 155000, 'submitted', 'quotation'],
   ['SCIENCE', 'Physics laboratory equipment upgrade', 'Laboratory Equipment', 1, 'set', 650000, 'approved', 'quotation'],
@@ -103,7 +113,31 @@ async function main() {
 
     console.log(`${APPLY ? 'APPLY' : 'PREVIEW'}: ${org?.name || owner.orgId} · ${branches.length} branches`);
     branches.forEach((branch) => console.log(`  ${branch.code}: ${branch.name}`));
-    console.log(`Planned: ${vendors.length} vendors, ${itemTemplates.length * branches.length} inventory items, ${itemTemplates.length * branches.length} opening transactions, ${expenseTemplates.length * branches.length} expenses, ${incomeTemplates.length * branches.length} income records, ${procurementTemplates.length * branches.length} procurement requests`);
+    const roomRecords = ROOM_COUNT * roomAssetTemplates.length * branches.length;
+    const roomUnits = ROOM_COUNT * branches.length * roomAssetTemplates.reduce((sum, item) => sum + Number(item[3]), 0);
+    const inventoryRecords = itemTemplates.length * branches.length + roomRecords;
+    console.log(`Planned: ${vendors.length} vendors, ${inventoryRecords} inventory items (${roomRecords} room-specific records / ${roomUnits} physical room units), ${inventoryRecords} opening transactions, ${expenseTemplates.length * branches.length} expenses, ${incomeTemplates.length * branches.length} income records, ${procurementTemplates.length * branches.length} procurement requests`);
+    if (REPORT) {
+      console.log('\nRoom inventory verification:');
+      for (const branch of branches) {
+        const roomFilter = { orgId: owner.orgId, branchId: branch._id, subcategory: 'Classroom Assets' };
+        const [summary] = await db.collection('inventoryitems').aggregate([
+          { $match: roomFilter },
+          { $group: { _id: null, records: { $sum: 1 }, units: { $sum: '$quantity' } } },
+        ]).toArray();
+        const rooms = await db.collection('inventoryitems').distinct('location', roomFilter);
+        const unitCounts = {};
+        for (const [key] of roomAssetTemplates) {
+          const [assetSummary] = await db.collection('inventoryitems').aggregate([
+            { $match: { ...roomFilter, assetCode: { $regex: `-${key}$` } } },
+            { $group: { _id: null, units: { $sum: '$quantity' } } },
+          ]).toArray();
+          unitCounts[key] = assetSummary?.units || 0;
+        }
+        console.log(`  ${branch.name}: ${rooms.length} rooms · ${summary?.records || 0} records · ${summary?.units || 0} units · AC ${unitCounts.AC}, whiteboards ${unitCounts.WHITEBOARD}, fans ${unitCounts.FAN}, chairs ${unitCounts.CHAIR}`);
+      }
+      return;
+    }
     if (!APPLY) {
       console.log('Preview only. Re-run with --apply to insert missing seeded records.');
       return;
@@ -130,7 +164,7 @@ async function main() {
       const approverId = principal?._id || owner._id;
 
       const assetCodes = [];
-      const itemOps = itemTemplates.map((template, itemIndex) => {
+      const generalItemOps = itemTemplates.map((template, itemIndex) => {
         const [key, name, type, category, unit, baseQty, baseAvailable, reorderLevel, baseCost, usefulLifeMonths, ageYears, location, department, condition, status, vendorIndex] = template;
         const assetCode = `${type === 'fixed_asset' ? 'AST' : 'STK'}-${branchCode}-${key}`;
         assetCodes.push(assetCode);
@@ -154,6 +188,39 @@ async function main() {
           },
         };
       });
+      const roomItemOps = Array.from({ length: ROOM_COUNT }, (_, roomIndex) => {
+        const roomNo = String(roomIndex + 1).padStart(2, '0');
+        return roomAssetTemplates.map((template, templateIndex) => {
+          const [key, name, category, quantity, baseCost, usefulLifeMonths, vendorIndex] = template;
+          const assetCode = `AST-${branchCode}-R${roomNo}-${key}`;
+          assetCodes.push(assetCode);
+          const purchaseDate = yearsAgo(1 + ((roomIndex + templateIndex) % 4), templateIndex);
+          const condition = roomIndex % 11 === 0 && key === 'FAN' ? 'fair' : 'good';
+          return {
+            updateOne: {
+              filter: { orgId: owner.orgId, branchId: branch._id, assetCode },
+              update: { $setOnInsert: {
+                orgId: owner.orgId, branchId: branch._id, assetCode,
+                name: `${name} · Classroom ${roomNo}`,
+                description: `${quantity} ${name.toLowerCase()} assigned to Classroom ${roomNo}`,
+                type: 'fixed_asset', category, subcategory: 'Classroom Assets', unit: 'unit',
+                quantity: Number(quantity), availableQuantity: Number(quantity), reorderLevel: 0,
+                unitCost: money(Number(baseCost), branchIndex),
+                salvageValue: Math.round(money(Number(baseCost), branchIndex) * 0.05 * Number(quantity)),
+                purchaseDate, inServiceDate: purchaseDate, usefulLifeMonths: Number(usefulLifeMonths),
+                depreciationMethod: 'straight_line', location: `Classroom ${roomNo}`, department: 'Academics',
+                vendorId: vendorByNtn[vendors[Number(vendorIndex)][1]]?._id, condition, status: 'assigned',
+                lastVerifiedAt: monthDate(2), nextVerificationDue: addYears(monthDate(2), 1),
+                fundingSource: 'Campus Development Fund',
+                notes: 'Room-level demo inventory seed; physically verify quantities and condition.',
+                createdById: makerId, createdAt: now, updatedAt: now,
+              } },
+              upsert: true,
+            },
+          };
+        });
+      }).flat();
+      const itemOps = [...generalItemOps, ...roomItemOps];
       const itemResult = await db.collection('inventoryitems').bulkWrite(itemOps, { ordered: false });
       totals.items += itemResult.upsertedCount;
 

@@ -1,4 +1,4 @@
-package com.example.edustack_mobile
+package enterprises.tws.edustack
 
 import io.flutter.embedding.android.FlutterActivity
 

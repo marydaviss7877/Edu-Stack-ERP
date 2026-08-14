@@ -12,7 +12,8 @@ import { examService } from '../../services/examService';
 import { studentService } from '../../services/studentService';
 import { notificationService } from '../../services/notificationService';
 import { academicService } from '../../services/academicService';
-import { formatDate, getInitials } from '../../lib/utils';
+import { formatDate } from '../../lib/utils';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 const today = new Date();
 const todayDOW = today.getDay();
@@ -299,9 +300,12 @@ export default function TeacherDashboard() {
 
       {/* ══ HEADER ══ */}
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-lg font-bold shadow-md">
-          {getInitials(user?.name ?? '?')}
-        </div>
+        <UserAvatar
+          name={user?.name ?? '?'}
+          photoUrl={user?.profilePhotoUrl}
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-lg shadow-md"
+          fallbackClassName="bg-linear-to-br from-blue-500 to-blue-700 text-white"
+        />
         <div className="min-w-0 flex-1">
           <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400">{greeting()}, Teacher</p>
           <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight truncate">

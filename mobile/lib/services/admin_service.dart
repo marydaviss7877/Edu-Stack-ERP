@@ -9,7 +9,7 @@ class AdminService {
 
   Future<Map<String, dynamic>> getOrgStats() async {
     try {
-      final res = await _dio.get('/admin/stats');
+      final res = await _dio.get('/branches/summary');
       final data = res.data as Map<String, dynamic>;
       if (data['success'] == true) return data['data'] as Map<String, dynamic>;
     } catch (_) {}

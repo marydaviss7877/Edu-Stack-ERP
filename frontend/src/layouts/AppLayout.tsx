@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useNavigate, Outlet, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import type { UserRole, Branch, ApiResponse } from '../types';
-import { cn, roleLabel, getInitials } from '../lib/utils';
+import { cn, roleLabel } from '../lib/utils';
 import { setLanguage } from '../i18n';
 import { notificationService } from '../services/notificationService';
 import { useSocket } from '../hooks/useSocket';
-import { getOrgBranding } from '../services/authService';
+import { getMe, getOrgBranding } from '../services/authService';
 import { getOrgSlug } from '../utils/tenant';
 import VerifyEmailBanner from '../components/shared/VerifyEmailBanner';
 import api from '../services/api';
+import UserAvatar from '../components/ui/UserAvatar';
 
 interface NavItem {
   label: string;
@@ -173,7 +174,11 @@ export default function AppLayout() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
-  const { user, logout, activeBranch, setActiveBranch } = useAuthStore();
+  const { user, logout, setUser, activeBranch, setActiveBranch } = useAuthStore();
+
+  useEffect(() => {
+    getMe().then(setUser).catch(() => {});
+  }, [setUser]);
   const { isDark, toggle: toggleDark } = useThemeStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -328,9 +333,7 @@ export default function AppLayout() {
             <>
               {user?.role === 'student' ? (
               <Link to={`${base}/profile`} className="flex items-center gap-3 mb-3 rounded-xl hover:bg-gray-50 transition-colors p-1 -m-1">
-                <div className="shrink-0 w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold">
-                  {getInitials(user?.name ?? '?')}
-                </div>
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
                   <p className="text-xs text-gray-400 truncate">{roleLabel(user.role)}</p>
@@ -338,9 +341,7 @@ export default function AppLayout() {
               </Link>
             ) : (
               <div className="flex items-center gap-3 mb-3">
-                <div className="shrink-0 w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold">
-                  {getInitials(user?.name ?? '?')}
-                </div>
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-400 truncate">{roleLabel(user?.role ?? '')}</p>
@@ -379,9 +380,7 @@ export default function AppLayout() {
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold cursor-pointer" title={user?.name}>
-                {getInitials(user?.name ?? '?')}
-              </div>
+              <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-9 h-9 rounded-xl text-xs cursor-pointer" fallbackClassName="bg-amber-500 text-navy-950" />
               <button
                 onClick={toggleDark}
                 title={isDark ? 'Light mode' : 'Dark mode'}
@@ -437,13 +436,11 @@ export default function AppLayout() {
           </Link>
 
           {user?.role === 'student' ? (
-            <Link to={`${base}/profile`} className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold shrink-0 hover:opacity-90 transition-opacity" title="My Profile">
-              {getInitials(user.name ?? '?')}
+            <Link to={`${base}/profile`} className="shrink-0 hover:opacity-90 transition-opacity" title="My Profile">
+              <UserAvatar name={user.name ?? '?'} photoUrl={user.profilePhotoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
             </Link>
           ) : (
-            <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-xs font-bold shrink-0">
-              {getInitials(user?.name ?? '?')}
-            </div>
+            <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-8 h-8 rounded-xl text-xs" fallbackClassName="bg-amber-500 text-navy-950" />
           )}
         </header>
 
@@ -618,9 +615,7 @@ export default function AppLayout() {
             {/* User footer */}
             <div className="border-t border-gray-100 p-4 shrink-0">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-navy-950 text-sm font-bold shrink-0">
-                  {getInitials(user?.name ?? '?')}
-                </div>
+                <UserAvatar name={user?.name ?? '?'} photoUrl={user?.profilePhotoUrl} className="w-10 h-10 rounded-xl text-sm" fallbackClassName="bg-amber-500 text-navy-950" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-400">{roleLabel(user?.role ?? '')}</p>

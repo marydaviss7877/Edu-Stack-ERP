@@ -5,6 +5,7 @@ import type { User, Branch, ApiResponse } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 const ROLE_VARIANTS: Record<string, 'info' | 'success' | 'warning' | 'default'> = {
   branch_principal: 'info',
@@ -170,7 +171,17 @@ export default function StaffPage() {
             )}
             {staff.map(s => (
               <tr key={s._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{s.name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={s.name}
+                      photoUrl={s.profilePhotoUrl}
+                      className="h-9 w-9 rounded-xl text-xs"
+                      fallbackClassName="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                    />
+                    <span className="font-medium text-gray-900 dark:text-slate-100">{s.name}</span>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{s.email}</td>
                 <td className="px-4 py-3">
                   <Badge variant={ROLE_VARIANTS[s.role] ?? 'default'}>{s.role.replace(/_/g, ' ')}</Badge>

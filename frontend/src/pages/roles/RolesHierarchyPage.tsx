@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
-import { roleLabel, getInitials, cn } from '../../lib/utils';
+import { roleLabel, cn } from '../../lib/utils';
 import type { UserRole } from '../../types';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface UserRow {
@@ -13,6 +14,7 @@ interface UserRow {
   active: boolean;
   branchId?: { name: string } | string;
   lastLoginAt?: string;
+  profilePhotoUrl?: string;
 }
 
 interface UsersResponse {
@@ -176,7 +178,7 @@ function AccessBadge({ access }: { access: Access }) {
 }
 
 // ── Tree node component ───────────────────────────────────────────────
-function TreeNodeCard({ node, isLast: _isLast = false }: { node: TreeNode; isLast?: boolean }) {
+function TreeNodeCard({ node }: { node: TreeNode; isLast?: boolean }) {
   return (
     <div className="flex flex-col items-center">
       <div className={cn(
@@ -408,12 +410,12 @@ export default function RolesHierarchyPage() {
                   <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className={cn(
-                          'w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0',
-                          AVATAR_COLORS[u.role] ?? 'bg-slate-500'
-                        )}>
-                          {getInitials(u.name)}
-                        </div>
+                        <UserAvatar
+                          name={u.name}
+                          photoUrl={u.profilePhotoUrl}
+                          className="w-8 h-8 rounded-lg text-xs"
+                          fallbackClassName={cn('text-white', AVATAR_COLORS[u.role] ?? 'bg-slate-500')}
+                        />
                         <div className="min-w-0">
                           <p className="font-medium text-gray-800 dark:text-white truncate">{u.name}</p>
                           <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{u.email}</p>

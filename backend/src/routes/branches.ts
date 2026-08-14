@@ -9,6 +9,7 @@ import {
   updateBranch,
   deleteBranch,
   getBranchStats,
+  getOrganizationSummary,
 } from '../controllers/branchController';
 
 const router = Router();
@@ -16,6 +17,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/', authorize('branch_management', 'create'), createBranchValidators, createBranch);
+router.get('/summary', authorize('branch_management', 'read'), getOrganizationSummary);
 router.get('/stats', authorize('branch_management', 'read'), getBranchStats);
 router.get('/', authorize('branch_management', 'read'), listBranches);
 router.get('/:id', authorize('branch_management', 'read'), getBranch);
