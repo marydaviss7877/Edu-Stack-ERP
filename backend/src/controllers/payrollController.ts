@@ -6,6 +6,7 @@ import { User } from '../models/User';
 import { Branch } from '../models/Branch';
 import { StaffAttendance } from '../models/StaffAttendance';
 import { AppError } from '../utils/errorHandler';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createPayrollValidators = [
   body('staffId').isMongoId(),
@@ -29,7 +30,7 @@ export async function listPayroll(req: Request, res: Response, next: NextFunctio
   try {
     const { month, staffId, status, page = '1', limit = '30' } = req.query;
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-    const filter: Record<string, unknown> = { orgId: req.orgId, branchId: req.user!.branchId };
+    const filter: Record<string, unknown> = orgBranchScope({ orgId: req.orgId!, branchId: req.user!.branchId });
     if (month) filter['month'] = month;
     if (staffId) filter['staffId'] = staffId;
     if (status) filter['status'] = status;

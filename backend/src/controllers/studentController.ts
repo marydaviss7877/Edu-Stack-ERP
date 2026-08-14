@@ -8,6 +8,7 @@ import { Sequence } from '../models/Sequence';
 import { Challan } from '../models/Challan';
 import { hashPassword } from '../services/authService';
 import { getUploadUrl, getPublicUrl } from '../services/s3Service';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 async function generateRollNumber(orgId: string, classId: string, sectionId: string, academicYearId: string): Promise<string> {
   const key = `roll:${classId}:${sectionId}:${academicYearId}`;
@@ -106,7 +107,7 @@ export async function listStudents(req: Request, res: Response): Promise<void> {
   const { classId, sectionId, academicYearId, status, page = '1', limit = '30' } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId: orgId!, branchId });
   if (classId) filter.classId = classId;
   if (sectionId) filter.sectionId = sectionId;
   if (academicYearId) filter.academicYearId = academicYearId;

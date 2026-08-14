@@ -4,6 +4,7 @@ import { LearningResource } from '../models/LearningResource';
 import { Student } from '../models/Student';
 import { getUploadUrl, getPublicUrl, deleteFile } from '../services/s3Service';
 import { pushNotification } from './notificationController';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 const UPLOAD_ROLES = ['branch_principal', 'it_admin', 'teacher', 'group_admin'];
 
@@ -33,10 +34,7 @@ export async function listResources(req: Request, res: Response): Promise<void> 
   const { orgId, branchId, role, id: userId } = req.user!;
   const { classId, subjectId, type, search, bookmarked } = req.query;
 
-  const filter: Record<string, unknown> = { orgId };
-
-  // Group admin sees all branches; others scoped to their branch
-  if (role !== 'group_admin') filter.branchId = branchId;
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
 
   // Students: force-filter to enrolled class + published only
   if (role === 'student') {

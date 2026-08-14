@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Types } from 'mongoose';
 import { Timetable } from '../models/Timetable';
 import { Student } from '../models/Student';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createTimetableValidators = [
   body('classId').isMongoId(),
@@ -110,7 +111,7 @@ export async function getTimetable(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { classId, sectionId, teacherId, academicYearId } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId, isActive: true };
+  const filter: Record<string, unknown> = { ...orgBranchScope({ orgId, branchId }), isActive: true };
   if (classId) filter.classId = classId;
   if (sectionId) filter.sectionId = sectionId;
   if (academicYearId) filter.academicYearId = academicYearId;

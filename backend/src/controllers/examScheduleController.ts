@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { ExamSchedule } from '../models/ExamSchedule';
 import { AppError } from '../utils/errorHandler';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export async function listSchedules(req: Request, res: Response, next: NextFunction) {
   try {
-    const { orgId, branchId } = req as any;
+    const { orgId, branchId } = req.user!;
     const { examId, classId } = req.query;
 
-    const filter: Record<string, unknown> = { orgId, branchId };
+    const filter: Record<string, unknown> = orgBranchScope({ orgId: orgId!, branchId });
     if (examId) filter.examId = examId;
     if (classId) filter.classId = classId;
 
@@ -25,8 +26,8 @@ export async function listSchedules(req: Request, res: Response, next: NextFunct
 
 export async function getSchedule(req: Request, res: Response, next: NextFunction) {
   try {
-    const { orgId, branchId } = req as any;
-    const schedule = await ExamSchedule.findOne({ _id: req.params.id, orgId, branchId })
+    const { orgId, branchId } = req.user!;
+    const schedule = await ExamSchedule.findOne({ _id: req.params.id, ...orgBranchScope({ orgId: orgId!, branchId }) })
       .populate('examId', 'name')
       .populate('classId', 'name section')
       .populate('slots.subjectId', 'name code');
@@ -40,8 +41,7 @@ export async function getSchedule(req: Request, res: Response, next: NextFunctio
 
 export async function upsertSchedule(req: Request, res: Response, next: NextFunction) {
   try {
-    const { orgId, branchId } = req as any;
-    const userId = (req as any).user?.id;
+    const { orgId, branchId, id: userId } = req.user!;
     const { examId, classId, slots } = req.body;
 
     if (!examId || !classId) throw new AppError('examId and classId are required', 400);
@@ -67,7 +67,7 @@ export async function upsertSchedule(req: Request, res: Response, next: NextFunc
 
 export async function updateSchedule(req: Request, res: Response, next: NextFunction) {
   try {
-    const { orgId, branchId } = req as any;
+    const { orgId, branchId } = req.user!;
     const { slots } = req.body;
 
     const schedule = await ExamSchedule.findOneAndUpdate(
@@ -88,7 +88,7 @@ export async function updateSchedule(req: Request, res: Response, next: NextFunc
 
 export async function deleteSchedule(req: Request, res: Response, next: NextFunction) {
   try {
-    const { orgId, branchId } = req as any;
+    const { orgId, branchId } = req.user!;
     const schedule = await ExamSchedule.findOneAndDelete({ _id: req.params.id, orgId, branchId });
     if (!schedule) throw new AppError('Schedule not found', 404);
     res.json({ success: true, data: null });

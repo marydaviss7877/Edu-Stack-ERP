@@ -6,6 +6,7 @@ import { Student } from '../models/Student';
 import { Branch } from '../models/Branch';
 import { StaffAttendance } from '../models/StaffAttendance';
 import { User } from '../models/User';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const markAttendanceValidators = [
   body('classId').isMongoId(),
@@ -47,7 +48,7 @@ export async function getAttendance(req: Request, res: Response): Promise<void> 
 
   const { classId, sectionId, date, startDate, endDate } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (classId) filter.classId = classId;
   if (sectionId) filter.sectionId = sectionId;
 
@@ -82,8 +83,7 @@ export async function getStudentMonthlySummary(req: Request, res: Response): Pro
   const monthEnd = new Date(parseInt(year as string), parseInt(month as string), 0);
 
   const records = await Attendance.find({
-    orgId,
-    branchId,
+    ...orgBranchScope({ orgId, branchId }),
     date: { $gte: monthStart, $lte: monthEnd },
     'records.studentId': new Types.ObjectId(studentId as string),
   }).lean();
@@ -275,7 +275,7 @@ export async function getStaffAttendance(req: Request, res: Response): Promise<v
   const { orgId, branchId } = req.user!;
   const { date, month, year } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
 
   if (date) {
     const d = new Date(date as string);
@@ -310,10 +310,14 @@ export async function getStaffMonthlySummary(req: Request, res: Response): Promi
   const monthEnd = new Date(parseInt(year as string), parseInt(month as string), 0, 23, 59, 59);
 
   const [staff, agg] = await Promise.all([
-    User.find({ orgId, branchId, role: { $nin: ['student', 'super_admin', 'group_admin'] }, active: true })
+    User.find({ ...orgBranchScope({ orgId, branchId }), role: { $nin: ['student', 'super_admin', 'group_admin'] }, active: true })
       .select('name role').lean(),
     StaffAttendance.aggregate([
-      { $match: { orgId: new Types.ObjectId(orgId!), branchId: new Types.ObjectId(branchId!), date: { $gte: monthStart, $lte: monthEnd } } },
+      { $match: {
+          orgId: new Types.ObjectId(orgId!),
+          ...(branchId ? { branchId: new Types.ObjectId(branchId) } : {}),
+          date: { $gte: monthStart, $lte: monthEnd },
+        } },
       { $group: {
         _id: '$staffId',
         present: { $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] } },

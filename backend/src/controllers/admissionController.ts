@@ -10,6 +10,7 @@ import { User } from '../models/User';
 import { Sequence } from '../models/Sequence';
 import { hashPassword } from '../services/authService';
 import { getUploadUrl, getPublicUrl } from '../services/s3Service';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -211,7 +212,7 @@ export async function submitApplication(req: Request, res: Response): Promise<vo
 
 export async function listPrograms(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
-  const programs = await AdmissionProgram.find({ orgId, branchId })
+  const programs = await AdmissionProgram.find(orgBranchScope({ orgId, branchId }))
     .sort({ sortOrder: 1, name: 1 })
     .lean();
   res.json({ success: true, data: programs });

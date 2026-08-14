@@ -112,6 +112,7 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
   ],
 
   assignments: [
+    { roles: ['group_admin'], actions: ['read'] },
     { roles: ['branch_principal'], actions: ['read'] },
     { roles: ['coordinator'], actions: ['read', 'mark'] },
     { roles: ['teacher'], actions: ['create', 'read', 'update', 'delete', 'mark'] },

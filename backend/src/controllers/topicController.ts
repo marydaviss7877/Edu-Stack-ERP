@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { SubjectTopic } from '../models/SubjectTopic';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createTopicValidators = [
   body('classId').isMongoId(),
@@ -14,7 +15,7 @@ export async function listTopics(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { subjectId, classId } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (subjectId) filter.subjectId = subjectId;
   if (classId) filter.classId = classId;
 

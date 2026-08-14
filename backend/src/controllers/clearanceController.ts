@@ -5,6 +5,7 @@ import { ClearanceExam } from '../models/ClearanceExam';
 import { Paper } from '../models/Paper';
 import { PaperResult } from '../models/PaperResult';
 import { Branch } from '../models/Branch';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ export async function listClearances(req: Request, res: Response): Promise<void>
   const { orgId, branchId, id: userId, role } = req.user!;
   const { status, month, year, classId, sectionId, studentId, subjectId } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (status) filter.status = status;
   if (month) filter.triggerMonth = Number(month);
   if (year) filter.triggerYear = Number(year);
@@ -174,7 +175,7 @@ export async function getClearanceSummary(req: Request, res: Response): Promise<
   const { orgId, branchId } = req.user!;
   const { month, year } = req.query;
 
-  const match: Record<string, unknown> = { orgId, branchId };
+  const match: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (month) match.triggerMonth = Number(month);
   if (year) match.triggerYear = Number(year);
 

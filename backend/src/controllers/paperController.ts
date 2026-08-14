@@ -4,6 +4,7 @@ import { Types, PipelineStage } from 'mongoose';
 import { Paper } from '../models/Paper';
 import { PaperResult } from '../models/PaperResult';
 import { Branch } from '../models/Branch';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createPaperValidators = [
   body('classId').isMongoId(),
@@ -39,7 +40,7 @@ export async function listPapers(req: Request, res: Response): Promise<void> {
   const { orgId, branchId, id: userId, role } = req.user!;
   const { subjectId, classId, sectionId, month, year, status } = req.query;
 
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (subjectId) filter.subjectId = subjectId;
   if (classId) filter.classId = classId;
   if (sectionId) filter.sectionId = sectionId;
@@ -168,8 +169,7 @@ export async function getWeakTopics(req: Request, res: Response): Promise<void> 
   const pipeline = [
     {
       $match: {
-        orgId,
-        branchId,
+        ...orgBranchScope({ orgId, branchId }),
         studentId: new Types.ObjectId(targetStudentId),
         isWeak: true,
         ...(subjectIdStr ? { subjectId: new Types.ObjectId(subjectIdStr) } : {}),
@@ -245,8 +245,7 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
   }
 
   const paperFilter: Record<string, unknown> = {
-    orgId,
-    branchId,
+    ...orgBranchScope({ orgId, branchId }),
     month: Number(month),
     year: Number(year),
     paperType: 'weekly',
@@ -264,11 +263,11 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
     return;
   }
 
-  const branch = await Branch.findOne({ _id: branchId, orgId }).lean();
+  const branch = branchId ? await Branch.findOne({ _id: branchId, orgId }).lean() : null;
   const weakThreshold = branch?.academicThresholds?.weakThreshold ?? 50;
 
   const agg = await PaperResult.aggregate([
-    { $match: { orgId, branchId, paperId: { $in: paperIds } } },
+    { $match: { ...orgBranchScope({ orgId, branchId }), paperId: { $in: paperIds } } },
     {
       $group: {
         _id: { studentId: '$studentId', subjectId: '$subjectId' },

@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Assignment } from '../models/Assignment';
 import { Submission } from '../models/Submission';
 import { getUploadUrl, getPublicUrl } from '../services/s3Service';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createAssignmentValidators = [
   body('title').trim().notEmpty(),
@@ -25,7 +26,7 @@ export async function createAssignment(req: Request, res: Response): Promise<voi
 export async function listAssignments(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { classId, sectionId, subjectId } = req.query;
-  const filter: Record<string, unknown> = { orgId, branchId, isActive: true };
+  const filter: Record<string, unknown> = { ...orgBranchScope({ orgId, branchId }), isActive: true };
   if (classId) filter.classId = classId;
   if (sectionId) filter.sectionId = sectionId;
   if (subjectId) filter.subjectId = subjectId;

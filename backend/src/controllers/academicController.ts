@@ -5,6 +5,7 @@ import { Class } from '../models/Class';
 import { Section } from '../models/Section';
 import { Subject } from '../models/Subject';
 import { Types } from 'mongoose';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 // ─── Academic Year ────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ export async function createAcademicYear(req: Request, res: Response): Promise<v
 
 export async function listAcademicYears(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
-  const years = await AcademicYear.find({ orgId, branchId }).sort({ startDate: -1 }).lean();
+  const years = await AcademicYear.find(orgBranchScope({ orgId, branchId })).sort({ startDate: -1 }).lean();
   res.json({ success: true, data: years });
 }
 
@@ -70,7 +71,7 @@ export async function createClass(req: Request, res: Response): Promise<void> {
 export async function listClasses(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { academicYearId } = req.query;
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (academicYearId) filter.academicYearId = academicYearId;
   const classes = await Class.find(filter).sort({ displayOrder: 1, name: 1 }).lean();
   res.json({ success: true, data: classes });
@@ -114,7 +115,7 @@ export async function createSection(req: Request, res: Response): Promise<void> 
 export async function listSections(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { classId } = req.query;
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (classId) filter.classId = classId;
   const sections = await Section.find(filter).sort({ name: 1 }).lean();
   res.json({ success: true, data: sections });
@@ -156,7 +157,7 @@ export async function createSubject(req: Request, res: Response): Promise<void> 
 
 export async function listSubjects(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
-  const subjects = await Subject.find({ orgId, branchId }).sort({ name: 1 }).lean();
+  const subjects = await Subject.find(orgBranchScope({ orgId, branchId })).sort({ name: 1 }).lean();
   res.json({ success: true, data: subjects });
 }
 

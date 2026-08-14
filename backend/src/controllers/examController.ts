@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Exam, IGradeThreshold } from '../models/Exam';
 import { Result } from '../models/Result';
 import { Student } from '../models/Student';
+import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createExamValidators = [
   body('name').trim().notEmpty(),
@@ -28,7 +29,7 @@ export async function createExam(req: Request, res: Response): Promise<void> {
 export async function listExams(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
   const { academicYearId } = req.query;
-  const filter: Record<string, unknown> = { orgId, branchId };
+  const filter: Record<string, unknown> = orgBranchScope({ orgId, branchId });
   if (academicYearId) filter.academicYearId = academicYearId;
   const exams = await Exam.find(filter).sort({ startDate: -1 }).lean();
   res.json({ success: true, data: exams });
