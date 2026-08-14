@@ -7,14 +7,15 @@ class AccountantService {
   final Dio _dio = DioClient.instance;
 
   // All challans (branch-wide, paginated)
-  Future<List<Challan>> getAllChallans({String? status, String? month, int page = 1}) async {
+  Future<List<Challan>> getAllChallans(
+      {String? status, String? month, int page = 1}) async {
     final res = await _dio.get(
       ApiConstants.fees,
       queryParameters: {
-        'page':  page,
+        'page': page,
         'limit': 30,
         if (status != null) 'status': status,
-        if (month != null)  'month':  month,
+        if (month != null) 'month': month,
       },
     );
     final data = res.data as Map<String, dynamic>;
@@ -27,7 +28,8 @@ class AccountantService {
   // Monthly collection summary
   Future<Map<String, dynamic>> getMonthlySummary(String month) async {
     try {
-      final res  = await _dio.get('${ApiConstants.fees}/summary', queryParameters: {'month': month});
+      final res = await _dio.get('${ApiConstants.fees}/summary',
+          queryParameters: {'month': month});
       final data = res.data as Map<String, dynamic>;
       if (data['success'] == true) return data['data'] as Map<String, dynamic>;
     } catch (_) {}
@@ -44,7 +46,7 @@ class AccountantService {
     await _dio.post(
       '${ApiConstants.fees}/$challanId/payment',
       data: {
-        'amount':        amount,
+        'amount': amount,
         'paymentMethod': paymentMethod,
         if (referenceNo != null) 'referenceNo': referenceNo,
       },
@@ -54,7 +56,7 @@ class AccountantService {
   // Overdue challans count
   Future<int> getOverdueCount() async {
     try {
-      final res  = await _dio.get('${ApiConstants.fees}/overdue-count');
+      final res = await _dio.get('${ApiConstants.fees}/overdue-count');
       final data = res.data as Map<String, dynamic>;
       return (data['data']?['count'] as int?) ?? 0;
     } catch (_) {
@@ -65,7 +67,7 @@ class AccountantService {
   // Fee collection dashboard stats
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
-      final res  = await _dio.get('${ApiConstants.fees}/dashboard-stats');
+      final res = await _dio.get('${ApiConstants.fees}/dashboard-stats');
       final data = res.data as Map<String, dynamic>;
       if (data['success'] == true) return data['data'] as Map<String, dynamic>;
     } catch (_) {}

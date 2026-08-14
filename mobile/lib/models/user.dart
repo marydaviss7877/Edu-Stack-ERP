@@ -18,35 +18,44 @@ class AppUser {
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
-        id:              json['id']?.toString() ?? json['_id']?.toString() ?? '',
-        name:            json['name'] as String,
-        email:           json['email'] as String,
-        role:            json['role'] as String,
-        orgId:           json['orgId']?.toString(),
-        branchId:        json['branchId']?.toString(),
+        id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+        name: json['name'] as String,
+        email: json['email'] as String,
+        role: json['role'] as String,
+        orgId: json['orgId']?.toString(),
+        branchId: json['branchId']?.toString(),
         profilePhotoUrl: json['profilePhotoUrl'] as String?,
       );
 
-  bool get isStudent        => role == 'student';
-  bool get isTeacher        => role == 'teacher';
-  bool get isPrincipal      => role == 'branch_principal';
-  bool get isCoordinator    => role == 'coordinator';
-  bool get isAccountant     => role == 'accountant';
-  bool get isItAdmin        => role == 'it_admin';
-  bool get isGroupAdmin     => role == 'group_admin';
-  bool get isSuperAdmin     => role == 'super_admin';
+  bool get isStudent => role == 'student';
+  bool get isTeacher => role == 'teacher';
+  bool get isPrincipal => role == 'branch_principal';
+  bool get isCoordinator => role == 'coordinator';
+  bool get isAccountant => role == 'accountant';
+  bool get isItAdmin => role == 'it_admin';
+  bool get isGroupAdmin => role == 'group_admin';
+  bool get isSuperAdmin => role == 'super_admin';
 
   String get homeRoute {
     switch (role) {
-      case 'student':          return '/student';
-      case 'teacher':          return '/teacher';
-      case 'branch_principal': return '/principal';
-      case 'coordinator':      return '/coordinator';
-      case 'accountant':       return '/accountant';
-      case 'it_admin':         return '/it-admin';
-      case 'group_admin':      return '/group';
-      case 'super_admin':      return '/admin';
-      default:                 return '/login';
+      case 'student':
+        return '/student';
+      case 'teacher':
+        return '/teacher';
+      case 'branch_principal':
+        return '/principal';
+      case 'coordinator':
+        return '/coordinator';
+      case 'accountant':
+        return '/accountant';
+      case 'it_admin':
+        return '/it-admin';
+      case 'group_admin':
+        return '/group';
+      case 'super_admin':
+        return '/admin';
+      default:
+        return '/login';
     }
   }
 }

@@ -51,7 +51,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: scheme.outlineVariant.withOpacity(0.5)),
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         color: scheme.surface,
       ),
@@ -62,7 +62,8 @@ class AppTheme {
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           elevation: 0,
         ),
@@ -71,20 +72,21 @@ class AppTheme {
       // Input fields
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest.withOpacity(0.5),
+        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.outline.withOpacity(0.3)),
+          borderSide: BorderSide(color: scheme.outline.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         labelStyle: TextStyle(color: scheme.onSurfaceVariant),
       ),
 
@@ -107,7 +109,7 @@ class AppTheme {
 
       // Divider
       dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant.withOpacity(0.5),
+        color: scheme.outlineVariant.withValues(alpha: 0.5),
         thickness: 1,
         space: 1,
       ),

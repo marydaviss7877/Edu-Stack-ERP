@@ -14,18 +14,19 @@ class OrgConfig {
   });
 
   factory OrgConfig.fromJson(Map<String, dynamic> json) => OrgConfig(
-        slug:          json['slug'] as String,
-        name:          json['name'] as String,
-        logoUrl:       json['logoUrl'] as String?,
-        primaryColor:  (json['settings']?['primaryColor'] as String?) ?? '#1e3a5f',
+        slug: json['slug'] as String,
+        name: json['name'] as String,
+        logoUrl: json['logoUrl'] as String?,
+        primaryColor:
+            (json['settings']?['primaryColor'] as String?) ?? '#1e3a5f',
         mobileEnabled: (json['mobile']?['enabled'] as bool?) ?? true,
       );
 
   /// Parse from QR payload (base64-encoded JSON from backend)
   factory OrgConfig.fromQrPayload(Map<String, dynamic> json) => OrgConfig(
-        slug:         json['slug'] as String,
-        name:         json['name'] as String,
-        logoUrl:      json['logoUrl'] as String?,
+        slug: json['slug'] as String,
+        name: json['name'] as String,
+        logoUrl: json['logoUrl'] as String?,
         primaryColor: (json['primaryColor'] as String?) ?? '#1e3a5f',
       );
 }

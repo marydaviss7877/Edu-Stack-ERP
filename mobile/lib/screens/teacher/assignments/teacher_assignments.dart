@@ -29,7 +29,9 @@ class TeacherAssignments extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(e.toString(), textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: () => ref.invalidate(teacherAssignmentsProvider), child: const Text('Retry')),
+              ElevatedButton(
+                  onPressed: () => ref.invalidate(teacherAssignmentsProvider),
+                  child: const Text('Retry')),
             ],
           ),
         ),
@@ -39,11 +41,13 @@ class TeacherAssignments extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.assignment_rounded, size: 56, color: cs.outlineVariant),
+                  Icon(Icons.assignment_rounded,
+                      size: 56, color: cs.outlineVariant),
                   const SizedBox(height: 12),
                   const Text('No assignments created yet.'),
                   const SizedBox(height: 8),
-                  const Text('Tap + to create your first assignment.', style: TextStyle(fontSize: 12)),
+                  const Text('Tap + to create your first assignment.',
+                      style: TextStyle(fontSize: 12)),
                 ],
               ),
             );
@@ -57,7 +61,8 @@ class TeacherAssignments extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, i) => _TeacherAssignmentCard(
                 assignment: assignments[i],
-                onViewSubmissions: () => _showSubmissions(context, ref, assignments[i].id),
+                onViewSubmissions: () =>
+                    _showSubmissions(context, ref, assignments[i].id),
               ),
             ),
           );
@@ -78,7 +83,8 @@ class TeacherAssignments extends ConsumerWidget {
     );
   }
 
-  void _showSubmissions(BuildContext context, WidgetRef ref, String assignmentId) {
+  void _showSubmissions(
+      BuildContext context, WidgetRef ref, String assignmentId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -90,14 +96,15 @@ class TeacherAssignments extends ConsumerWidget {
 }
 
 class _TeacherAssignmentCard extends StatelessWidget {
-  const _TeacherAssignmentCard({required this.assignment, required this.onViewSubmissions});
+  const _TeacherAssignmentCard(
+      {required this.assignment, required this.onViewSubmissions});
   final Assignment assignment;
   final VoidCallback onViewSubmissions;
 
   @override
   Widget build(BuildContext context) {
-    final cs   = Theme.of(context).colorScheme;
-    final tt   = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final days = assignment.daysLeft;
     final overdue = assignment.isOverdue;
 
@@ -110,21 +117,30 @@ class _TeacherAssignmentCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: cs.secondaryContainer, borderRadius: BorderRadius.circular(4)),
-                  child: Text(assignment.subjectName, style: tt.labelSmall?.copyWith(color: cs.onSecondaryContainer)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: cs.secondaryContainer,
+                      borderRadius: BorderRadius.circular(4)),
+                  child: Text(assignment.subjectName,
+                      style: tt.labelSmall
+                          ?.copyWith(color: cs.onSecondaryContainer)),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: overdue ? cs.errorContainer : cs.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    overdue ? 'Closed' : '$days day${days == 1 ? '' : 's'} left',
+                    overdue
+                        ? 'Closed'
+                        : '$days day${days == 1 ? '' : 's'} left',
                     style: tt.labelSmall?.copyWith(
-                      color: overdue ? cs.onErrorContainer : cs.onPrimaryContainer,
+                      color:
+                          overdue ? cs.onErrorContainer : cs.onPrimaryContainer,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -132,7 +148,8 @@ class _TeacherAssignmentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(assignment.title, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(assignment.title,
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             Text(
               assignment.description,
@@ -143,7 +160,8 @@ class _TeacherAssignmentCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.calendar_today_rounded, size: 13, color: cs.onSurfaceVariant),
+                Icon(Icons.calendar_today_rounded,
+                    size: 13, color: cs.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   'Due: ${DateFormat('d MMM yyyy').format(assignment.dueDate)}',
@@ -151,16 +169,20 @@ class _TeacherAssignmentCard extends StatelessWidget {
                 ),
                 if (assignment.totalMarks != null) ...[
                   const SizedBox(width: 10),
-                  Icon(Icons.star_outline_rounded, size: 13, color: cs.onSurfaceVariant),
+                  Icon(Icons.star_outline_rounded,
+                      size: 13, color: cs.onSurfaceVariant),
                   const SizedBox(width: 4),
-                  Text('${assignment.totalMarks!.toStringAsFixed(0)} marks', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  Text('${assignment.totalMarks!.toStringAsFixed(0)} marks',
+                      style:
+                          tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                 ],
                 const Spacer(),
                 TextButton.icon(
                   onPressed: onViewSubmissions,
                   icon: const Icon(Icons.people_rounded, size: 16),
                   label: const Text('Submissions'),
-                  style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                  style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
                 ),
               ],
             ),
@@ -176,17 +198,19 @@ class _CreateAssignmentSheet extends ConsumerStatefulWidget {
   final VoidCallback onCreated;
 
   @override
-  ConsumerState<_CreateAssignmentSheet> createState() => _CreateAssignmentSheetState();
+  ConsumerState<_CreateAssignmentSheet> createState() =>
+      _CreateAssignmentSheetState();
 }
 
-class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> {
-  final _formKey    = GlobalKey<FormState>();
-  final _titleCtrl  = TextEditingController();
-  final _descCtrl   = TextEditingController();
-  final _marksCtrl  = TextEditingController();
+class _CreateAssignmentSheetState
+    extends ConsumerState<_CreateAssignmentSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _marksCtrl = TextEditingController();
   DateTime? _dueDate;
-  String?  _subjectId;
-  bool     _submitting = false;
+  String? _subjectId;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -199,7 +223,8 @@ class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_dueDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a due date.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a due date.')));
       return;
     }
 
@@ -207,10 +232,10 @@ class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> 
     try {
       final svc = ref.read(assignmentServiceProvider);
       await svc.createAssignment({
-        'title':       _titleCtrl.text.trim(),
+        'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
-        'dueDate':     _dueDate!.toIso8601String(),
-        'totalMarks':  double.tryParse(_marksCtrl.text.trim()),
+        'dueDate': _dueDate!.toIso8601String(),
+        'totalMarks': double.tryParse(_marksCtrl.text.trim()),
         if (_subjectId != null) 'subjectId': _subjectId,
       });
       if (mounted) {
@@ -219,7 +244,8 @@ class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> 
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       setState(() => _submitting = false);
@@ -238,25 +264,36 @@ class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> 
           controller: ctrl,
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
           children: [
-            Text('New Assignment', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            Text('New Assignment',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             TextFormField(
               controller: _titleCtrl,
-              decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+              decoration: const InputDecoration(
+                  labelText: 'Title', border: OutlineInputBorder()),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+              decoration: const InputDecoration(
+                  labelText: 'Description', border: OutlineInputBorder()),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _marksCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Total Marks (optional)', border: OutlineInputBorder()),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                  labelText: 'Total Marks (optional)',
+                  border: OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -270,12 +307,16 @@ class _CreateAssignmentSheetState extends ConsumerState<_CreateAssignmentSheet> 
                 if (picked != null) setState(() => _dueDate = picked);
               },
               icon: const Icon(Icons.calendar_today_rounded),
-              label: Text(_dueDate == null ? 'Set Due Date' : 'Due: ${DateFormat('d MMM yyyy').format(_dueDate!)}'),
+              label: Text(_dueDate == null
+                  ? 'Set Due Date'
+                  : 'Due: ${DateFormat('d MMM yyyy').format(_dueDate!)}'),
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _submitting ? null : _submit,
-              child: _submitting ? const CircularProgressIndicator() : const Text('Create Assignment'),
+              child: _submitting
+                  ? const CircularProgressIndicator()
+                  : const Text('Create Assignment'),
             ),
           ],
         ),
@@ -298,7 +339,8 @@ class _SubmissionsSheet extends ConsumerWidget {
       initialChildSize: 0.7,
       maxChildSize: 0.95,
       builder: (_, ctrl) => FutureBuilder<List<Map<String, dynamic>>>(
-        future: ref.read(assignmentServiceProvider).getSubmissions(assignmentId),
+        future:
+            ref.read(assignmentServiceProvider).getSubmissions(assignmentId),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -325,27 +367,39 @@ class _SubmissionsSheet extends ConsumerWidget {
             itemCount: submissions.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (_, i) {
-              final s        = submissions[i];
-              final student  = s['studentId'];
-              final profile  = student is Map ? student['profile'] as Map? : null;
-              final name     = (profile?['name'] as String?) ?? 'Unknown';
+              final s = submissions[i];
+              final student = s['studentId'];
+              final profile =
+                  student is Map ? student['profile'] as Map? : null;
+              final name = (profile?['name'] as String?) ?? 'Unknown';
               final submittedAt = s['submittedAt'] as String?;
-              final grade  = s['grade'] as String?;
+              final grade = s['grade'] as String?;
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: cs.primaryContainer,
                   child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          color: cs.onPrimaryContainer,
+                          fontWeight: FontWeight.bold)),
                 ),
-                title: Text(name, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                title: Text(name,
+                    style:
+                        tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                 subtitle: submittedAt != null
-                    ? Text('Submitted ${DateFormat('d MMM').format(DateTime.parse(submittedAt))}')
+                    ? Text(
+                        'Submitted ${DateFormat('d MMM').format(DateTime.parse(submittedAt))}')
                     : null,
                 trailing: grade != null
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(8)),
-                        child: Text(grade, style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: cs.primaryContainer,
+                            borderRadius: BorderRadius.circular(8)),
+                        child: Text(grade,
+                            style: TextStyle(
+                                color: cs.onPrimaryContainer,
+                                fontWeight: FontWeight.bold)),
                       )
                     : null,
               );

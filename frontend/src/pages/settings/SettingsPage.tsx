@@ -31,6 +31,11 @@ export default function SettingsPage() {
       periodsPerDay: 8,
       workingDays: [1, 2, 3, 4, 5],
     },
+    academicThresholds: {
+      weakThreshold: 50,
+      failingThreshold: 40,
+      clearancePassMark: 40,
+    },
   });
 
   const [saved, setSaved] = useState(false);
@@ -48,6 +53,11 @@ export default function SettingsPage() {
           attendanceThreshold: data.settings?.attendanceThreshold ?? 75,
           periodsPerDay: data.settings?.periodsPerDay ?? 8,
           workingDays: data.settings?.workingDays ?? [1, 2, 3, 4, 5],
+        },
+        academicThresholds: {
+          weakThreshold: data.academicThresholds?.weakThreshold ?? 50,
+          failingThreshold: data.academicThresholds?.failingThreshold ?? 40,
+          clearancePassMark: data.academicThresholds?.clearancePassMark ?? 40,
         },
       });
     }
@@ -193,6 +203,60 @@ export default function SettingsPage() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">0 = Sunday, 6 = Saturday</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Weak-Topic & Clearance Thresholds */}
+          <div className={cardCls}>
+            <h2 className={headingCls}>Weak-Topic &amp; Clearance Thresholds</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Weak Threshold</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">Below this % on a weekly test flags the topic as weak</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min={0} max={100}
+                    className="w-20 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.academicThresholds.weakThreshold}
+                    onChange={e => setForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, weakThreshold: Number(e.target.value) } }))}
+                  />
+                  <span className="text-sm text-gray-500 dark:text-slate-400">%</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Failing Threshold</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">Below this monthly average triggers an automatic clearance exam</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min={0} max={100}
+                    className="w-20 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.academicThresholds.failingThreshold}
+                    onChange={e => setForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, failingThreshold: Number(e.target.value) } }))}
+                  />
+                  <span className="text-sm text-gray-500 dark:text-slate-400">%</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Clearance Pass Mark</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">Minimum % to pass a clearance exam and clear the weak flag</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min={0} max={100}
+                    className="w-20 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm text-center bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.academicThresholds.clearancePassMark}
+                    onChange={e => setForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, clearancePassMark: Number(e.target.value) } }))}
+                  />
+                  <span className="text-sm text-gray-500 dark:text-slate-400">%</span>
+                </div>
               </div>
             </div>
           </div>

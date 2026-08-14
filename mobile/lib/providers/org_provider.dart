@@ -10,18 +10,18 @@ class OrgNotifier extends StateNotifier<OrgConfig?> {
     final name = LocalStorageService.orgName;
     if (slug == null || name == null) return null;
     return OrgConfig(
-      slug:         slug,
-      name:         name,
-      logoUrl:      LocalStorageService.orgLogoUrl,
+      slug: slug,
+      name: name,
+      logoUrl: LocalStorageService.orgLogoUrl,
       primaryColor: LocalStorageService.orgPrimaryColor,
     );
   }
 
   void setOrg(OrgConfig org) {
     LocalStorageService.saveOrg(
-      slug:         org.slug,
-      name:         org.name,
-      logoUrl:      org.logoUrl,
+      slug: org.slug,
+      name: org.name,
+      logoUrl: org.logoUrl,
       primaryColor: org.primaryColor,
     );
     state = org;

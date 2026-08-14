@@ -29,7 +29,8 @@ final todayPeriodsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(teacherServiceProvider).getTodayPeriods();
 });
 
-final teacherDashboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) {
+final teacherDashboardStatsProvider =
+    FutureProvider<Map<String, dynamic>>((ref) {
   return ref.watch(teacherServiceProvider).getDashboardStats();
 });
 
@@ -38,7 +39,8 @@ final activeExamsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
 });
 
 // Students for a class/section — family provider keyed by 'classId:sectionId'
-final classStudentsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, key) {
+final classStudentsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, key) {
   final parts = key.split(':');
   if (parts.length != 2) return Future.value([]);
   return ref.watch(teacherServiceProvider).getStudents(parts[0], parts[1]);

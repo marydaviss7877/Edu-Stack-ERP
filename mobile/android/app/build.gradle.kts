@@ -17,7 +17,7 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "enterprises.tws.edustack"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
     buildToolsVersion = "35.0.0"
 

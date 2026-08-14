@@ -9,7 +9,7 @@ class AdminService {
 
   Future<Map<String, dynamic>> getOrgStats() async {
     try {
-      final res  = await _dio.get('/admin/stats');
+      final res = await _dio.get('/admin/stats');
       final data = res.data as Map<String, dynamic>;
       if (data['success'] == true) return data['data'] as Map<String, dynamic>;
     } catch (_) {}
@@ -18,10 +18,15 @@ class AdminService {
 
   // ── User management ───────────────────────────────────────
 
-  Future<List<Map<String, dynamic>>> getUsers({String? role, int page = 1}) async {
+  Future<List<Map<String, dynamic>>> getUsers(
+      {String? role, int page = 1}) async {
     final res = await _dio.get(
       '/users',
-      queryParameters: {'page': page, 'limit': 20, if (role != null) 'role': role},
+      queryParameters: {
+        'page': page,
+        'limit': 20,
+        if (role != null) 'role': role
+      },
     );
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load users');
@@ -35,7 +40,8 @@ class AdminService {
   // ── QR code ───────────────────────────────────────────────
 
   Future<String> generateQrCode(String orgId) async {
-    final res  = await _dio.post('${ApiConstants.generateQr}/$orgId/generate-qr');
+    final res =
+        await _dio.post('${ApiConstants.generateQr}/$orgId/generate-qr');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to generate QR');
     return data['data']['qrData'] as String;
@@ -44,7 +50,7 @@ class AdminService {
   // ── Branches ─────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> getBranches() async {
-    final res  = await _dio.get('/branches');
+    final res = await _dio.get('/branches');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) return [];
     return (data['data'] as List).cast<Map<String, dynamic>>();
@@ -53,7 +59,7 @@ class AdminService {
   // ── Super Admin: all orgs ─────────────────────────────────
 
   Future<List<Map<String, dynamic>>> getAllOrgs() async {
-    final res  = await _dio.get('/organizations');
+    final res = await _dio.get('/organizations');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) return [];
     return (data['data'] as List).cast<Map<String, dynamic>>();

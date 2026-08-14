@@ -66,11 +66,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
     refreshListenable: _RouterNotifier(ref),
-
     redirect: (context, state) {
       final authState = ref.read(authProvider);
-      final org       = ref.read(orgProvider);
-      final path      = state.matchedLocation;
+      final org = ref.read(orgProvider);
+      final path = state.matchedLocation;
 
       // Onboarding is never blocked by session loading
       if (path.startsWith('/onboarding')) {
@@ -82,13 +81,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Wait for session check before making auth decisions
       if (authState.isLoading) return null;
 
-      final hasOrg   = org != null;
+      final hasOrg = org != null;
       final isAuthed = authState.isAuthenticated;
 
       if (!hasOrg) return '/onboarding/scan';
 
       if (!isAuthed) {
-        if (path.startsWith('/login') || path.startsWith('/change-password')) return null;
+        if (path.startsWith('/login') || path.startsWith('/change-password')) {
+          return null;
+        }
         return '/login';
       }
 
@@ -99,31 +100,48 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       return null;
     },
-
     routes: [
       // ── Onboarding ─────────────────────────────────────────
-      GoRoute(path: '/onboarding/scan', builder: (_, __) => const QrScannerScreen()),
+      GoRoute(
+          path: '/onboarding/scan',
+          builder: (_, __) => const QrScannerScreen()),
       GoRoute(
         path: '/onboarding/confirm',
         builder: (_, state) => OrgConfirmScreen(org: state.extra as OrgConfig),
       ),
 
       // ── Auth ───────────────────────────────────────────────
-      GoRoute(path: '/login',           builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/change-password', builder: (_, __) => const ChangePasswordScreen()),
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(
+          path: '/change-password',
+          builder: (_, __) => const ChangePasswordScreen()),
 
       // ── Student ────────────────────────────────────────────
       ShellRoute(
         builder: (_, __, child) => StudentShell(child: child),
         routes: [
-          GoRoute(path: '/student',               builder: (_, __) => const StudentDashboard()),
-          GoRoute(path: '/student/timetable',     builder: (_, __) => const StudentTimetable()),
-          GoRoute(path: '/student/results',       builder: (_, __) => const ResultsScreen()),
-          GoRoute(path: '/student/attendance',    builder: (_, __) => const MyAttendance()),
-          GoRoute(path: '/student/assignments',   builder: (_, __) => const MyAssignments()),
-          GoRoute(path: '/student/fees',          builder: (_, __) => const MyChallans()),
-          GoRoute(path: '/student/class-fellows', builder: (_, __) => const ClassFellowsScreen()),
-          GoRoute(path: '/student/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/student', builder: (_, __) => const StudentDashboard()),
+          GoRoute(
+              path: '/student/timetable',
+              builder: (_, __) => const StudentTimetable()),
+          GoRoute(
+              path: '/student/results',
+              builder: (_, __) => const ResultsScreen()),
+          GoRoute(
+              path: '/student/attendance',
+              builder: (_, __) => const MyAttendance()),
+          GoRoute(
+              path: '/student/assignments',
+              builder: (_, __) => const MyAssignments()),
+          GoRoute(
+              path: '/student/fees', builder: (_, __) => const MyChallans()),
+          GoRoute(
+              path: '/student/class-fellows',
+              builder: (_, __) => const ClassFellowsScreen()),
+          GoRoute(
+              path: '/student/notifications',
+              builder: (_, __) => const NotificationsScreen()),
         ],
       ),
 
@@ -131,24 +149,33 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => TeacherShell(child: child),
         routes: [
-          GoRoute(path: '/teacher',              builder: (_, __) => const TeacherDashboard()),
-          GoRoute(path: '/teacher/attendance',   builder: (_, __) => const SelectClassScreen()),
+          GoRoute(
+              path: '/teacher', builder: (_, __) => const TeacherDashboard()),
+          GoRoute(
+              path: '/teacher/attendance',
+              builder: (_, __) => const SelectClassScreen()),
           GoRoute(
             path: '/teacher/attendance/mark',
             builder: (_, state) {
               final extra = state.extra as Map<String, dynamic>? ?? {};
               return MarkAttendanceScreen(
-                classId:     extra['classId'] as String? ?? '',
-                sectionId:   extra['sectionId'] as String? ?? '',
-                className:   extra['className'] as String? ?? '',
+                classId: extra['classId'] as String? ?? '',
+                sectionId: extra['sectionId'] as String? ?? '',
+                className: extra['className'] as String? ?? '',
                 sectionName: extra['sectionName'] as String? ?? '',
                 subjectName: extra['subjectName'] as String? ?? '',
               );
             },
           ),
-          GoRoute(path: '/teacher/marks',        builder: (_, __) => const EnterMarksScreen()),
-          GoRoute(path: '/teacher/assignments',  builder: (_, __) => const TeacherAssignments()),
-          GoRoute(path: '/teacher/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/teacher/marks',
+              builder: (_, __) => const EnterMarksScreen()),
+          GoRoute(
+              path: '/teacher/assignments',
+              builder: (_, __) => const TeacherAssignments()),
+          GoRoute(
+              path: '/teacher/notifications',
+              builder: (_, __) => const NotificationsScreen()),
         ],
       ),
 
@@ -156,10 +183,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => PrincipalShell(child: child),
         routes: [
-          GoRoute(path: '/principal',               builder: (_, __) => const PrincipalDashboard()),
-          GoRoute(path: '/principal/attendance',    builder: (_, __) => const PrincipalAttendanceReport()),
-          GoRoute(path: '/principal/results',       builder: (_, __) => const ResultsScreen()),
-          GoRoute(path: '/principal/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/principal',
+              builder: (_, __) => const PrincipalDashboard()),
+          GoRoute(
+              path: '/principal/attendance',
+              builder: (_, __) => const PrincipalAttendanceReport()),
+          GoRoute(
+              path: '/principal/results',
+              builder: (_, __) => const ResultsScreen()),
+          GoRoute(
+              path: '/principal/notifications',
+              builder: (_, __) => const NotificationsScreen()),
         ],
       ),
 
@@ -167,10 +202,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => CoordinatorShell(child: child),
         routes: [
-          GoRoute(path: '/coordinator',               builder: (_, __) => const CoordinatorDashboard()),
-          GoRoute(path: '/coordinator/attendance',    builder: (_, __) => const PrincipalAttendanceReport()),
-          GoRoute(path: '/coordinator/timetable',     builder: (_, __) => const StudentTimetable()),
-          GoRoute(path: '/coordinator/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/coordinator',
+              builder: (_, __) => const CoordinatorDashboard()),
+          GoRoute(
+              path: '/coordinator/attendance',
+              builder: (_, __) => const PrincipalAttendanceReport()),
+          GoRoute(
+              path: '/coordinator/timetable',
+              builder: (_, __) => const StudentTimetable()),
+          GoRoute(
+              path: '/coordinator/notifications',
+              builder: (_, __) => const NotificationsScreen()),
         ],
       ),
 
@@ -178,10 +221,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => AccountantShell(child: child),
         routes: [
-          GoRoute(path: '/accountant',               builder: (_, __) => const AccountantDashboard()),
-          GoRoute(path: '/accountant/challans',      builder: (_, __) => const _AccountantChallansPlaceholder()),
-          GoRoute(path: '/accountant/reports',       builder: (_, __) => const _AccountantReportsPlaceholder()),
-          GoRoute(path: '/accountant/notifications', builder: (_, __) => const NotificationsScreen()),
+          GoRoute(
+              path: '/accountant',
+              builder: (_, __) => const AccountantDashboard()),
+          GoRoute(
+              path: '/accountant/challans',
+              builder: (_, __) => const _AccountantChallansPlaceholder()),
+          GoRoute(
+              path: '/accountant/reports',
+              builder: (_, __) => const _AccountantReportsPlaceholder()),
+          GoRoute(
+              path: '/accountant/notifications',
+              builder: (_, __) => const NotificationsScreen()),
         ],
       ),
 
@@ -189,10 +240,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => GroupAdminShell(child: child),
         routes: [
-          GoRoute(path: '/group',           builder: (_, __) => const AdminDashboard(isSuperAdmin: false)),
-          GoRoute(path: '/group/users',     builder: (_, __) => const UserManagementScreen()),
-          GoRoute(path: '/group/qr',        builder: (_, __) => const GenerateQrScreen()),
-          GoRoute(path: '/group/settings',  builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: '/group',
+              builder: (_, __) => const AdminDashboard(isSuperAdmin: false)),
+          GoRoute(
+              path: '/group/users',
+              builder: (_, __) => const UserManagementScreen()),
+          GoRoute(
+              path: '/group/qr', builder: (_, __) => const GenerateQrScreen()),
+          GoRoute(
+              path: '/group/settings',
+              builder: (_, __) => const SettingsScreen()),
         ],
       ),
 
@@ -200,20 +258,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => AdminShell(child: child),
         routes: [
-          GoRoute(path: '/admin',          builder: (_, __) => const AdminDashboard(isSuperAdmin: true)),
-          GoRoute(path: '/admin/users',    builder: (_, __) => const UserManagementScreen()),
-          GoRoute(path: '/admin/qr',       builder: (_, __) => const GenerateQrScreen()),
-          GoRoute(path: '/admin/settings', builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: '/admin',
+              builder: (_, __) => const AdminDashboard(isSuperAdmin: true)),
+          GoRoute(
+              path: '/admin/users',
+              builder: (_, __) => const UserManagementScreen()),
+          GoRoute(
+              path: '/admin/qr', builder: (_, __) => const GenerateQrScreen()),
+          GoRoute(
+              path: '/admin/settings',
+              builder: (_, __) => const SettingsScreen()),
         ],
       ),
 
       // ── IT Admin (maps to admin dashboard with limited tabs) ──
-      GoRoute(path: '/it-admin', builder: (_, __) => const AdminDashboard(isSuperAdmin: false)),
+      GoRoute(
+          path: '/it-admin',
+          builder: (_, __) => const AdminDashboard(isSuperAdmin: false)),
 
       // ── Shared ─────────────────────────────────────────────
-      GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
-      GoRoute(path: '/settings',    builder: (_, __) => const SettingsScreen()),
-      GoRoute(path: '/no-internet', builder: (_, __) => const NoInternetScreen()),
+      GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(
+          path: '/no-internet', builder: (_, __) => const NoInternetScreen()),
     ],
   );
 });
@@ -223,24 +291,24 @@ class _AccountantChallansPlaceholder extends StatelessWidget {
   const _AccountantChallansPlaceholder();
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Fee Challans')),
-    body: const Center(child: Text('All challans — Sprint 14')),
-  );
+        appBar: AppBar(title: const Text('Fee Challans')),
+        body: const Center(child: Text('All challans — Sprint 14')),
+      );
 }
 
 class _AccountantReportsPlaceholder extends StatelessWidget {
   const _AccountantReportsPlaceholder();
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Financial Reports')),
-    body: const Center(child: Text('Monthly reports — Sprint 14')),
-  );
+        appBar: AppBar(title: const Text('Financial Reports')),
+        body: const Center(child: Text('Monthly reports — Sprint 14')),
+      );
 }
 
 /// Makes GoRouter re-evaluate redirects on auth/org state changes
 class _RouterNotifier extends ChangeNotifier {
   _RouterNotifier(Ref ref) {
     ref.listen(authProvider, (_, __) => notifyListeners());
-    ref.listen(orgProvider,  (_, __) => notifyListeners());
+    ref.listen(orgProvider, (_, __) => notifyListeners());
   }
 }

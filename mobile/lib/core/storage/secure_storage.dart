@@ -17,8 +17,10 @@ class SecureStorageService {
     ]);
   }
 
-  Future<String?> getAccessToken()  => _storage.read(key: StorageKeys.accessToken);
-  Future<String?> getRefreshToken() => _storage.read(key: StorageKeys.refreshToken);
+  Future<String?> getAccessToken() =>
+      _storage.read(key: StorageKeys.accessToken);
+  Future<String?> getRefreshToken() =>
+      _storage.read(key: StorageKeys.refreshToken);
 
   Future<void> saveFcmToken(String token) =>
       _storage.write(key: StorageKeys.fcmToken, value: token);

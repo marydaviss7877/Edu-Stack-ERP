@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import '../../core/layout/responsive.dart';
+
 class TeacherShell extends StatelessWidget {
   final Widget child;
   const TeacherShell({super.key, required this.child});
@@ -38,13 +40,15 @@ class TeacherShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: AdaptiveNavigationBar(
         selectedIndex: current,
         onDestinationSelected: (i) => context.go(_paths[i]),
-        destinations: List.generate(_paths.length, (i) => NavigationDestination(
-          icon: Icon(_icons[i]),
-          label: labels[i],
-        )),
+        items: List.generate(
+            _paths.length,
+            (i) => AppNavigationItem(
+                  icon: _icons[i],
+                  label: labels[i],
+                )),
       ),
     );
   }

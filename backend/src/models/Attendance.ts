@@ -45,7 +45,7 @@ const attendanceSchema = new Schema<IAttendance>(
 
 attendanceSchema.index({ orgId: 1, branchId: 1, date: -1 });
 attendanceSchema.index({ orgId: 1, branchId: 1, classId: 1, sectionId: 1, date: -1 });
-attendanceSchema.index({ orgId: 1, branchId: 1, classId: 1, date: -1, periodNo: 1 }, { unique: true });
+attendanceSchema.index({ orgId: 1, branchId: 1, classId: 1, sectionId: 1, date: -1, periodNo: 1 }, { unique: true });
 
 import { tenantPlugin } from '../utils/tenantPlugin';
 attendanceSchema.plugin(tenantPlugin);

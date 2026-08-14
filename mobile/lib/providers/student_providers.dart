@@ -16,13 +16,13 @@ import '../models/student_profile.dart';
 
 // ── Service singletons ───────────────────────────────────────────────
 
-final studentServiceProvider      = Provider((_) => StudentService());
-final timetableServiceProvider    = Provider((_) => TimetableService());
-final examServiceProvider         = Provider((_) => ExamService());
-final attendanceServiceProvider   = Provider((_) => AttendanceService());
-final feeServiceProvider          = Provider((_) => FeeService());
+final studentServiceProvider = Provider((_) => StudentService());
+final timetableServiceProvider = Provider((_) => TimetableService());
+final examServiceProvider = Provider((_) => ExamService());
+final attendanceServiceProvider = Provider((_) => AttendanceService());
+final feeServiceProvider = Provider((_) => FeeService());
 final notificationServiceProvider = Provider((_) => NotificationService());
-final assignmentServiceProvider   = Provider((_) => AssignmentService());
+final assignmentServiceProvider = Provider((_) => AssignmentService());
 
 // ── Student data providers ───────────────────────────────────────────
 
@@ -59,7 +59,8 @@ final myAttendanceSummaryProvider = FutureProvider<AttendanceSummary>((ref) {
 });
 
 // month: 'YYYY-MM' string or null for all records
-final myAttendanceProvider = FutureProvider.family<List<AttendanceRecord>, String?>((ref, month) {
+final myAttendanceProvider =
+    FutureProvider.family<List<AttendanceRecord>, String?>((ref, month) {
   return ref.watch(attendanceServiceProvider).getMyAttendance(month: month);
 });
 
@@ -76,7 +77,9 @@ final myAssignmentsProvider = FutureProvider<List<Assignment>>((ref) {
 });
 
 final pendingAssignmentsProvider = FutureProvider<List<Assignment>>((ref) {
-  return ref.watch(assignmentServiceProvider).getMyAssignments(pendingOnly: true);
+  return ref
+      .watch(assignmentServiceProvider)
+      .getMyAssignments(pendingOnly: true);
 });
 
 final classFellowsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {

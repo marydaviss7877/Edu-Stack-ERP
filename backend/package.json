@@ -11,7 +11,11 @@
     "test:watch": "jest --watch",
     "lint": "tsc --noEmit",
     "seed:admin": "ts-node --transpile-only scripts/seedSuperAdmin.ts",
-    "seed:school": "ts-node --transpile-only scripts/seedSchool.ts"
+    "seed:school": "ts-node --transpile-only scripts/seedSchool.ts",
+    "seed:mphss": "node scripts/seedMphssOrg.js",
+    "seed:mphss-extras": "node scripts/seedMphssExtras.js",
+    "fix:attendance-index": "node scripts/fixAttendanceIndex.js",
+    "fix:collection-names": "node scripts/fixCollectionNames.js"
   },
   "keywords": [],
   "author": "",

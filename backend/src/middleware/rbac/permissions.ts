@@ -40,7 +40,7 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
   branch_management: [
     { roles: ['super_admin'], actions: ['create', 'read', 'update', 'delete'] },
     { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete'] },
-    { roles: ['branch_principal'], actions: ['read'] },
+    { roles: ['branch_principal'], actions: ['read', 'update'] },
     { roles: ['it_admin'], actions: ['configure'] },
   ],
 

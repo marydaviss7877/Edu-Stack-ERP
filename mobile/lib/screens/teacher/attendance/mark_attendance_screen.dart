@@ -26,10 +26,10 @@ class MarkAttendanceScreen extends ConsumerStatefulWidget {
 }
 
 class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
-  Map<String, String> _statusMap = {};    // studentId → status
+  Map<String, String> _statusMap = {}; // studentId → status
   bool _submitting = false;
-  bool _submitted  = false;
-  int _periodNo    = 1;
+  bool _submitted = false;
+  int _periodNo = 1;
 
   final _statuses = ['present', 'absent', 'late', 'excused'];
 
@@ -40,8 +40,9 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
   }
 
   Future<void> _loadExistingAttendance() async {
-    final svc     = ref.read(attendanceServiceProvider);
-    final existing = await svc.getTodayAttendance(widget.classId, widget.sectionId, _periodNo);
+    final svc = ref.read(attendanceServiceProvider);
+    final existing = await svc.getTodayAttendance(
+        widget.classId, widget.sectionId, _periodNo);
     if (existing != null) {
       setState(() {
         _statusMap = {
@@ -55,16 +56,19 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
   Future<void> _submit() async {
     if (_statusMap.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mark at least one student before submitting.')),
+        const SnackBar(
+            content: Text('Mark at least one student before submitting.')),
       );
       return;
     }
 
     setState(() => _submitting = true);
 
-    final today   = DateTime.now().toIso8601String().split('T').first;
-    final records = _statusMap.entries.map((e) => {'studentId': e.key, 'status': e.value}).toList();
-    final svc     = ref.read(attendanceServiceProvider);
+    final today = DateTime.now().toIso8601String().split('T').first;
+    final records = _statusMap.entries
+        .map((e) => {'studentId': e.key, 'status': e.value})
+        .toList();
+    final svc = ref.read(attendanceServiceProvider);
 
     try {
       final connectivity = await Connectivity().checkConnectivity();
@@ -72,26 +76,29 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
 
       if (online) {
         await svc.submitAttendance(
-          classId:   widget.classId,
+          classId: widget.classId,
           sectionId: widget.sectionId,
-          date:      today,
-          periodNo:  _periodNo,
-          records:   records,
+          date: today,
+          periodNo: _periodNo,
+          records: records,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Attendance saved successfully.')),
           );
-          setState(() { _submitted = true; _submitting = false; });
+          setState(() {
+            _submitted = true;
+            _submitting = false;
+          });
         }
       } else {
         // Offline: queue for later
         await svc.queueOffline(OfflineAttendanceEntry(
-          classId:   widget.classId,
+          classId: widget.classId,
           sectionId: widget.sectionId,
-          date:      today,
-          periodNo:  _periodNo,
-          records:   records,
+          date: today,
+          periodNo: _periodNo,
+          records: records,
           createdAt: DateTime.now(),
         ));
         if (mounted) {
@@ -101,13 +108,18 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
               backgroundColor: Colors.orange,
             ),
           );
-          setState(() { _submitted = true; _submitting = false; });
+          setState(() {
+            _submitted = true;
+            _submitting = false;
+          });
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error),
         );
         setState(() => _submitting = false);
       }
@@ -115,7 +127,8 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
   }
 
   void _markAll(String status) {
-    final students = ref.read(classStudentsProvider('${widget.classId}:${widget.sectionId}'));
+    final students = ref
+        .read(classStudentsProvider('${widget.classId}:${widget.sectionId}'));
     students.whenData((list) {
       setState(() {
         for (final s in list) {
@@ -128,7 +141,8 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final studentsAsync = ref.watch(classStudentsProvider('${widget.classId}:${widget.sectionId}'));
+    final studentsAsync = ref
+        .watch(classStudentsProvider('${widget.classId}:${widget.sectionId}'));
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -137,9 +151,11 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${widget.className}${widget.sectionName.isNotEmpty ? " · ${widget.sectionName}" : ""}'),
+            Text(
+                '${widget.className}${widget.sectionName.isNotEmpty ? " · ${widget.sectionName}" : ""}'),
             if (widget.subjectName.isNotEmpty)
-              Text(widget.subjectName, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+              Text(widget.subjectName,
+                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
           ],
         ),
         actions: [
@@ -149,10 +165,21 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
             child: DropdownButton<int>(
               value: _periodNo,
               underline: const SizedBox.shrink(),
-              items: List.generate(8, (i) => DropdownMenuItem(value: i + 1, child: Text('Period ${i + 1}'))),
-              onChanged: _submitted ? null : (v) {
-                if (v != null) { setState(() { _periodNo = v; _statusMap.clear(); }); _loadExistingAttendance(); }
-              },
+              items: List.generate(
+                  8,
+                  (i) => DropdownMenuItem(
+                      value: i + 1, child: Text('Period ${i + 1}'))),
+              onChanged: _submitted
+                  ? null
+                  : (v) {
+                      if (v != null) {
+                        setState(() {
+                          _periodNo = v;
+                          _statusMap.clear();
+                        });
+                        _loadExistingAttendance();
+                      }
+                    },
             ),
           ),
         ],
@@ -168,11 +195,11 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
           // Auto-mark all present if no existing data
           if (_statusMap.isEmpty && !_submitted) {
             Future.microtask(() => setState(() {
-              for (final s in students) {
-                final id = s['_id'] as String? ?? '';
-                if (id.isNotEmpty) _statusMap[id] = 'present';
-              }
-            }));
+                  for (final s in students) {
+                    final id = s['_id'] as String? ?? '';
+                    if (id.isNotEmpty) _statusMap[id] = 'present';
+                  }
+                }));
           }
 
           return Column(
@@ -180,20 +207,20 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
               // ── Bulk actions bar ─────────────────────────────
               if (!_submitted)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   color: cs.surfaceContainerLow,
-                  child: Row(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text('Mark all:', style: tt.labelMedium),
-                      const SizedBox(width: 8),
-                      ..._statuses.map((s) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ActionChip(
-                          label: Text(s[0].toUpperCase() + s.substring(1)),
-                          visualDensity: VisualDensity.compact,
-                          onPressed: () => _markAll(s),
-                        ),
-                      )),
+                      ..._statuses.map((s) => ActionChip(
+                            label: Text(s[0].toUpperCase() + s.substring(1)),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => _markAll(s),
+                          )),
                     ],
                   ),
                 ),
@@ -205,15 +232,17 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                   itemCount: students.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
-                    final s       = students[i];
-                    final id      = s['_id'] as String? ?? '';
-                    final name    = (s['profile']?['name'] as String?) ?? 'Unknown';
-                    final rollNo  = s['rollNo'] as String? ?? '';
-                    final status  = _statusMap[id] ?? 'present';
+                    final s = students[i];
+                    final id = s['_id'] as String? ?? '';
+                    final name =
+                        (s['profile']?['name'] as String?) ?? 'Unknown';
+                    final rollNo = s['rollNo'] as String? ?? '';
+                    final status = _statusMap[id] ?? 'present';
 
                     return Card(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         child: Row(
                           children: [
                             // Avatar
@@ -222,7 +251,9 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                               backgroundColor: cs.primaryContainer,
                               child: Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    color: cs.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -230,9 +261,13 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(name, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                  Text(name,
+                                      style: tt.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w600)),
                                   if (rollNo.isNotEmpty)
-                                    Text('Roll #$rollNo', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                                    Text('Roll #$rollNo',
+                                        style: tt.bodySmall?.copyWith(
+                                            color: cs.onSurfaceVariant)),
                                 ],
                               ),
                             ),
@@ -242,7 +277,8 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                             else
                               _StatusToggle(
                                 status: status,
-                                onChanged: (s) => setState(() => _statusMap[id] = s),
+                                onChanged: (s) =>
+                                    setState(() => _statusMap[id] = s),
                               ),
                           ],
                         ),
@@ -261,16 +297,24 @@ class _MarkAttendanceState extends ConsumerState<MarkAttendanceScreen> {
                           children: [
                             Icon(Icons.check_circle_rounded, color: cs.primary),
                             const SizedBox(width: 8),
-                            Text('Attendance recorded', style: tt.bodyMedium?.copyWith(color: cs.primary)),
+                            Text('Attendance recorded',
+                                style:
+                                    tt.bodyMedium?.copyWith(color: cs.primary)),
                           ],
                         )
                       : FilledButton.icon(
                           onPressed: _submitting ? null : _submit,
                           icon: _submitting
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2))
                               : const Icon(Icons.check_rounded),
-                          label: Text(_submitting ? 'Saving…' : 'Submit Attendance'),
-                          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                          label: Text(
+                              _submitting ? 'Saving…' : 'Submit Attendance'),
+                          style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48)),
                         ),
                 ),
               ),
@@ -290,10 +334,10 @@ class _StatusBadge extends StatelessWidget {
     final cs = Theme.of(ctx).colorScheme;
     return switch (s) {
       'present' => cs.primary,
-      'absent'  => cs.error,
-      'late'    => cs.tertiary,
+      'absent' => cs.error,
+      'late' => cs.tertiary,
       'excused' => cs.secondary,
-      _         => cs.outline,
+      _ => cs.outline,
     };
   }
 
@@ -303,12 +347,13 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         status[0].toUpperCase() + status.substring(1),
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        style:
+            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }
@@ -330,10 +375,22 @@ class _StatusToggle extends StatelessWidget {
       selected: {status},
       onSelectionChanged: (s) => onChanged(s.first),
       segments: [
-        ButtonSegment(value: 'present', label: const Text('P'), tooltip: 'attendance.present'.tr()),
-        ButtonSegment(value: 'absent',  label: const Text('A'), tooltip: 'attendance.absent'.tr()),
-        ButtonSegment(value: 'late',    label: const Text('L'), tooltip: 'attendance.late'.tr()),
-        ButtonSegment(value: 'excused', label: const Text('E'), tooltip: 'attendance.excused'.tr()),
+        ButtonSegment(
+            value: 'present',
+            label: const Text('P'),
+            tooltip: 'attendance.present'.tr()),
+        ButtonSegment(
+            value: 'absent',
+            label: const Text('A'),
+            tooltip: 'attendance.absent'.tr()),
+        ButtonSegment(
+            value: 'late',
+            label: const Text('L'),
+            tooltip: 'attendance.late'.tr()),
+        ButtonSegment(
+            value: 'excused',
+            label: const Text('E'),
+            tooltip: 'attendance.excused'.tr()),
       ],
     );
   }

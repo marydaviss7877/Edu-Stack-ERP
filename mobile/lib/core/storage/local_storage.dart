@@ -23,13 +23,15 @@ class LocalStorageService {
     _p.setString(StorageKeys.orgSlug, slug);
     _p.setString(StorageKeys.orgName, name);
     if (logoUrl != null) _p.setString(StorageKeys.orgLogoUrl, logoUrl);
-    if (primaryColor != null) _p.setString(StorageKeys.orgPrimaryColor, primaryColor);
+    if (primaryColor != null) {
+      _p.setString(StorageKeys.orgPrimaryColor, primaryColor);
+    }
   }
 
-  static String? get orgSlug        => _p.getString(StorageKeys.orgSlug);
-  static String? get orgName        => _p.getString(StorageKeys.orgName);
-  static String? get orgLogoUrl     => _p.getString(StorageKeys.orgLogoUrl);
-  static String  get orgPrimaryColor =>
+  static String? get orgSlug => _p.getString(StorageKeys.orgSlug);
+  static String? get orgName => _p.getString(StorageKeys.orgName);
+  static String? get orgLogoUrl => _p.getString(StorageKeys.orgLogoUrl);
+  static String get orgPrimaryColor =>
       _p.getString(StorageKeys.orgPrimaryColor) ?? '#1e3a5f';
 
   static bool get hasOrg => orgSlug != null;
@@ -55,8 +57,10 @@ class LocalStorageService {
   }
 
   // ── Preferences ─────────────────────────────────────────
-  static String get themeMode => _p.getString(StorageKeys.themeMode) ?? 'system';
-  static void setThemeMode(String mode) => _p.setString(StorageKeys.themeMode, mode);
+  static String get themeMode =>
+      _p.getString(StorageKeys.themeMode) ?? 'system';
+  static void setThemeMode(String mode) =>
+      _p.setString(StorageKeys.themeMode, mode);
 
   static String get locale => _p.getString(StorageKeys.locale) ?? 'en';
   static void setLocale(String loc) => _p.setString(StorageKeys.locale, loc);

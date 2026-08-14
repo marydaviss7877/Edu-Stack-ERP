@@ -6,16 +6,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/teacher_providers.dart';
+import '../../../core/layout/responsive.dart';
 
 class TeacherDashboard extends ConsumerWidget {
   const TeacherDashboard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user  = ref.watch(currentUserProvider);
-    final org   = ref.watch(orgProvider);
-    final cs    = Theme.of(context).colorScheme;
-    final tt    = Theme.of(context).textTheme;
+    final user = ref.watch(currentUserProvider);
+    final org = ref.watch(orgProvider);
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Scaffold(
       backgroundColor: cs.surfaceContainerLowest,
@@ -36,12 +37,24 @@ class TeacherDashboard extends ConsumerWidget {
                   if (org?.logoUrl != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(imageUrl: org!.logoUrl!, width: 28, height: 28, fit: BoxFit.contain),
+                      child: CachedNetworkImage(
+                          imageUrl: org!.logoUrl!,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain),
                     )
                   else
                     Icon(Icons.school_rounded, color: cs.primary, size: 26),
                   const SizedBox(width: 8),
-                  Text(org?.name ?? 'EduStack', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Expanded(
+                    child: Text(
+                      org?.name ?? 'EduStack',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ],
               ),
               actions: [
@@ -57,7 +70,12 @@ class TeacherDashboard extends ConsumerWidget {
 
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                padding: EdgeInsets.fromLTRB(
+                  context.pageGutter,
+                  16,
+                  context.pageGutter,
+                  100,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -75,14 +93,14 @@ class TeacherDashboard extends ConsumerWidget {
                     _OfflineQueueBanner(),
 
                     // ── Today's schedule ──────────────────────
-                    _SectionHeader(title: "Today's Classes"),
+                    const _SectionHeader(title: "Today's Classes"),
                     const SizedBox(height: 10),
                     _TodaySchedule(),
 
                     const SizedBox(height: 24),
 
                     // ── Pending items ─────────────────────────
-                    _SectionHeader(title: 'Pending Actions'),
+                    const _SectionHeader(title: 'Pending Actions'),
                     const SizedBox(height: 10),
                     _PendingActions(),
                   ],
@@ -103,15 +121,19 @@ class _WelcomeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs  = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
     final now = DateTime.now();
-    final greeting = now.hour < 12 ? 'Good morning' : now.hour < 17 ? 'Good afternoon' : 'Good evening';
+    final greeting = now.hour < 12
+        ? 'Good morning'
+        : now.hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [cs.primary, cs.secondary.withOpacity(0.9)],
+          colors: [cs.primary, cs.secondary.withValues(alpha: 0.9)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -123,17 +145,27 @@ class _WelcomeBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$greeting,', style: TextStyle(color: cs.onPrimary.withOpacity(0.8), fontSize: 13)),
+                Text('$greeting,',
+                    style: TextStyle(
+                        color: cs.onPrimary.withValues(alpha: 0.8),
+                        fontSize: 13)),
                 const SizedBox(height: 2),
-                Text(name, style: TextStyle(color: cs.onPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
+                Text(name,
+                    style: TextStyle(
+                        color: cs.onPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_rounded, size: 14, color: cs.onPrimary.withOpacity(0.7)),
+                    Icon(Icons.calendar_today_rounded,
+                        size: 14, color: cs.onPrimary.withValues(alpha: 0.7)),
                     const SizedBox(width: 4),
                     Text(
                       _dayLabel(now),
-                      style: TextStyle(color: cs.onPrimary.withOpacity(0.7), fontSize: 12),
+                      style: TextStyle(
+                          color: cs.onPrimary.withValues(alpha: 0.7),
+                          fontSize: 12),
                     ),
                   ],
                 ),
@@ -142,10 +174,13 @@ class _WelcomeBanner extends StatelessWidget {
           ),
           CircleAvatar(
             radius: 26,
-            backgroundColor: cs.onPrimary.withOpacity(0.15),
+            backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : 'T',
-              style: TextStyle(color: cs.onPrimary, fontSize: 22, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                  color: cs.onPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -154,8 +189,29 @@ class _WelcomeBanner extends StatelessWidget {
   }
 
   String _dayLabel(DateTime dt) {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]}';
   }
 }
@@ -165,36 +221,41 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        _ActionTile(
-          icon: Icons.how_to_reg_rounded,
-          label: 'Mark\nAttendance',
-          color: cs.primary,
-          onTap: () => context.go('/teacher/attendance'),
-        ),
-        const SizedBox(width: 10),
-        _ActionTile(
-          icon: Icons.edit_note_rounded,
-          label: 'Enter\nMarks',
-          color: cs.secondary,
-          onTap: () => context.go('/teacher/marks'),
-        ),
-        const SizedBox(width: 10),
-        _ActionTile(
-          icon: Icons.assignment_rounded,
-          label: 'My\nAssignments',
-          color: cs.tertiary,
-          onTap: () => context.go('/teacher/assignments'),
-        ),
-        const SizedBox(width: 10),
-        _ActionTile(
-          icon: Icons.notifications_rounded,
-          label: 'Alerts',
-          color: cs.error,
-          onTap: () => context.go('/teacher/notifications'),
-        ),
-      ],
+    final items = [
+      _ActionTile(
+        icon: Icons.how_to_reg_rounded,
+        label: 'Mark\nAttendance',
+        color: cs.primary,
+        onTap: () => context.go('/teacher/attendance'),
+      ),
+      _ActionTile(
+        icon: Icons.edit_note_rounded,
+        label: 'Enter\nMarks',
+        color: cs.secondary,
+        onTap: () => context.go('/teacher/marks'),
+      ),
+      _ActionTile(
+        icon: Icons.assignment_rounded,
+        label: 'My\nAssignments',
+        color: cs.tertiary,
+        onTap: () => context.go('/teacher/assignments'),
+      ),
+      _ActionTile(
+        icon: Icons.notifications_rounded,
+        label: 'Alerts',
+        color: cs.error,
+        onTap: () => context.go('/teacher/notifications'),
+      ),
+    ];
+    final columns = context.isCompactPhone ? 2 : 4;
+    return GridView.count(
+      crossAxisCount: columns,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: columns == 2 ? 1.8 : 0.95,
+      children: items,
     );
   }
 }
@@ -213,28 +274,27 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.2)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
-              ),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w600, color: color),
+            ),
+          ],
         ),
       ),
     );
@@ -262,7 +322,10 @@ class _OfflineQueueBanner extends ConsumerWidget {
               Expanded(
                 child: Text(
                   '$count attendance record${count == 1 ? '' : 's'} pending sync',
-                  style: TextStyle(color: cs.onErrorContainer, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: TextStyle(
+                      color: cs.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13),
                 ),
               ),
               Icon(Icons.sync_rounded, color: cs.error, size: 18),
@@ -284,7 +347,7 @@ class _TodaySchedule extends ConsumerWidget {
 
     return periodsAsync.when(
       loading: () => const _Skeleton(),
-      error:   (_, __) => const _EmptyCard(message: 'Could not load schedule'),
+      error: (_, __) => const _EmptyCard(message: 'Could not load schedule'),
       data: (periods) {
         if (periods.isEmpty) {
           return const _EmptyCard(message: 'No classes scheduled today 🎉');
@@ -292,12 +355,12 @@ class _TodaySchedule extends ConsumerWidget {
         return Column(
           children: periods.map((p) {
             final subjectName = p['subjectName'] as String? ?? '';
-            final className   = p['className'] as String? ?? '';
+            final className = p['className'] as String? ?? '';
             final sectionName = p['sectionName'] as String? ?? '';
-            final startTime   = p['startTime'] as String? ?? '';
-            final endTime     = p['endTime'] as String? ?? '';
-            final periodNo    = p['periodNo'] as int? ?? 0;
-            final isNow       = p['isNow'] as bool? ?? false;
+            final startTime = p['startTime'] as String? ?? '';
+            final endTime = p['endTime'] as String? ?? '';
+            final periodNo = p['periodNo'] as int? ?? 0;
+            final isNow = p['isNow'] as bool? ?? false;
 
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -305,12 +368,15 @@ class _TodaySchedule extends ConsumerWidget {
                 color: isNow ? cs.primaryContainer : cs.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: isNow ? cs.primary : cs.outlineVariant.withOpacity(0.5),
+                  color: isNow
+                      ? cs.primary
+                      : cs.outlineVariant.withValues(alpha: 0.5),
                   width: isNow ? 1.5 : 1,
                 ),
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 leading: Container(
                   width: 42,
                   height: 42,
@@ -328,7 +394,9 @@ class _TodaySchedule extends ConsumerWidget {
                     ),
                   ),
                 ),
-                title: Text(subjectName, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                title: Text(subjectName,
+                    style:
+                        tt.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                 subtitle: Text(
                   '$className${sectionName.isNotEmpty ? " · Sec $sectionName" : ""}',
                   style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -339,12 +407,21 @@ class _TodaySchedule extends ConsumerWidget {
                   children: [
                     if (isNow)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: cs.primary, borderRadius: BorderRadius.circular(8)),
-                        child: Text('NOW', style: TextStyle(color: cs.onPrimary, fontSize: 10, fontWeight: FontWeight.w800)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: cs.primary,
+                            borderRadius: BorderRadius.circular(8)),
+                        child: Text('NOW',
+                            style: TextStyle(
+                                color: cs.onPrimary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800)),
                       ),
                     if (startTime.isNotEmpty)
-                      Text('$startTime–$endTime', style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                      Text('$startTime–$endTime',
+                          style: tt.labelSmall
+                              ?.copyWith(color: cs.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -365,13 +442,16 @@ class _PendingActions extends ConsumerWidget {
 
     return statsAsync.when(
       loading: () => const _Skeleton(),
-      error:   (_, __) => const _EmptyCard(message: 'Could not load pending actions'),
+      error: (_, __) =>
+          const _EmptyCard(message: 'Could not load pending actions'),
       data: (stats) {
         final pendingAttendance = stats['pendingAttendance'] as int? ?? 0;
-        final pendingMarks      = stats['pendingMarks'] as int? ?? 0;
+        final pendingMarks = stats['pendingMarks'] as int? ?? 0;
         final activeAssignments = stats['activeAssignments'] as int? ?? 0;
 
-        if (pendingAttendance == 0 && pendingMarks == 0 && activeAssignments == 0) {
+        if (pendingAttendance == 0 &&
+            pendingMarks == 0 &&
+            activeAssignments == 0) {
           return const _EmptyCard(message: 'All tasks up to date ✓');
         }
 
@@ -380,21 +460,24 @@ class _PendingActions extends ConsumerWidget {
             if (pendingAttendance > 0)
               _PendingTile(
                 icon: Icons.how_to_reg_rounded,
-                label: '$pendingAttendance class${pendingAttendance == 1 ? '' : 'es'} without attendance today',
+                label:
+                    '$pendingAttendance class${pendingAttendance == 1 ? '' : 'es'} without attendance today',
                 color: cs.error,
                 onTap: () => context.go('/teacher/attendance'),
               ),
             if (pendingMarks > 0)
               _PendingTile(
                 icon: Icons.edit_note_rounded,
-                label: '$pendingMarks exam${pendingMarks == 1 ? '' : 's'} with missing marks',
+                label:
+                    '$pendingMarks exam${pendingMarks == 1 ? '' : 's'} with missing marks',
                 color: cs.tertiary,
                 onTap: () => context.go('/teacher/marks'),
               ),
             if (activeAssignments > 0)
               _PendingTile(
                 icon: Icons.assignment_rounded,
-                label: '$activeAssignments active assignment${activeAssignments == 1 ? '' : 's'}',
+                label:
+                    '$activeAssignments active assignment${activeAssignments == 1 ? '' : 's'}',
                 color: cs.secondary,
                 onTap: () => context.go('/teacher/assignments'),
               ),
@@ -406,7 +489,11 @@ class _PendingActions extends ConsumerWidget {
 }
 
 class _PendingTile extends StatelessWidget {
-  const _PendingTile({required this.icon, required this.label, required this.color, required this.onTap});
+  const _PendingTile(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
   final IconData icon;
   final String label;
   final Color color;
@@ -422,11 +509,14 @@ class _PendingTile extends StatelessWidget {
         leading: Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(label, style: tt.bodyMedium),
-        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: cs.onSurfaceVariant),
+        trailing: Icon(Icons.arrow_forward_ios_rounded,
+            size: 14, color: cs.onSurfaceVariant),
         onTap: onTap,
       ),
     );
@@ -440,7 +530,8 @@ class _UnreadBadge extends ConsumerWidget {
     final count = ref.watch(unreadCountProvider);
     return IconButton(
       icon: Badge(
-        isLabelVisible: count.maybeWhen(data: (c) => c > 0, orElse: () => false),
+        isLabelVisible:
+            count.maybeWhen(data: (c) => c > 0, orElse: () => false),
         label: count.maybeWhen(data: (c) => Text('$c'), orElse: () => null),
         child: const Icon(Icons.notifications_outlined),
       ),
@@ -472,10 +563,12 @@ class _EmptyCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withOpacity(0.5),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(message, textAlign: TextAlign.center, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+      child: Text(message,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
     );
   }
 }
@@ -489,7 +582,7 @@ class _Skeleton extends StatelessWidget {
     return Container(
       height: 72,
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withOpacity(0.4),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(14),
       ),
     );

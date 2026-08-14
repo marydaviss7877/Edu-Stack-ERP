@@ -10,14 +10,14 @@ class AttendanceRecord {
   });
 
   bool get isPresent => status == 'present';
-  bool get isAbsent  => status == 'absent';
-  bool get isLate    => status == 'late';
+  bool get isAbsent => status == 'absent';
+  bool get isLate => status == 'late';
   bool get isExcused => status == 'excused';
 
   factory AttendanceRecord.fromJson(Map<String, dynamic> j) => AttendanceRecord(
-        date:   DateTime.parse(j['date'] as String),
+        date: DateTime.parse(j['date'] as String),
         status: j['status'] as String,
-        note:   j['note'] as String?,
+        note: j['note'] as String?,
       );
 }
 
@@ -36,10 +36,13 @@ class ClassAttendance {
   });
 
   factory ClassAttendance.fromJson(Map<String, dynamic> j) => ClassAttendance(
-        id:       j['_id'] as String,
-        date:     DateTime.parse(j['date'] as String),
+        id: j['_id'] as String,
+        date: DateTime.parse(j['date'] as String),
         periodNo: j['periodNo'] as int?,
-        records:  (j['records'] as List? ?? []).map((r) => StudentAttendanceRecord.fromJson(r as Map<String, dynamic>)).toList(),
+        records: (j['records'] as List? ?? [])
+            .map((r) =>
+                StudentAttendanceRecord.fromJson(r as Map<String, dynamic>))
+            .toList(),
       );
 }
 
@@ -59,10 +62,10 @@ class StudentAttendanceRecord {
   factory StudentAttendanceRecord.fromJson(Map<String, dynamic> j) {
     final stu = j['studentId'];
     return StudentAttendanceRecord(
-      studentId:   stu is Map ? stu['_id'] as String : stu as String,
+      studentId: stu is Map ? stu['_id'] as String : stu as String,
       studentName: stu is Map ? (stu['profile']?['name'] as String? ?? '') : '',
-      rollNo:      stu is Map ? (stu['rollNo'] as String? ?? '') : '',
-      status:      j['status'] as String? ?? 'present',
+      rollNo: stu is Map ? (stu['rollNo'] as String? ?? '') : '',
+      status: j['status'] as String? ?? 'present',
     );
   }
 }
@@ -86,11 +89,11 @@ class OfflineAttendanceEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'classId':   classId,
+        'classId': classId,
         'sectionId': sectionId,
-        'date':      date,
-        'periodNo':  periodNo,
-        'records':   records,
+        'date': date,
+        'periodNo': periodNo,
+        'records': records,
         'createdAt': createdAt.toIso8601String(),
       };
 }

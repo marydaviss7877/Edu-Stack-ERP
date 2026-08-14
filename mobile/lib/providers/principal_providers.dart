@@ -3,29 +3,35 @@ import '../services/principal_service.dart';
 import '../services/notification_service.dart';
 
 final principalServiceProvider = Provider((_) => PrincipalService());
-final _notifServiceProvider     = Provider((_) => NotificationService());
+final _notifServiceProvider = Provider((_) => NotificationService());
 
-final todayAttendanceOverviewProvider = FutureProvider<Map<String, dynamic>>((ref) {
+final todayAttendanceOverviewProvider =
+    FutureProvider<Map<String, dynamic>>((ref) {
   return ref.watch(principalServiceProvider).getTodayAttendanceOverview();
 });
 
-final attendanceByClassProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final attendanceByClassProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(principalServiceProvider).getAttendanceByClass();
 });
 
-final classPerformanceProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final classPerformanceProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(principalServiceProvider).getClassPerformance();
 });
 
-final staffAttendanceTodayProvider = FutureProvider<Map<String, dynamic>>((ref) {
+final staffAttendanceTodayProvider =
+    FutureProvider<Map<String, dynamic>>((ref) {
   return ref.watch(principalServiceProvider).getStaffAttendanceToday();
 });
 
-final upcomingExamsPrincipalProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final upcomingExamsPrincipalProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(principalServiceProvider).getUpcomingExams();
 });
 
-final lowAttendanceStudentsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final lowAttendanceStudentsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(principalServiceProvider).getLowAttendanceStudents();
 });
 

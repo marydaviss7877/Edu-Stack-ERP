@@ -7,7 +7,7 @@ class FeeService {
   final Dio _dio = DioClient.instance;
 
   Future<List<Challan>> getMyChallans() async {
-    final res  = await _dio.get(ApiConstants.fees);
+    final res = await _dio.get(ApiConstants.fees);
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load challans');
     return (data['data'] as List)

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>System Audit &amp; Data Population Report — mphss</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2438; --border: #2a3350;
+    --text: #e7ebf5; --muted: #93a0bf; --accent: #5b8cff;
+    --red: #ff6b6b; --red-bg: #2a1418; --amber: #ffb84d; --amber-bg: #2a2013;
+    --green: #4ade80; --green-bg: #12241a; --mono: 'SF Mono', Consolas, Monaco, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.55; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  .meta { color: var(--muted); font-size: 0.9rem; }
+  .meta code { color: var(--accent); background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+  h2 { font-size: 1.15rem; margin: 40px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  h3 { font-size: 0.98rem; margin: 22px 0 8px; }
+  p { color: var(--text); }
+  .badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 20px; }
+  .badge.confirmed { background: var(--red-bg); color: var(--red); border: 1px solid #4a2028; }
+  .badge.gap { background: var(--amber-bg); color: var(--amber); border: 1px solid #4a3a1a; }
+  .badge.ok { background: var(--green-bg); color: var(--green); border: 1px solid #1e4030; }
+  .finding { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--red); border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
+  .finding.gap { border-left-color: var(--amber); }
+  .finding.info { border-left-color: var(--accent); }
+  .finding h4 { margin: 0 0 10px; font-size: 1rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .finding .path { font-family: var(--mono); font-size: 0.82rem; color: var(--accent); }
+  .finding .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-top:14px; margin-bottom:4px; font-weight:600;}
+  code, pre { font-family: var(--mono); font-size: 0.85rem; }
+  pre { background: #0a0e18; border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+  code.inline { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 4px; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin: 16px 0; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat .n { font-size: 1.5rem; font-weight: 700; }
+  .stat .l { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  ul.check-list { list-style: none; padding: 0; margin: 8px 0; columns: 2; column-gap: 24px; }
+  ul.check-list li { padding: 4px 0; font-size: 0.88rem; break-inside: avoid; }
+  ul.check-list li::before { content: "✓ "; color: var(--green); font-weight: 700; }
+  .not-populated { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .not-populated span { background: var(--panel-2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.82rem; color: var(--muted); }
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+  .credtable td:first-child { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>System Audit &amp; Data Population Report</h1>
+  <div class="meta">
+    Org: <code>Muslim Group of Schools &amp; Colleges Science</code> (slug: <code>mphss</code>) ·
+    Owner: <code>subhan@gmail.com</code> · Generated 2026-08-14 · Updated 2026-08-14 (pass 4: both findings fixed, frontend shipped, verified)
+  </div>
+</header>
+
+<h2>1. Data population — done</h2>
+<p>Ran <code class="inline">backend/scripts/seedMphssOrg.js</code> against the live database for the existing <code class="inline">mphss</code> org. Verified post-write: correct role counts, no orphaned <code class="inline">Result → Exam</code> references, sample student's results/attendance/challan all cross-link correctly.</p>
+
+<div class="stat-grid">
+  <div class="stat"><div class="n">5</div><div class="l">Branches</div></div>
+  <div class="stat"><div class="n">5</div><div class="l">Principals</div></div>
+  <div class="stat"><div class="n">120</div><div class="l">Total staff (incl. 100 teachers)</div></div>
+  <div class="stat"><div class="n">600</div><div class="l">Students (11th &amp; 12th)</div></div>
+  <div class="stat"><div class="n">80</div><div class="l">Exams (4 academic years)</div></div>
+  <div class="stat"><div class="n">4,200</div><div class="l">Results</div></div>
+  <div class="stat"><div class="n">600</div><div class="l">Fee challans</div></div>
+  <div class="stat"><div class="n">13,528</div><div class="l">Total documents written (both passes)</div></div>
+</div>
+
+<h3>Branches</h3>
+<table>
+  <tr><th>Campus</th><th>Code</th><th>City</th><th>Principal</th></tr>
+  <tr><td>Garden Town Campus</td><td>GT-LHR</td><td>Lahore</td><td>Dr. Hamza Sial</td></tr>
+  <tr><td>Model Town Campus</td><td>MT-LHR</td><td>Lahore</td><td>Dr. Naveed Mirza</td></tr>
+  <tr><td>Gulberg Campus</td><td>GB-LHR</td><td>Lahore</td><td>Dr. Rehan Sheikh</td></tr>
+  <tr><td>Faisalabad Campus</td><td>FSD-01</td><td>Faisalabad</td><td>Dr. Sundas Tariq</td></tr>
+  <tr><td>Multan Campus</td><td>MUL-01</td><td>Multan</td><td>Dr. Hamza Yousaf</td></tr>
+</table>
+<p style="color:var(--muted); font-size:0.85rem;">Garden Town and Model Town reuse the two branch IDs that already existed on the account (previously named "Main Branch" / "mn", both empty placeholders) — renamed and fully populated in place. Gulberg, Faisalabad and Multan are new.</p>
+
+<h3>Academic structure</h3>
+<p>Each branch: <b>Inter I (11th)</b> and <b>Inter II (12th)</b> only, each split into <b>FA / FSC / ICS</b> sections (20 students/section). 13 subjects per branch, distributed per stream (FA: 6 subjects incl. Economics/Education; FSC: 7 incl. Physics/Chemistry/Biology; ICS: 7 incl. Physics/Computer Science/Mathematics). 4 academic years per branch: <code class="inline">2023-24</code>, <code class="inline">2024-25</code>, <code class="inline">2025-26</code>, current <code class="inline">2026-27</code>.</p>
+
+<h3>Exams &amp; results</h3>
+<p>Mid Term + Final Term for all 3 past years (published, with results) and the current year's Mid Term (published, results in — exam dated Aug 2026). Current year's Final Term exists as an unpublished shell with an exam schedule but <em>no results yet</em> (dated Feb 2027, hasn't happened) — this deliberately exercises the "upcoming/ungraded exam" state. Each student carries 7 years of Result history with class + section rank.</p>
+
+<h3>Also populated</h3>
+<ul class="check-list">
+  <li>Exam schedules (per-subject dated slots) for all 80 exams</li>
+  <li>Attendance — last 10 school days, all current sections</li>
+  <li>Fee structures + challans (current month, mixed paid/partial/unpaid)</li>
+  <li>Staff attendance — last 10 school days, all 120 staff</li>
+  <li>Payroll — current month, all staff, role-based salary bands</li>
+  <li>Branch letterheads (BranchHeader)</li>
+  <li>Weekly timetables for all 30 current sections</li>
+  <li>Sample notifications (fee due, result published, broadcast)</li>
+</ul>
+
+<h3>Login credentials (shared per role, so any seat can be tested)</h3>
+<table class="credtable">
+  <tr><th>Role</th><th>Password</th><th>Notes</th></tr>
+  <tr><td>group_admin</td><td><code>unchanged</code></td><td>subhan@gmail.com — password untouched</td></tr>
+  <tr><td>branch_principal</td><td><code>Principal@123</code></td><td>5 users, 1 per branch</td></tr>
+  <tr><td>coordinator</td><td><code>Coordinator@123</code></td><td>5 users, 1 per branch</td></tr>
+  <tr><td>accountant</td><td><code>Accountant@123</code></td><td>5 users, 1 per branch</td></tr>
+  <tr><td>it_admin</td><td><code>ITAdmin@123</code></td><td>5 users, 1 per branch</td></tr>
+  <tr><td>teacher</td><td><code>Teacher@123</code></td><td>100 users, 20 per branch</td></tr>
+  <tr><td>student</td><td><code>Student@123</code></td><td>600 users, 120 per branch</td></tr>
+</table>
+<p style="color:var(--muted); font-size:0.85rem;">Emails are unique per user (e.g. <code class="inline">ali.khan1042@mphss.pk</code>) — look up a specific one via the Users list in-app, or query the <code class="inline">users</code> collection filtered by role/branch.</p>
+
+<h2>2. Route &amp; system audit</h2>
+<p>Cross-checked every backend route file (<code class="inline">backend/src/routes/*.ts</code>) against every frontend service call (<code class="inline">frontend/src/services/*.ts</code>) and the full page-route table in <code class="inline">App.tsx</code>. Also checked route-ordering for static-vs-dynamic segment shadowing, and read the RBAC permission matrix against what's actually reachable in the UI.</p>
+
+<div class="finding" style="border-left-color: var(--green);">
+  <h4><span class="badge ok">Fixed</span> Attendance can't be marked for a class's 2nd or 3rd section on the same day</h4>
+  <p class="path">backend/src/models/Attendance.ts:48 · backend/src/controllers/attendanceController.ts:31</p>
+  <p>The unique index on <code class="inline">Attendance</code> was <code class="inline">{ orgId, branchId, classId, date, periodNo }</code> — it didn't include <code class="inline">sectionId</code>. A <code class="inline">Class</code> here commonly has multiple sections sharing one <code class="inline">classId</code> (the FA/FSC/ICS setup on every grade in this org), so <code class="inline">markAttendance()</code>'s upsert for a second section would collide on the sectionId-blind index and throw an uncaught <code class="inline">E11000 duplicate key</code> — a 500 to whoever was marking attendance.</p>
+  <p class="label">What actually shipped (corrected — see §4)</p>
+  <p>An earlier version of this fix checked <code class="inline">db.collection('attendance')</code> (singular) and found no index at all, so it looked like a clean create-only fix. That check was against the wrong collection — see the §4 writeup for how that was caught. The <b>real</b> collection is <code class="inline">attendances</code> (Mongoose pluralizes "Attendance" → "attendances"), and the old buggy index <em>was</em> already live there, most likely built by a previously-running deployed instance of this backend against the same Atlas cluster. The actual fix: correct <code class="inline">Attendance.ts</code> to <code class="inline">{ orgId, branchId, classId, sectionId, date, periodNo }</code>, drop the stale index by name from <code class="inline">attendances</code>, create the corrected one, and normalize away the synthetic per-stream <code class="inline">periodNo</code> workaround the seed data had needed.</p>
+  <p class="label">Verified (final, against the correct collection)</p>
+  <pre>attendances indexes: _id_, orgId_1_branchId_1_date_-1,
+  orgId_1_branchId_1_classId_1_sectionId_1_date_-1,
+  orgId_1_branchId_1_classId_1_sectionId_1_date_-1_periodNo_1   (unique — correct, old one dropped)
+
+── Verification: mark attendance for FA then FSC, same class + date, periodNo omitted ──
+  ✓ FA section marked OK
+  ✓ FSC section marked OK (this used to throw E11000 duplicate key before the fix)</pre>
+</div>
+
+<div class="finding" style="border-left-color: var(--green);">
+  <h4><span class="badge ok">Fixed — frontend shipped</span> The "Academic Intelligence" subsystem was unreachable from the frontend</h4>
+  <p class="path">routes: topics.ts, papers.ts, clearances.ts · controllers: topicController, paperController, clearanceController</p>
+  <p class="label">Originally found</p>
+  <p>Weekly test papers with per-topic weak-mark flagging, a weak-topic/monthly report, subject-topic management, and the clearance-exam remediation workflow were all fully built server-side — models (<code class="inline">Paper</code>, <code class="inline">PaperResult</code>, <code class="inline">SubjectTopic</code>, <code class="inline">ClearanceExam</code>), routes, controllers, and a complete RBAC entry (<code class="inline">academic_intelligence</code> module) — but no route in <code class="inline">App.tsx</code>, no frontend service file, and no page component referenced any of it. <code class="inline">Branch.academicThresholds</code> (<code class="inline">weakThreshold</code>, <code class="inline">failingThreshold</code>, <code class="inline">clearancePassMark</code>) existed specifically to configure this feature, with no settings UI either.</p>
+  <p class="label">Fixed in §4</p>
+  <p><code class="inline">WeeklyPapersPage.tsx</code> — Weekly Tests / Weak Topics / Clearance Exams tabs, 3 new frontend services, routed and in-nav for every role, plus an editable thresholds card on the branch settings pages. Verified end-to-end via 21 live API calls (login → create/grade a test → weak flag appears → clearance approved and graded → flag clears), not just typechecked. Full detail in §4 below.</p>
+</div>
+
+<div class="finding info">
+  <h4><span class="badge ok">Verified working</span> Every other route ↔ frontend service mapping checks out</h4>
+  <p>Walked every path in <code class="inline">academicService, admissionService, assignmentService, attendanceService, authService, branchHeaderService, examPaperDraftService, examScheduleService, examService, examTypeService, feeService, gatewayService, notificationService, payrollService, questionBankService, studentService, timetableService, userService</code>, plus the inline <code class="inline">api.*</code> calls in <code class="inline">OrganizationsPage, BranchesPage, ResourcesPage, SopsPage</code> and others — all resolve to a real, correctly-ordered backend route. No stale paths, no static-vs-<code class="inline">/:id</code> route shadowing (checked <code class="inline">/results</code>, <code class="inline">/challans/summary</code>, <code class="inline">/applications/stats</code>, <code class="inline">/me</code> etc. are all declared before their sibling <code class="inline">/:id</code> routes).</p>
+  <p>Also checked tenant/subdomain resolution (<code class="inline">extractTenant.ts</code>) and CORS origin handling (<code class="inline">app.ts</code>) against <code class="inline">frontend/.env</code>'s <code class="inline">VITE_API_URL</code> and backend's <code class="inline">BASE_DOMAIN</code> — consistent, and the two prior commits on this branch ("strip protocol/trailing slash from VITE_BASE_DOMAIN", "allow bare base domain in CORS origin check") already cover the edge cases that would otherwise bite here.</p>
+</div>
+
+<h2>3. Second pass — everything previously flagged "not populated" is now in</h2>
+<p>Ran <code class="inline">backend/scripts/seedMphssExtras.js</code> on top of pass 1. It reads the branches/classes/sections/subjects/teachers/students/timetables pass 1 already wrote and builds every module that was empty, including the "Academic Intelligence" subsystem from finding <code class="inline">§2</code> — that data is now real (via direct writes matching what the controllers would produce), even though there's still no frontend page to browse it from.</p>
+
+<div class="stat-grid">
+  <div class="stat"><div class="n">550</div><div class="l">Subject topics (chapters)</div></div>
+  <div class="stat"><div class="n">189</div><div class="l">Weekly + clearance papers</div></div>
+  <div class="stat"><div class="n">2,400</div><div class="l">Paper results</div></div>
+  <div class="stat"><div class="n">89</div><div class="l">Clearance exams</div></div>
+  <div class="stat"><div class="n">60</div><div class="l">Assignments</div></div>
+  <div class="stat"><div class="n">1,108</div><div class="l">Submissions</div></div>
+  <div class="stat"><div class="n">660</div><div class="l">Question bank items</div></div>
+  <div class="stat"><div class="n">110</div><div class="l">Exam paper drafts</div></div>
+  <div class="stat"><div class="n">75</div><div class="l">Admission applications</div></div>
+  <div class="stat"><div class="n">20</div><div class="l">Learning resources</div></div>
+  <div class="stat"><div class="n">30</div><div class="l">SOPs</div></div>
+  <div class="stat"><div class="n">2</div><div class="l">Payment gateway configs</div></div>
+</div>
+
+<h3>Weekly papers → weak-topic flags → clearance exams (the full chain)</h3>
+<p>Each current-year section got 4 weekly test papers in one core subject (rotated across ENG/URD/ISL/PST per section, not always English), graded for all 20 students against the branch's <code class="inline">weakThreshold</code> (50%). Students averaging below <code class="inline">failingThreshold</code> (40%) across those 4 papers got a <code class="inline">ClearanceExam</code> — spread realistically across <code class="inline">pending_approval / scheduled / completed / waived</code>. For the <code class="inline">completed</code> + passed ones, the same side-effect <code class="inline">clearanceController.enterClearanceMarks</code> performs in the real app was replicated by hand: the student's earlier <code class="inline">isWeak</code> paper results got flipped and stamped with <code class="inline">clearedByClearanceId</code>. Verified on a sample record.</p>
+
+<h3>Exam paper drafts — built to pass real validation, not just inserted</h3>
+<p>Added one <code class="inline">ExamType</code> per branch (MCQ 2q/10 marks, SQ 2q/40 marks, LQ 2q/50 marks) and a matching 660-item question bank (2 questions per type per subject per grade). <code class="inline">ExamPaperDraft</code> records for <code class="inline">approved</code>/<code class="inline">printed</code>/<code class="inline">pending_approval</code> status were assembled from real question-bank IDs with per-section marks summing exactly to the declared <code class="inline">totalMarks</code> — the same invariant <code class="inline">updatePaperSections</code>/<code class="inline">submitForApproval</code> enforce. Verified on a sample: MCQ 2/2 questions summing to 10, SQ 2/2 to 40, LQ 2/2 to 50.</p>
+
+<h3>Payment gateway — encrypted with the app's real key</h3>
+<p>One JazzCash + one EasyPaisa sandbox config, encrypted with the same AES-256-GCM scheme and <code class="inline">GATEWAY_ENCRYPTION_KEY</code> the app's own <code class="inline">paymentGatewayService.encryptCreds()</code> uses — confirmed by decrypting it back with the app's exact algorithm. <code class="inline">loadTenantGateway()</code> will resolve these correctly if the online-payment flow is exercised (with obviously-fake sandbox merchant IDs, not real credentials).</p>
+
+<h3>Self-correcting note</h3>
+<p>Pass 1 had put all 13 catalog subjects (including <code class="inline">Statistics</code> and <code class="inline">Civics</code>) on every exam and exam schedule, but only 11 are ever actually assigned to a stream (FA/FSC/ICS) — so 2 subjects would have shown up on every exam paper with nobody enrolled to sit them. This pass ran a small cleanup ($pull) on the existing 80 exams / 80 exam schedules to drop those 2 phantom entries before adding anything new. Verified: exam subject counts are now 11, not 13.</p>
+
+<h3>Still not populated</h3>
+<p>Two collections were left alone — both are auto-computed by the app rather than hand-authored data:</p>
+<div class="not-populated">
+  <span>UsageMetric (billing rollup, cron-computed)</span>
+  <span>PlatformSettings (single global row, super-admin only)</span>
+</div>
+
+<h2>4. Fourth pass — fixed both open findings, built the missing frontend, verified the whole chain</h2>
+<p>Planned as two phases: fix the confirmed Attendance bug, then build a real frontend for the Academic Intelligence subsystem. Both landed — but verifying them surfaced two more real bugs along the way, documented below rather than glossed over.</p>
+
+<h3>What got built</h3>
+<p>New page <code class="inline">frontend/src/pages/papers/WeeklyPapersPage.tsx</code> — one page, three tabs, following the existing role-branched pattern from <code class="inline">AttendancePage.tsx</code> rather than inventing a new one:</p>
+<ul class="check-list">
+  <li>Weekly Tests — teacher creates/grades, principal/coordinator read-only</li>
+  <li>Weak Topics — student's own flags, teacher/principal monthly report</li>
+  <li>Clearance Exams — principal approves/waives, teacher schedules + grades</li>
+  <li>3 new services: weeklyPaperService, topicService, clearanceService</li>
+  <li>Routed as <code class="inline">papers</code> / <code class="inline">papers/monthly-report</code> in all 5 role trees</li>
+  <li>Matches the pre-existing notification deep link (<code class="inline">weakReportHandler.ts</code> already linked to <code class="inline">/papers/monthly-report?month=&year=</code> — that link now actually resolves)</li>
+  <li>Nav entry + i18n keys (en + ur) in AppLayout</li>
+  <li>Weak/Failing/Clearance-pass thresholds are now editable — <code class="inline">SettingsPage.tsx</code> (branch_principal) and <code class="inline">BranchesPage.tsx</code>'s edit modal (group_admin)</li>
+</ul>
+
+<div class="finding" style="border-left-color: var(--red);">
+  <h4><span class="badge confirmed">Confirmed bug — introduced this session, caught before shipping</span> Two seed collections were silently invisible to the real app</h4>
+  <p class="path">backend/scripts/seedMphssOrg.js · backend/scripts/seedMphssExtras.js</p>
+  <p>Both raw-driver seed scripts hardcoded MongoDB collection names, guessing Mongoose's auto-pluralization. Two guesses were wrong:</p>
+  <table>
+    <tr><th>Model</th><th>Guessed (used)</th><th>Actual (<code class="inline">mongoose.pluralize()</code>)</th></tr>
+    <tr><td><code class="inline">Paper</code></td><td><code class="inline">papers</code></td><td><code class="inline">paper</code> — singular, an irregular case in Mongoose's bundled pluralizer</td></tr>
+    <tr><td><code class="inline">Attendance</code></td><td><code class="inline">attendance</code></td><td><code class="inline">attendances</code></td></tr>
+  </table>
+  <p>189 weekly/clearance <code class="inline">Paper</code> docs and 302 <code class="inline">Attendance</code> docs went into collections the real <code class="inline">Paper</code>/<code class="inline">Attendance</code> Mongoose models never query — invisible to the actual app, including the just-fixed unique index (built against the wrong <code class="inline">attendance</code> collection, so the real bug on <code class="inline">attendances</code> was untouched). Caught because the user explicitly asked for API-level verification instead of a browser check — a request to grade a "scheduled" clearance exam 404'd with "Clearance paper not found" even though the linked paper clearly existed in the DB. Tracing that down to a Mongoose-vs-raw-driver collection name mismatch is exactly the kind of thing a browser click-through wouldn't have surfaced as clearly as a direct API assertion did.</p>
+  <p class="label">Fix</p>
+  <p>Migrated all documents from the wrong collections into the correct ones (same <code class="inline">_id</code>s, so every foreign-key reference — <code class="inline">ClearanceExam.clearancePaperId</code>, <code class="inline">PaperResult.paperId</code> — kept working), rebuilt the schema's indexes on the correct collections, dropped the wrongly-named ones, and fixed both seed scripts + <code class="inline">fixAttendanceIndex.js</code> so a future re-run won't reproduce this. One-time migration script: <code class="inline">backend/scripts/fixCollectionNames.js</code>.</p>
+</div>
+
+<div class="finding" style="border-left-color: var(--red);">
+  <h4><span class="badge confirmed">Confirmed bug — pre-existing, unrelated to this session's other work</span> branch_principal could never actually save Branch Settings</h4>
+  <p class="path">backend/src/middleware/rbac/permissions.ts (branch_management) · backend/src/controllers/branchController.ts (updateBranch)</p>
+  <p><code class="inline">SettingsPage.tsx</code> — the branch-level settings page, rendered for <code class="inline">branch_principal</code>/<code class="inline">accountant</code>/<code class="inline">it_admin</code> — has always saved via <code class="inline">PUT /api/branches/:id</code>. But <code class="inline">permissions.ts</code> only granted <code class="inline">branch_principal</code> the <code class="inline">read</code> action on <code class="inline">branch_management</code>, never <code class="inline">update</code> (and <code class="inline">it_admin</code>'s <code class="inline">configure</code> action doesn't match any action the route actually checks for). So clicking "Save Settings" on that page has always 403'd for its own intended users — not something this session's new thresholds card broke, just something it was the first thing to actually get verified against.</p>
+  <p class="label">Fix</p>
+  <p>Added <code class="inline">update</code> to <code class="inline">branch_principal</code>'s <code class="inline">branch_management</code> actions. That alone exposed a second, adjacent gap:</p>
+</div>
+
+<div class="finding gap" style="border-left-color: var(--amber);">
+  <h4><span class="badge gap">Follow-on gap, fixed in the same pass</span> updateBranch had no per-branch ownership check</h4>
+  <p class="path">backend/src/controllers/branchController.ts</p>
+  <p><code class="inline">updateBranch</code>'s query was always <code class="inline">{ _id: req.params.id, orgId }</code> — scoped to the org, never to the caller's own branch. Harmless while only <code class="inline">group_admin</code>/<code class="inline">super_admin</code> (legitimately org-wide) could reach it; the moment <code class="inline">branch_principal</code> got <code class="inline">update</code> above, a principal of one branch could edit <em>any</em> branch in the org by ID. Caught immediately by verifying the fix, not by inspection — the first real test of "update as branch_principal" landed on a different branch than the logged-in principal's own.</p>
+  <p class="label">Fix</p>
+  <p>Added an explicit check: if <code class="inline">role === 'branch_principal'</code> and <code class="inline">req.params.id !== branchId</code>, 403. group_admin/super_admin remain unrestricted across the org.</p>
+</div>
+
+<h3>Verification — API-level, not browser (per explicit instruction)</h3>
+<p>21 assertions run as real HTTP requests against the running backend (logged in as a seeded teacher, principal, and student via <code class="inline">POST /auth/login</code>, cookie-jar carried through), exercising exactly what the new frontend calls: create a weekly test → grade it (one student absent, one scoring low) → confirm the low scorer's result is flagged <code class="inline">isWeak</code> → paper flips to <code class="inline">graded</code> → monthly report aggregates correctly → grade a "scheduled" clearance exam as teacher → approve a "pending_approval" one as principal → save branch thresholds as principal on their own branch (200) and a different branch (403, correctly rejected) → student sees only their own weak topics and clearance records.</p>
+<pre>21 passed, 0 failed</pre>
+<p style="color:var(--muted); font-size:0.85rem;">Also ran <code class="inline">tsc --noEmit</code> clean on both frontend and backend, and a full frontend production build (<code class="inline">vite build</code>) with no errors.</p>
+
+<h2>5. Mobile app (Flutter, <code class="inline">mobile/</code>) — same bugs checked for there too</h2>
+<p>Same two findings, checked against the actual Flutter codebase rather than assumed.</p>
+
+<div class="finding" style="border-left-color: var(--green);">
+  <h4><span class="badge ok">Applies to mobile — already covered by the backend fix</span> Attendance index bug</h4>
+  <p class="path">mobile/lib/screens/teacher/attendance/mark_attendance_screen.dart · mobile/lib/services/attendance_service.dart</p>
+  <p>Mobile's <code class="inline">MarkAttendanceScreen</code> has a real "Period" dropdown (1–8) and <code class="inline">AttendanceService.submitAttendance()</code> requires an explicit <code class="inline">periodNo</code> — unlike the web app, which never sends one. That's actually a <em>more direct</em> trigger for the same bug: two teachers marking attendance for different sections (FA, ICS) during the same numbered period on the same day — an everyday occurrence, not an edge case — hit the identical sectionId-blind unique index. Since the fix was at the schema/database level, it protects every client automatically; verified by replaying mobile's exact request shape (explicit shared <code class="inline">periodNo</code>, not omitted) against the fixed index:</p>
+  <pre>FA, Period 1: 200 true
+ICS, SAME Period 1, same day (mobile's real pattern): 200 true</pre>
+  <p>No mobile-side code change needed or made.</p>
+</div>
+
+<div class="finding" style="border-left-color: var(--green);">
+  <h4><span class="badge ok">Does not apply to mobile — no code path exists</span> Branch-settings RBAC/scoping bug</h4>
+  <p class="path">mobile/lib/screens/shared/settings_screen.dart · mobile/lib/services/*.dart</p>
+  <p>Checked every <code class="inline">PUT</code> call across all mobile services (only one exists app-wide: toggling a user's active flag) and the only settings screen mobile has (theme, language, sign-out — no branch fields at all). There is no branch-editing UI on mobile, so this bug's trigger path never existed there. The backend fix (RBAC + ownership scoping) is a general safety improvement that would apply automatically if such a screen were ever added.</p>
+</div>
+
+<div class="finding gap">
+  <h4><span class="badge gap">Confirmed absent, not attempted this pass</span> Academic Intelligence subsystem (§2/§4) doesn't exist on mobile either</h4>
+  <p>Zero references to clearance/weak-topic/papers/SubjectTopic anywhere in <code class="inline">mobile/lib</code> — same state mobile has always been in, not a regression. Building it out for Flutter is a separate, sizable UI effort in a different framework; flagging rather than starting it unprompted.</p>
+</div>
+
+<footer>
+  Scripts: <code>seedMphssOrg.js</code> + <code>seedMphssExtras.js</code> (data, passes 1–2, now collection-name-correct) · <code>fixAttendanceIndex.js</code> (index fix, safe to re-run) · <code>fixCollectionNames.js</code> (one-time migration, historical record).
+  <br>Both seed scripts remain non-idempotent — re-running either duplicates data since both always insert fresh ObjectIds.
+</footer>
+
+</div>
+</body>
+</html>

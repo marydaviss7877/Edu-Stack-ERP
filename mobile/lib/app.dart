@@ -47,16 +47,16 @@ class _EduStackAppState extends ConsumerState<EduStackApp> {
 
   @override
   Widget build(BuildContext context) {
-    final router       = ref.watch(routerProvider);
-    final themeMode    = ref.watch(themeModeProvider);
+    final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final primaryColor = ref.watch(primaryColorProvider);
 
     return MaterialApp.router(
-      title:                      'EduStack',
+      title: 'EduStack',
       debugShowCheckedModeBanner: false,
 
       // Material 3 + per-school color
-      theme:     AppTheme.light(primaryColor),
+      theme: AppTheme.light(primaryColor),
       darkTheme: AppTheme.dark(primaryColor),
       themeMode: themeMode,
 
@@ -65,8 +65,8 @@ class _EduStackAppState extends ConsumerState<EduStackApp> {
 
       // easy_localization takes over localization delegates
       localizationsDelegates: context.localizationDelegates,
-      supportedLocales:       context.supportedLocales,
-      locale:                 context.locale,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
     );
   }
 }

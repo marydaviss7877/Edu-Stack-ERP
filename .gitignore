@@ -33,3 +33,14 @@ backend/coverage/
 CREDENTIALS.md
 EduStack_Upgraded_Brochure.html
 scratch/
+
+# Google service account keys (NEVER commit these)
+*service-account*.json
+*serviceaccount*.json
+edu-stack-505509-*.json
+
+# Certificates (NEVER commit these)
+certificates/
+certificates.zip
+deployment_cert.der
+*.der

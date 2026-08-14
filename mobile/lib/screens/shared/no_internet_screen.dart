@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class NoInternetScreen extends StatelessWidget {
   const NoInternetScreen({super.key});
   @override
@@ -11,9 +12,14 @@ class NoInternetScreen extends StatelessWidget {
           children: [
             Icon(Icons.wifi_off_rounded, size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
-            Text('No Internet', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text('No Internet',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Check your connection and try again.', style: TextStyle(color: cs.onSurfaceVariant)),
+            Text('Check your connection and try again.',
+                style: TextStyle(color: cs.onSurfaceVariant)),
           ],
         ),
       ),

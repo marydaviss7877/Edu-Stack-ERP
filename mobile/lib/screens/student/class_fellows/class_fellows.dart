@@ -15,7 +15,9 @@ class ClassFellowsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Class Fellows')),
       body: fellowsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => _ErrorRetry(message: e.toString(), onRetry: () => ref.invalidate(classFellowsProvider)),
+        error: (e, _) => _ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(classFellowsProvider)),
         data: (fellows) {
           if (fellows.isEmpty) {
             return Center(
@@ -43,7 +45,10 @@ class ClassFellowsScreen extends ConsumerWidget {
           double topPct = 0;
           for (final f in sorted) {
             final pct = (f['lastResultPercentage'] as num?)?.toDouble() ?? 0;
-            if (pct > topPct) { topPct = pct; topper = f; }
+            if (pct > topPct) {
+              topPct = pct;
+              topper = f;
+            }
           }
 
           return RefreshIndicator(
@@ -65,11 +70,15 @@ class ClassFellowsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Row(
                       children: [
-                        _MiniStat(label: 'Total', value: '${sorted.length}', icon: Icons.group_rounded),
+                        _MiniStat(
+                            label: 'Total',
+                            value: '${sorted.length}',
+                            icon: Icons.group_rounded),
                         const SizedBox(width: 12),
                         _MiniStat(
                           label: 'Present today',
-                          value: '${sorted.where((f) => f['todayStatus'] == 'present').length}',
+                          value:
+                              '${sorted.where((f) => f['todayStatus'] == 'present').length}',
                           icon: Icons.check_circle_rounded,
                         ),
                       ],
@@ -83,7 +92,8 @@ class ClassFellowsScreen extends ConsumerWidget {
                   sliver: SliverList.separated(
                     itemCount: sorted.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) => _FellowCard(fellow: sorted[i], rank: i + 1),
+                    itemBuilder: (context, i) =>
+                        _FellowCard(fellow: sorted[i], rank: i + 1),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -103,8 +113,8 @@ class _TopperBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tt     = Theme.of(context).textTheme;
-    final name   = (fellow['profile']?['name'] as String?) ?? 'Unknown';
+    final tt = Theme.of(context).textTheme;
+    final name = (fellow['profile']?['name'] as String?) ?? 'Unknown';
     final avatar = fellow['profile']?['avatarUrl'] as String?;
 
     return Card(
@@ -119,9 +129,15 @@ class _TopperBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Class Topper', style: tt.labelMedium?.copyWith(color: Colors.orange.shade800)),
-                  Text(name, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Text('${percentage.toStringAsFixed(1)}%', style: tt.bodySmall?.copyWith(color: Colors.orange.shade700)),
+                  Text('Class Topper',
+                      style: tt.labelMedium
+                          ?.copyWith(color: Colors.orange.shade800)),
+                  Text(name,
+                      style: tt.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('${percentage.toStringAsFixed(1)}%',
+                      style: tt.bodySmall
+                          ?.copyWith(color: Colors.orange.shade700)),
                 ],
               ),
             ),
@@ -134,7 +150,8 @@ class _TopperBanner extends StatelessWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.value, required this.icon});
+  const _MiniStat(
+      {required this.label, required this.value, required this.icon});
   final String label;
   final String value;
   final IconData icon;
@@ -155,8 +172,12 @@ class _MiniStat extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(value, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(value,
+                      style: tt.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(label,
+                      style:
+                          tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
                 ],
               ),
             ],
@@ -174,19 +195,19 @@ class _FellowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs     = Theme.of(context).colorScheme;
-    final tt     = Theme.of(context).textTheme;
-    final name   = (fellow['profile']?['name'] as String?) ?? 'Unknown';
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final name = (fellow['profile']?['name'] as String?) ?? 'Unknown';
     final rollNo = fellow['rollNo'] as String? ?? '—';
     final avatar = fellow['profile']?['avatarUrl'] as String?;
     final status = fellow['todayStatus'] as String?;
-    final pct    = (fellow['lastResultPercentage'] as num?)?.toDouble();
+    final pct = (fellow['lastResultPercentage'] as num?)?.toDouble();
 
     final statusColor = switch (status) {
       'present' => cs.primary,
-      'absent'  => cs.error,
-      'late'    => cs.tertiary,
-      _         => cs.outlineVariant,
+      'absent' => cs.error,
+      'late' => cs.tertiary,
+      _ => cs.outlineVariant,
     };
 
     return Card(
@@ -209,8 +230,12 @@ class _FellowCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  Text('Roll # $rollNo', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(name,
+                      style:
+                          tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  Text('Roll # $rollNo',
+                      style:
+                          tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -219,19 +244,23 @@ class _FellowCard extends StatelessWidget {
               children: [
                 if (status != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.12),
+                      color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       status[0].toUpperCase() + status.substring(1),
-                      style: tt.labelSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+                      style: tt.labelSmall?.copyWith(
+                          color: statusColor, fontWeight: FontWeight.bold),
                     ),
                   ),
                 if (pct != null) ...[
                   const SizedBox(height: 4),
-                  Text('${pct.toStringAsFixed(1)}%', style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                  Text('${pct.toStringAsFixed(1)}%',
+                      style:
+                          tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
                 ],
               ],
             ),
@@ -282,7 +311,8 @@ class _ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

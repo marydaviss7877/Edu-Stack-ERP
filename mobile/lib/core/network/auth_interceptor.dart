@@ -66,7 +66,8 @@ class AuthInterceptor extends Interceptor {
 
       // Call refresh — send token in body (mobile pattern, not cookie)
       final refreshDio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl))
-        ..options.headers[ApiConstants.clientTypeHeader] = ApiConstants.clientTypeValue;
+        ..options.headers[ApiConstants.clientTypeHeader] =
+            ApiConstants.clientTypeValue;
 
       final slug = LocalStorageService.orgSlug;
       if (slug != null) {
@@ -85,7 +86,8 @@ class AuthInterceptor extends Interceptor {
       );
 
       // Retry the original request
-      err.requestOptions.headers['Authorization'] = 'Bearer ${data['accessToken']}';
+      err.requestOptions.headers['Authorization'] =
+          'Bearer ${data['accessToken']}';
       final retried = await dio.fetch(err.requestOptions);
       handler.resolve(retried);
 

@@ -19,7 +19,7 @@ class AssignmentService {
   }
 
   Future<Assignment> getAssignment(String id) async {
-    final res  = await _dio.get('${ApiConstants.assignments}/$id');
+    final res = await _dio.get('${ApiConstants.assignments}/$id');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load assignment');
     return Assignment.fromJson(data['data'] as Map<String, dynamic>);
@@ -27,7 +27,7 @@ class AssignmentService {
 
   // Teacher: create assignment
   Future<Assignment> createAssignment(Map<String, dynamic> payload) async {
-    final res  = await _dio.post(ApiConstants.assignments, data: payload);
+    final res = await _dio.post(ApiConstants.assignments, data: payload);
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to create assignment');
     return Assignment.fromJson(data['data'] as Map<String, dynamic>);
@@ -35,7 +35,8 @@ class AssignmentService {
 
   // Teacher: list submissions for an assignment
   Future<List<Map<String, dynamic>>> getSubmissions(String assignmentId) async {
-    final res  = await _dio.get('${ApiConstants.assignments}/$assignmentId/submissions');
+    final res =
+        await _dio.get('${ApiConstants.assignments}/$assignmentId/submissions');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load submissions');
     return (data['data'] as List).cast<Map<String, dynamic>>();

@@ -62,8 +62,16 @@ export async function getBranch(req: Request, res: Response): Promise<void> {
 }
 
 export async function updateBranch(req: Request, res: Response): Promise<void> {
-  const orgId = req.user!.orgId;
-  const allowed = ['name', 'address', 'city', 'phone', 'email', 'principalName', 'status', 'settings', 'logoUrl'];
+  const { orgId, branchId, role } = req.user!;
+
+  // branch_principal has org-wide `orgId` scoping like group_admin below, but must not be
+  // able to edit a *different* branch in their org — only group_admin/super_admin can.
+  if (role === 'branch_principal' && req.params.id !== branchId) {
+    res.status(403).json({ success: false, message: 'You can only update your own branch' });
+    return;
+  }
+
+  const allowed = ['name', 'address', 'city', 'phone', 'email', 'principalName', 'status', 'settings', 'academicThresholds', 'logoUrl'];
   const update: Record<string, unknown> = {};
   for (const key of allowed) {
     if (req.body[key] !== undefined) update[key] = req.body[key];

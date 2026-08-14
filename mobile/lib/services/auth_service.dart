@@ -15,12 +15,21 @@ class AuthService {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: {'email': email, 'password': password, 'slug': slug, 'loginAs': loginAs},
+        data: {
+          'email': email,
+          'password': password,
+          'slug': slug,
+          'loginAs': loginAs
+        },
       );
       final data = response.data as Map<String, dynamic>;
-      if (data['success'] != true) throw Exception(data['message'] ?? 'Login failed');
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'Login failed');
+      }
       // mustChangePassword comes at the top level, not nested under 'data'
-      if (data['mustChangePassword'] == true) throw Exception('PASSWORD_CHANGE_REQUIRED');
+      if (data['mustChangePassword'] == true) {
+        throw Exception('PASSWORD_CHANGE_REQUIRED');
+      }
       return data['data'] as Map<String, dynamic>;
     } on DioException catch (e) {
       final body = e.response?.data;
@@ -37,14 +46,20 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    try { await _dio.post(ApiConstants.logout); } catch (_) {}
+    try {
+      await _dio.post(ApiConstants.logout);
+    } catch (_) {}
   }
 
   Future<void> registerFcmToken(String token) async {
-    try { await _dio.post(ApiConstants.fcmToken, data: {'fcmToken': token}); } catch (_) {}
+    try {
+      await _dio.post(ApiConstants.fcmToken, data: {'fcmToken': token});
+    } catch (_) {}
   }
 
   Future<void> removeFcmToken(String token) async {
-    try { await _dio.delete(ApiConstants.fcmToken, data: {'fcmToken': token}); } catch (_) {}
+    try {
+      await _dio.delete(ApiConstants.fcmToken, data: {'fcmToken': token});
+    } catch (_) {}
   }
 }

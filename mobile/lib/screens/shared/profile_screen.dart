@@ -12,8 +12,8 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final org  = ref.watch(orgProvider);
-    final cs   = Theme.of(context).colorScheme;
+    final org = ref.watch(orgProvider);
+    final cs = Theme.of(context).colorScheme;
 
     final isStudent = user?.role == 'student';
 
@@ -38,8 +38,8 @@ class _StudentProfile extends ConsumerWidget {
 
     return profileAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error:   (_, __) => _StudentProfileBody(profile: null, org: org),
-      data:    (profile) => _StudentProfileBody(profile: profile, org: org),
+      error: (_, __) => _StudentProfileBody(profile: null, org: org),
+      data: (profile) => _StudentProfileBody(profile: profile, org: org),
     );
   }
 }
@@ -65,7 +65,8 @@ class _StudentProfileBody extends ConsumerWidget {
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,
           flexibleSpace: FlexibleSpaceBar(
-            background: _StudentHeroHeader(profile: profile, name: name, email: email),
+            background:
+                _StudentHeroHeader(profile: profile, name: name, email: email),
           ),
         ),
 
@@ -75,10 +76,9 @@ class _StudentProfileBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ── Academic info ────────────────────────────
                 if (profile?.rollNo != null || profile?.className != null) ...[
-                  _SectionLabel('Academic Details'),
+                  const _SectionLabel('Academic Details'),
                   const SizedBox(height: 8),
                   Card(
                     child: Column(
@@ -89,14 +89,17 @@ class _StudentProfileBody extends ConsumerWidget {
                             label: 'Roll Number',
                             value: profile!.rollNo!,
                           ),
-                        if (profile?.rollNo != null && profile?.className != null)
+                        if (profile?.rollNo != null &&
+                            profile?.className != null)
                           const Divider(height: 1, indent: 56),
                         if (profile?.className != null)
                           _InfoTile(
                             icon: Icons.class_rounded,
                             label: 'Class',
                             value: profile!.className! +
-                                (profile!.sectionName != null ? ' — Section ${profile!.sectionName}' : ''),
+                                (profile!.sectionName != null
+                                    ? ' — Section ${profile!.sectionName}'
+                                    : ''),
                           ),
                       ],
                     ),
@@ -106,7 +109,7 @@ class _StudentProfileBody extends ConsumerWidget {
 
                 // ── Guardian info ────────────────────────────
                 if (profile?.guardianName != null) ...[
-                  _SectionLabel('Guardian'),
+                  const _SectionLabel('Guardian'),
                   const SizedBox(height: 8),
                   Card(
                     child: Column(
@@ -132,7 +135,7 @@ class _StudentProfileBody extends ConsumerWidget {
 
                 // ── School info ──────────────────────────────
                 if (org != null) ...[
-                  _SectionLabel('School'),
+                  const _SectionLabel('School'),
                   const SizedBox(height: 8),
                   Card(
                     child: ListTile(
@@ -145,27 +148,31 @@ class _StudentProfileBody extends ConsumerWidget {
                                   height: 40,
                                   fit: BoxFit.contain),
                             )
-                          : Icon(Icons.school_rounded, size: 36, color: cs.primary),
+                          : Icon(Icons.school_rounded,
+                              size: 36, color: cs.primary),
                       title: Text(org.name,
-                          style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                          style: tt.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600)),
                       subtitle: Text(org.slug,
-                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                          style: tt.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant)),
                     ),
                   ),
                   const SizedBox(height: 20),
                 ],
 
                 // ── Account ──────────────────────────────────
-                _SectionLabel('Account'),
+                const _SectionLabel('Account'),
                 const SizedBox(height: 8),
                 Card(
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.lock_outline_rounded, color: cs.primary),
+                        leading:
+                            Icon(Icons.lock_outline_rounded, color: cs.primary),
                         title: const Text('Change Password'),
-                        trailing:
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                            size: 16),
                         onTap: () {},
                       ),
                       const Divider(height: 1, indent: 56),
@@ -213,7 +220,8 @@ class _StudentProfileBody extends ConsumerWidget {
 }
 
 class _StudentHeroHeader extends StatelessWidget {
-  const _StudentHeroHeader({required this.profile, required this.name, required this.email});
+  const _StudentHeroHeader(
+      {required this.profile, required this.name, required this.email});
   final StudentProfile? profile;
   final String name;
   final String email;
@@ -241,10 +249,11 @@ class _StudentHeroHeader extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: cs.onPrimary.withOpacity(0.4), width: 3),
+                  border: Border.all(
+                      color: cs.onPrimary.withValues(alpha: 0.4), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -252,7 +261,7 @@ class _StudentHeroHeader extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 46,
-                  backgroundColor: cs.onPrimary.withOpacity(0.15),
+                  backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
                   child: profile?.photoUrl != null
                       ? ClipOval(
                           child: CachedNetworkImage(
@@ -292,7 +301,7 @@ class _StudentHeroHeader extends StatelessWidget {
               Text(
                 email,
                 style: tt.bodySmall?.copyWith(
-                  color: cs.onPrimary.withOpacity(0.75),
+                  color: cs.onPrimary.withValues(alpha: 0.75),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -303,13 +312,17 @@ class _StudentHeroHeader extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 spacing: 8,
                 children: [
-                  _HeroChip(label: 'Student', icon: Icons.school_rounded),
+                  const _HeroChip(label: 'Student', icon: Icons.school_rounded),
                   if (profile?.rollNo != null)
-                    _HeroChip(label: 'Roll # ${profile!.rollNo!}', icon: Icons.badge_rounded),
+                    _HeroChip(
+                        label: 'Roll # ${profile!.rollNo!}',
+                        icon: Icons.badge_rounded),
                   if (profile?.className != null)
                     _HeroChip(
                       label: profile!.className! +
-                          (profile!.sectionName != null ? '-${profile!.sectionName}' : ''),
+                          (profile!.sectionName != null
+                              ? '-${profile!.sectionName}'
+                              : ''),
                       icon: Icons.class_rounded,
                     ),
                 ],
@@ -333,14 +346,14 @@ class _HeroChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: cs.onPrimary.withOpacity(0.18),
+        color: cs.onPrimary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.onPrimary.withOpacity(0.25)),
+        border: Border.all(color: cs.onPrimary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: cs.onPrimary.withOpacity(0.9)),
+          Icon(icon, size: 12, color: cs.onPrimary.withValues(alpha: 0.9)),
           const SizedBox(width: 4),
           Text(
             label,
@@ -385,7 +398,7 @@ class _GenericProfile extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 44,
-                backgroundColor: cs.onPrimary.withOpacity(0.15),
+                backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
                 child: user?.profilePhotoUrl != null
                     ? ClipOval(
                         child: CachedNetworkImage(
@@ -408,21 +421,22 @@ class _GenericProfile extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(
                 user?.name ?? '',
-                style: tt.titleLarge
-                    ?.copyWith(color: cs.onPrimary, fontWeight: FontWeight.w800),
+                style: tt.titleLarge?.copyWith(
+                    color: cs.onPrimary, fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 user?.email ?? '',
                 style: tt.bodySmall
-                    ?.copyWith(color: cs.onPrimary.withOpacity(0.75)),
+                    ?.copyWith(color: cs.onPrimary.withValues(alpha: 0.75)),
               ),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: cs.onPrimary.withOpacity(0.18),
+                  color: cs.onPrimary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -443,7 +457,7 @@ class _GenericProfile extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (org != null) ...[
-                _SectionLabel('School'),
+                const _SectionLabel('School'),
                 const SizedBox(height: 8),
                 Card(
                   child: ListTile(
@@ -456,22 +470,26 @@ class _GenericProfile extends ConsumerWidget {
                                 height: 40,
                                 fit: BoxFit.contain),
                           )
-                        : Icon(Icons.school_rounded, size: 36, color: cs.primary),
+                        : Icon(Icons.school_rounded,
+                            size: 36, color: cs.primary),
                     title: Text(org.name,
-                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                        style: tt.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     subtitle: Text(org.slug,
-                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                        style:
+                            tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                   ),
                 ),
                 const SizedBox(height: 20),
               ],
-              _SectionLabel('Account'),
+              const _SectionLabel('Account'),
               const SizedBox(height: 8),
               Card(
                 child: Column(
                   children: [
                     ListTile(
-                      leading: Icon(Icons.lock_outline_rounded, color: cs.primary),
+                      leading:
+                          Icon(Icons.lock_outline_rounded, color: cs.primary),
                       title: const Text('Change Password'),
                       trailing:
                           const Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -496,14 +514,14 @@ class _GenericProfile extends ConsumerWidget {
   }
 
   String _roleLabel(String role) => switch (role) {
-        'teacher'          => 'Teacher',
+        'teacher' => 'Teacher',
         'branch_principal' => 'Principal',
-        'coordinator'      => 'Coordinator',
-        'accountant'       => 'Accountant',
-        'it_admin'         => 'IT Admin',
-        'group_admin'      => 'Group Admin',
-        'super_admin'      => 'Super Admin',
-        _                  => role,
+        'coordinator' => 'Coordinator',
+        'accountant' => 'Accountant',
+        'it_admin' => 'IT Admin',
+        'group_admin' => 'Group Admin',
+        'super_admin' => 'Super Admin',
+        _ => role,
       };
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
@@ -548,7 +566,8 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.icon, required this.label, required this.value});
+  const _InfoTile(
+      {required this.icon, required this.label, required this.value});
   final IconData icon;
   final String label;
   final String value;
@@ -559,8 +578,10 @@ class _InfoTile extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return ListTile(
       leading: Icon(icon, color: cs.primary, size: 22),
-      title: Text(label, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-      subtitle: Text(value, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+      title: Text(label,
+          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+      subtitle: Text(value,
+          style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
       dense: true,
     );
   }

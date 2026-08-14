@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/org_provider.dart';
 import '../../core/storage/local_storage.dart';
+import '../../core/layout/responsive.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -62,44 +63,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final tt = Theme.of(context).textTheme;
     final org = ref.watch(orgProvider);
     final h = MediaQuery.of(context).size.height;
+    final heroHeight =
+        (h * (context.isShortViewport ? 0.38 : 0.46)).clamp(210.0, 430.0);
 
     return Scaffold(
       body: Column(
         children: [
           // ── Hero ──────────────────────────────────────────────
           SizedBox(
-            height: h * 0.46,
+            height: heroHeight,
             width: double.infinity,
             child: Stack(
               clipBehavior: Clip.hardEdge,
               children: [
                 // Gradient background
-                Positioned.fill(
+                const Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          const Color(0xFF1565C0),
-                          const Color(0xFF1E88E5),
-                          const Color(0xFF42A5F5),
+                          Color(0xFF1565C0),
+                          Color(0xFF1E88E5),
+                          Color(0xFF42A5F5),
                         ],
-                        stops: const [0.0, 0.55, 1.0],
+                        stops: [0.0, 0.55, 1.0],
                       ),
                     ),
                   ),
                 ),
 
                 // Decorative circle — bottom left
-                Positioned(
+                const Positioned(
                   bottom: -80,
                   left: -70,
                   child: _DecorativeCircle(size: 230),
                 ),
 
                 // Decorative circle — top right
-                Positioned(
+                const Positioned(
                   top: -40,
                   right: -60,
                   child: _DecorativeCircle(size: 200),
@@ -112,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: CustomPaint(
                     size: const Size(72, 120),
                     painter: _DotPainter(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                     ),
                   ),
                 ),
@@ -140,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
+                                    color: Colors.black.withValues(alpha: 0.12),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -186,7 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Text(
                               'auth.signInToContinue'.tr(),
                               style: tt.bodyLarge?.copyWith(
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withValues(alpha: 0.85),
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
@@ -211,7 +214,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -450,7 +453,7 @@ class _RoleSelector extends StatelessWidget {
                 boxShadow: active
                     ? [
                         BoxShadow(
-                          color: roleColor.withOpacity(0.35),
+                          color: roleColor.withValues(alpha: 0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         )
@@ -465,8 +468,8 @@ class _RoleSelector extends StatelessWidget {
                     height: 38,
                     decoration: BoxDecoration(
                       color: active
-                          ? Colors.white.withOpacity(0.18)
-                          : roleColor.withOpacity(0.1),
+                          ? Colors.white.withValues(alpha: 0.18)
+                          : roleColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -513,7 +516,7 @@ class _OrgLogo extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -571,7 +574,7 @@ class _DecorativeCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
       ),
     );
   }

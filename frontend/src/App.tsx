@@ -42,6 +42,7 @@ import GroupSettingsPage from './pages/settings/GroupSettingsPage';
 import BranchesPage from './pages/branches/BranchesPage';
 import ResourcesPage from './pages/resources/ResourcesPage';
 import ExamPaperPage from './pages/examPaper/ExamPaperPage';
+import WeeklyPapersPage from './pages/papers/WeeklyPapersPage';
 import RolesHierarchyPage from './pages/roles/RolesHierarchyPage';
 import MobileDevicesPage from './pages/admin/MobileDevicesPage';
 import StudentProfilePage from './pages/profile/StudentProfilePage';
@@ -157,6 +158,8 @@ function TenantRouter() {
         <Route path="sops"           element={<SopsPage />} />
         <Route path="resources"      element={<ResourcesPage />} />
         <Route path="exam-paper"     element={<ExamPaperPage />} />
+        <Route path="papers"         element={<WeeklyPapersPage />} />
+        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
         <Route path="settings"       element={<SettingsPage />} />
         <Route path="staff"          element={<StaffPage />} />
         <Route path="admission"      element={<AdmissionPage />} />
@@ -177,6 +180,8 @@ function TenantRouter() {
         <Route path="timetable"     element={<TimetablePage />} />
         <Route path="exams"         element={<ExamsPage />} />
         <Route path="exam-paper"    element={<ExamPaperPage />} />
+        <Route path="papers"        element={<WeeklyPapersPage />} />
+        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
         <Route path="assignments"   element={<AssignmentsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="admission"     element={<AdmissionPage />} />
@@ -198,6 +203,8 @@ function TenantRouter() {
         <Route path="assignments"   element={<AssignmentsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="exam-paper"    element={<ExamPaperPage />} />
+        <Route path="papers"        element={<WeeklyPapersPage />} />
+        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
         <Route path="resources"     element={<ResourcesPage />} />
         <Route path="sops"          element={<SopsPage />} />
         <Route path="fees"          element={<FeesPage />} />
@@ -218,6 +225,8 @@ function TenantRouter() {
         <Route path="attendance"     element={<AttendancePage />} />
         <Route path="timetable"      element={<TimetablePage />} />
         <Route path="exams"          element={<ExamsPage />} />
+        <Route path="papers"         element={<WeeklyPapersPage />} />
+        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
         <Route path="assignments"    element={<AssignmentsPage />} />
         <Route path="notifications"  element={<NotificationsPage />} />
         <Route path="fees"           element={<FeesPage />} />
@@ -261,6 +270,8 @@ function TenantRouter() {
         <Route path="sops"           element={<SopsPage />} />
         <Route path="resources"      element={<ResourcesPage />} />
         <Route path="exam-paper"     element={<ExamPaperPage />} />
+        <Route path="papers"         element={<WeeklyPapersPage />} />
+        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
         <Route path="settings"       element={<GroupSettingsPage />} />
         <Route path="roles"          element={<RolesHierarchyPage />} />
         <Route path="admission"      element={<AdmissionPage />} />

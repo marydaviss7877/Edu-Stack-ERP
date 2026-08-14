@@ -12,7 +12,7 @@ class AttendanceService {
   // ── Student ─────────────────────────────────────────
 
   Future<List<AttendanceRecord>> getMyAttendance({String? month}) async {
-    final res  = await _dio.get(
+    final res = await _dio.get(
       ApiConstants.myAttendance,
       queryParameters: month != null ? {'month': month} : null,
     );
@@ -24,7 +24,7 @@ class AttendanceService {
   }
 
   Future<AttendanceSummary> getSummary() async {
-    final res  = await _dio.get('${ApiConstants.myAttendance}/summary');
+    final res = await _dio.get('${ApiConstants.myAttendance}/summary');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load summary');
     return AttendanceSummary.fromJson(data['data'] as Map<String, dynamic>);
@@ -33,15 +33,16 @@ class AttendanceService {
   // ── Teacher ─────────────────────────────────────────
 
   // Get today's attendance for a class (or null if not yet taken)
-  Future<ClassAttendance?> getTodayAttendance(String classId, String sectionId, int periodNo) async {
+  Future<ClassAttendance?> getTodayAttendance(
+      String classId, String sectionId, int periodNo) async {
     final today = DateTime.now().toIso8601String().split('T').first;
     final res = await _dio.get(
       ApiConstants.attendance,
       queryParameters: {
-        'classId':   classId,
+        'classId': classId,
         'sectionId': sectionId,
-        'date':      today,
-        'periodNo':  periodNo,
+        'date': today,
+        'periodNo': periodNo,
       },
     );
     final data = res.data as Map<String, dynamic>;
@@ -60,11 +61,11 @@ class AttendanceService {
     required List<Map<String, String>> records,
   }) async {
     await _dio.post(ApiConstants.attendance, data: {
-      'classId':   classId,
+      'classId': classId,
       'sectionId': sectionId,
-      'date':      date,
-      'periodNo':  periodNo,
-      'records':   records,
+      'date': date,
+      'periodNo': periodNo,
+      'records': records,
     });
   }
 
@@ -86,11 +87,11 @@ class AttendanceService {
       try {
         final entry = raw.cast<String, dynamic>();
         await submitAttendance(
-          classId:   entry['classId'] as String,
+          classId: entry['classId'] as String,
           sectionId: entry['sectionId'] as String,
-          date:      entry['date'] as String,
-          periodNo:  entry['periodNo'] as int,
-          records:   (entry['records'] as List).cast<Map<String, String>>(),
+          date: entry['date'] as String,
+          periodNo: entry['periodNo'] as int,
+          records: (entry['records'] as List).cast<Map<String, String>>(),
         );
         await box.delete(key);
       } catch (_) {
@@ -99,5 +100,6 @@ class AttendanceService {
     }
   }
 
-  int get pendingOfflineCount => Hive.box<Map>(StorageKeys.offlineAttendanceBox).length;
+  int get pendingOfflineCount =>
+      Hive.box<Map>(StorageKeys.offlineAttendanceBox).length;
 }

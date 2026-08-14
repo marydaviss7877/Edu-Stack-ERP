@@ -42,7 +42,8 @@ class NotificationsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 56, color: cs.outlineVariant),
+                  Icon(Icons.notifications_none_rounded,
+                      size: 56, color: cs.outlineVariant),
                   const SizedBox(height: 12),
                   const Text('No notifications yet.'),
                 ],
@@ -82,35 +83,37 @@ class _NotificationTile extends StatelessWidget {
   final VoidCallback onRead;
 
   static IconData _iconFor(String type) => switch (type) {
-    'fee'        => Icons.receipt_long_rounded,
-    'attendance' => Icons.how_to_reg_rounded,
-    'result'     => Icons.school_rounded,
-    'assignment' => Icons.assignment_rounded,
-    'exam'       => Icons.edit_note_rounded,
-    _            => Icons.notifications_rounded,
-  };
+        'fee' => Icons.receipt_long_rounded,
+        'attendance' => Icons.how_to_reg_rounded,
+        'result' => Icons.school_rounded,
+        'assignment' => Icons.assignment_rounded,
+        'exam' => Icons.edit_note_rounded,
+        _ => Icons.notifications_rounded,
+      };
 
   static Color _colorFor(BuildContext context, String type) {
     final cs = Theme.of(context).colorScheme;
     return switch (type) {
-      'fee'        => cs.error,
+      'fee' => cs.error,
       'attendance' => cs.tertiary,
-      'result'     => cs.primary,
+      'result' => cs.primary,
       'assignment' => cs.secondary,
-      _            => cs.outline,
+      _ => cs.outline,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs    = Theme.of(context).colorScheme;
-    final tt    = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final color = _colorFor(context, notification.type);
 
     return InkWell(
       onTap: notification.isRead ? null : onRead,
       child: Container(
-        color: notification.isRead ? null : cs.primaryContainer.withOpacity(0.3),
+        color: notification.isRead
+            ? null
+            : cs.primaryContainer.withValues(alpha: 0.3),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +123,7 @@ class _NotificationTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(_iconFor(notification.type), color: color, size: 22),
@@ -136,7 +139,8 @@ class _NotificationTile extends StatelessWidget {
                         child: Text(
                           notification.title,
                           style: tt.bodyMedium?.copyWith(
-                            fontWeight: notification.isRead ? null : FontWeight.w600,
+                            fontWeight:
+                                notification.isRead ? null : FontWeight.w600,
                           ),
                         ),
                       ),
@@ -144,7 +148,8 @@ class _NotificationTile extends StatelessWidget {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                              color: cs.primary, shape: BoxShape.circle),
                         ),
                     ],
                   ),
@@ -180,7 +185,8 @@ class _ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

@@ -12,9 +12,9 @@ class PeriodTiming {
   });
 
   factory PeriodTiming.fromJson(Map<String, dynamic> j) => PeriodTiming(
-        periodNo:  j['periodNo'] as int,
+        periodNo: j['periodNo'] as int,
         startTime: j['startTime'] as String,
-        endTime:   j['endTime'] as String,
+        endTime: j['endTime'] as String,
       );
 }
 
@@ -41,13 +41,13 @@ class TimetableSlot {
     final sub = j['subjectId'];
     final tch = j['teacherId'];
     return TimetableSlot(
-      dayOfWeek:   j['dayOfWeek'] as int,
-      periodNo:    j['periodNo'] as int,
-      subjectId:   sub is Map ? sub['_id'] as String : sub as String,
+      dayOfWeek: j['dayOfWeek'] as int,
+      periodNo: j['periodNo'] as int,
+      subjectId: sub is Map ? sub['_id'] as String : sub as String,
       subjectName: sub is Map ? (sub['name'] as String? ?? '') : '',
-      teacherId:   tch is Map ? tch['_id'] as String : tch as String,
+      teacherId: tch is Map ? tch['_id'] as String : tch as String,
       teacherName: tch is Map ? (tch['name'] as String? ?? '') : '',
-      roomNo:      j['roomNo'] as String?,
+      roomNo: j['roomNo'] as String?,
     );
   }
 }
@@ -70,12 +70,16 @@ class Timetable {
   });
 
   factory Timetable.fromJson(Map<String, dynamic> j) => Timetable(
-        id:            j['_id'] as String,
-        classId:       j['classId']?.toString() ?? '',
-        sectionId:     j['sectionId']?.toString() ?? '',
-        slots:         (j['slots'] as List? ?? []).map((s) => TimetableSlot.fromJson(s as Map<String, dynamic>)).toList(),
-        periodTimings: (j['periodTimings'] as List? ?? []).map((p) => PeriodTiming.fromJson(p as Map<String, dynamic>)).toList(),
-        isActive:      j['isActive'] as bool? ?? false,
+        id: j['_id'] as String,
+        classId: j['classId']?.toString() ?? '',
+        sectionId: j['sectionId']?.toString() ?? '',
+        slots: (j['slots'] as List? ?? [])
+            .map((s) => TimetableSlot.fromJson(s as Map<String, dynamic>))
+            .toList(),
+        periodTimings: (j['periodTimings'] as List? ?? [])
+            .map((p) => PeriodTiming.fromJson(p as Map<String, dynamic>))
+            .toList(),
+        isActive: j['isActive'] as bool? ?? false,
       );
 
   List<TimetableSlot> slotsForDay(int dayOfWeek) =>
@@ -105,20 +109,21 @@ class TodaySlot {
 
   static List<TodaySlot> fromTimetable(Timetable timetable, int dayOfWeek) {
     final slots = timetable.slotsForDay(dayOfWeek);
-    final now   = TimeOfDay.now();
+    final now = TimeOfDay.now();
     return slots.map((slot) {
       final timing = timetable.periodTimings.firstWhere(
         (t) => t.periodNo == slot.periodNo,
-        orElse: () => PeriodTiming(periodNo: slot.periodNo, startTime: '', endTime: ''),
+        orElse: () =>
+            PeriodTiming(periodNo: slot.periodNo, startTime: '', endTime: ''),
       );
       return TodaySlot(
-        periodNo:    slot.periodNo,
+        periodNo: slot.periodNo,
         subjectName: slot.subjectName,
         teacherName: slot.teacherName,
-        startTime:   timing.startTime,
-        endTime:     timing.endTime,
-        roomNo:      slot.roomNo,
-        isNow:       _isCurrent(timing, now),
+        startTime: timing.startTime,
+        endTime: timing.endTime,
+        roomNo: slot.roomNo,
+        isNow: _isCurrent(timing, now),
       );
     }).toList();
   }
@@ -126,8 +131,8 @@ class TodaySlot {
   static bool _isCurrent(PeriodTiming t, TimeOfDay now) {
     if (t.startTime.isEmpty || t.endTime.isEmpty) return false;
     try {
-      final start  = _parseMinutes(t.startTime);
-      final end    = _parseMinutes(t.endTime);
+      final start = _parseMinutes(t.startTime);
+      final end = _parseMinutes(t.endTime);
       final nowMin = now.hour * 60 + now.minute;
       return nowMin >= start && nowMin < end;
     } catch (_) {
@@ -158,11 +163,12 @@ class AttendanceSummary {
   double get percentage =>
       totalDays > 0 ? (presentDays + lateDays * 0.5) / totalDays * 100 : 0;
 
-  factory AttendanceSummary.fromJson(Map<String, dynamic> j) => AttendanceSummary(
-        totalDays:   j['totalDays'] as int? ?? 0,
+  factory AttendanceSummary.fromJson(Map<String, dynamic> j) =>
+      AttendanceSummary(
+        totalDays: j['totalDays'] as int? ?? 0,
         presentDays: j['presentDays'] as int? ?? 0,
-        absentDays:  j['absentDays'] as int? ?? 0,
-        lateDays:    j['lateDays'] as int? ?? 0,
+        absentDays: j['absentDays'] as int? ?? 0,
+        lateDays: j['lateDays'] as int? ?? 0,
       );
 }
 
@@ -185,11 +191,11 @@ class UpcomingExam {
   int get daysLeft => startDate.difference(DateTime.now()).inDays;
 
   factory UpcomingExam.fromJson(Map<String, dynamic> j) => UpcomingExam(
-        id:        j['_id'] as String,
-        name:      j['name'] as String,
-        type:      j['type'] as String? ?? 'exam',
+        id: j['_id'] as String,
+        name: j['name'] as String,
+        type: j['type'] as String? ?? 'exam',
         startDate: DateTime.parse(j['startDate'] as String),
-        subjects:  (j['subjects'] as List? ?? [])
+        subjects: (j['subjects'] as List? ?? [])
             .map((s) => s is Map ? (s['name'] as String? ?? '') : s as String)
             .toList(),
       );

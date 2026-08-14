@@ -17,8 +17,8 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   final MobileScannerController _controller = MobileScannerController();
-  bool _scanned  = false;
-  bool _picking  = false;
+  bool _scanned = false;
+  bool _picking = false;
   String? _error;
 
   @override
@@ -31,14 +31,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
   void _processRawValue(String raw) {
     try {
       final decoded = utf8.decode(base64Decode(raw));
-      final json    = jsonDecode(decoded) as Map<String, dynamic>;
-      final org     = OrgConfig.fromQrPayload(json);
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+      final org = OrgConfig.fromQrPayload(json);
       if (!mounted) return;
       context.go('/onboarding/confirm', extra: org);
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error   = 'onboarding.invalidQr'.tr();
+        _error = 'onboarding.invalidQr'.tr();
         _scanned = false;
         _picking = false;
       });
@@ -57,26 +57,31 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
   Future<void> _pickAndScanImage() async {
     if (_picking) return;
-    setState(() { _picking = true; _error = null; });
+    setState(() {
+      _picking = true;
+      _error = null;
+    });
     _controller.stop();
 
     try {
       final picker = ImagePicker();
-      final file   = await picker.pickImage(source: ImageSource.gallery);
+      final file = await picker.pickImage(source: ImageSource.gallery);
       if (file == null) {
         // User cancelled
-        setState(() { _picking = false; });
+        setState(() {
+          _picking = false;
+        });
         _controller.start();
         return;
       }
 
       final capture = await _controller.analyzeImage(file.path);
-      final raw     = capture?.barcodes.firstOrNull?.rawValue;
+      final raw = capture?.barcodes.firstOrNull?.rawValue;
 
       if (raw == null) {
         if (!mounted) return;
         setState(() {
-          _error   = 'onboarding.noQrInImage'.tr();
+          _error = 'onboarding.noQrInImage'.tr();
           _picking = false;
         });
         _controller.start();
@@ -87,7 +92,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error   = 'onboarding.imageReadError'.tr();
+        _error = 'onboarding.imageReadError'.tr();
         _picking = false;
       });
       _controller.start();
@@ -117,7 +122,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                   GestureDetector(
                     onTap: _pickAndScanImage,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade600,
                         borderRadius: BorderRadius.circular(12),
@@ -126,16 +132,21 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2),
                             )
                           : const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.photo_library_rounded, color: Colors.white, size: 18),
+                                Icon(Icons.photo_library_rounded,
+                                    color: Colors.white, size: 18),
                                 SizedBox(width: 6),
                                 Text(
                                   'Upload QR',
-                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -145,11 +156,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                   // Torch toggle
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.flash_on_rounded, color: Colors.white),
+                      icon: const Icon(Icons.flash_on_rounded,
+                          color: Colors.white),
                       onPressed: () => _controller.toggleTorch(),
                     ),
                   ),
@@ -179,18 +191,22 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'onboarding.scanInstructions'.tr(),
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade900.withOpacity(0.85),
+                          color: Colors.red.shade900.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(_error!, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                        child: Text(_error!,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 13)),
                       ),
                     ],
                   ],
@@ -217,18 +233,24 @@ class _ScanOverlay extends StatelessWidget {
 class _OverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.55);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.55);
     const windowSize = 260.0;
     final cx = size.width / 2;
     final cy = size.height / 2 - 40;
-    final rect = Rect.fromCenter(center: Offset(cx, cy), width: windowSize, height: windowSize);
+    final rect = Rect.fromCenter(
+        center: Offset(cx, cy), width: windowSize, height: windowSize);
 
     // Draw dim overlay with cutout
     canvas
       ..drawRect(Rect.fromLTWH(0, 0, size.width, rect.top), paint)
       ..drawRect(Rect.fromLTWH(0, rect.top, rect.left, windowSize), paint)
-      ..drawRect(Rect.fromLTWH(rect.right, rect.top, size.width - rect.right, windowSize), paint)
-      ..drawRect(Rect.fromLTWH(0, rect.bottom, size.width, size.height - rect.bottom), paint);
+      ..drawRect(
+          Rect.fromLTWH(
+              rect.right, rect.top, size.width - rect.right, windowSize),
+          paint)
+      ..drawRect(
+          Rect.fromLTWH(0, rect.bottom, size.width, size.height - rect.bottom),
+          paint);
 
     // Scan window border
     final borderPaint = Paint()

@@ -44,7 +44,9 @@ class _StudentTimetableState extends ConsumerState<StudentTimetable>
       ),
       body: timetableAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => _ErrorView(message: e.toString(), onRetry: () => ref.invalidate(myTimetableProvider)),
+        error: (e, _) => _ErrorView(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(myTimetableProvider)),
         data: (timetable) {
           if (timetable == null) {
             return const _EmptyView(message: 'No timetable assigned yet.');
@@ -63,10 +65,13 @@ class _StudentTimetableState extends ConsumerState<StudentTimetable>
                   itemCount: daySlots.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, idx) {
-                    final slot   = daySlots[idx];
+                    final slot = daySlots[idx];
                     final timing = timetable.periodTimings.firstWhere(
                       (t) => t.periodNo == slot.periodNo,
-                      orElse: () => PeriodTiming(periodNo: slot.periodNo, startTime: '--', endTime: '--'),
+                      orElse: () => PeriodTiming(
+                          periodNo: slot.periodNo,
+                          startTime: '--',
+                          endTime: '--'),
                     );
                     final isToday = DateTime.now().weekday == i + 1;
                     final todaySlots = isToday
@@ -76,10 +81,10 @@ class _StudentTimetableState extends ConsumerState<StudentTimetable>
                       (ts) => ts.periodNo == slot.periodNo && ts.isNow,
                     );
                     return _PeriodCard(
-                      slot:      slot,
+                      slot: slot,
                       startTime: timing.startTime,
-                      endTime:   timing.endTime,
-                      isNow:     isNow,
+                      endTime: timing.endTime,
+                      isNow: isNow,
                     );
                   },
                 ),
@@ -138,12 +143,14 @@ class _PeriodCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           slot.subjectName,
-                          style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                          style: tt.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                       if (isNow)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: cs.primary,
                             borderRadius: BorderRadius.circular(20),
@@ -159,7 +166,9 @@ class _PeriodCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(slot.teacherName, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(slot.teacherName,
+                      style:
+                          tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                   if (startTime.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
@@ -187,7 +196,8 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.event_busy_rounded, size: 56, color: Theme.of(context).colorScheme.outlineVariant),
+          Icon(Icons.event_busy_rounded,
+              size: 56, color: Theme.of(context).colorScheme.outlineVariant),
           const SizedBox(height: 12),
           Text(message, style: Theme.of(context).textTheme.bodyMedium),
         ],
@@ -209,7 +219,8 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

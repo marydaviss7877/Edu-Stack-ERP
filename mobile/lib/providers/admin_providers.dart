@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/admin_service.dart';
 import '../services/notification_service.dart';
 
-final adminServiceProvider  = Provider((_) => AdminService());
+final adminServiceProvider = Provider((_) => AdminService());
 final _notifServiceProvider = Provider((_) => NotificationService());
 
 final orgStatsProvider = FutureProvider<Map<String, dynamic>>((ref) {
@@ -18,7 +18,8 @@ final allOrgsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
 });
 
 // Role filter: 'teacher' | 'student' | null (all)
-final usersListProvider = FutureProvider.family<List<Map<String, dynamic>>, String?>((ref, role) {
+final usersListProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String?>((ref, role) {
   return ref.watch(adminServiceProvider).getUsers(role: role);
 });
 

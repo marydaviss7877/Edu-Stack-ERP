@@ -20,16 +20,19 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // ── Appearance ────────────────────────────────────────
-          Text('Appearance', style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          Text('Appearance',
+              style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
           Card(
             child: Column(
               children: [
                 ListTile(
-                  leading: Icon(Icons.brightness_auto_rounded, color: cs.primary),
+                  leading:
+                      Icon(Icons.brightness_auto_rounded, color: cs.primary),
                   title: const Text('Theme'),
                   subtitle: Text(_themeName(themeMode)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  trailing:
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                   onTap: () => _showThemePicker(context, ref, themeMode),
                 ),
               ],
@@ -39,7 +42,8 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ── Language ─────────────────────────────────────────
-          Text('Language', style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          Text('Language',
+              style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -72,7 +76,8 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ── About ────────────────────────────────────────────
-          Text('About', style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          Text('About',
+              style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -80,7 +85,9 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.info_outline_rounded, color: cs.primary),
                   title: const Text('App Version'),
-                  trailing: Text('1.0.0', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  trailing: Text('1.0.0',
+                      style:
+                          tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                 ),
                 const Divider(height: 1, indent: 56),
                 ListTile(
@@ -95,12 +102,15 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ── Account ───────────────────────────────────────────
-          Text('Account', style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          Text('Account',
+              style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
           Card(
             child: ListTile(
               leading: Icon(Icons.logout_rounded, color: cs.error),
-              title: Text('Sign Out', style: TextStyle(color: cs.error, fontWeight: FontWeight.w600)),
+              title: Text('Sign Out',
+                  style:
+                      TextStyle(color: cs.error, fontWeight: FontWeight.w600)),
               onTap: () => _confirmSignOut(context, ref),
             ),
           ),
@@ -110,10 +120,10 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   String _themeName(ThemeMode mode) => switch (mode) {
-    ThemeMode.system => 'System default',
-    ThemeMode.light  => 'Light',
-    ThemeMode.dark   => 'Dark',
-  };
+        ThemeMode.system => 'System default',
+        ThemeMode.light => 'Light',
+        ThemeMode.dark => 'Dark',
+      };
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
     showDialog(
@@ -141,22 +151,38 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showThemePicker(BuildContext context, WidgetRef ref, ThemeMode current) {
+  void _showThemePicker(
+      BuildContext context, WidgetRef ref, ThemeMode current) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(title: const Text('System default'), leading: const Icon(Icons.brightness_auto_rounded),
-            selected: current == ThemeMode.system,
-            onTap: () { ref.read(themeModeProvider.notifier).setMode(ThemeMode.system); Navigator.of(context).pop(); }),
-          ListTile(title: const Text('Light'), leading: const Icon(Icons.light_mode_rounded),
-            selected: current == ThemeMode.light,
-            onTap: () { ref.read(themeModeProvider.notifier).setMode(ThemeMode.light); Navigator.of(context).pop(); }),
-          ListTile(title: const Text('Dark'), leading: const Icon(Icons.dark_mode_rounded),
-            selected: current == ThemeMode.dark,
-            onTap: () { ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark); Navigator.of(context).pop(); }),
+          ListTile(
+              title: const Text('System default'),
+              leading: const Icon(Icons.brightness_auto_rounded),
+              selected: current == ThemeMode.system,
+              onTap: () {
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.system);
+                Navigator.of(context).pop();
+              }),
+          ListTile(
+              title: const Text('Light'),
+              leading: const Icon(Icons.light_mode_rounded),
+              selected: current == ThemeMode.light,
+              onTap: () {
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.light);
+                Navigator.of(context).pop();
+              }),
+          ListTile(
+              title: const Text('Dark'),
+              leading: const Icon(Icons.dark_mode_rounded),
+              selected: current == ThemeMode.dark,
+              onTap: () {
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
+                Navigator.of(context).pop();
+              }),
           const SizedBox(height: 16),
         ],
       ),
@@ -165,7 +191,12 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 class _LocaleTile extends StatelessWidget {
-  const _LocaleTile({required this.locale, required this.label, required this.subtitle, required this.onTap, this.isSelected = false});
+  const _LocaleTile(
+      {required this.locale,
+      required this.label,
+      required this.subtitle,
+      required this.onTap,
+      this.isSelected = false});
   final String locale;
   final String label;
   final String subtitle;
@@ -179,13 +210,20 @@ class _LocaleTile extends StatelessWidget {
       leading: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+            color: cs.primaryContainer, borderRadius: BorderRadius.circular(8)),
         alignment: Alignment.center,
-        child: Text(locale.toUpperCase(), style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.bold, fontSize: 12)),
+        child: Text(locale.toUpperCase(),
+            style: TextStyle(
+                color: cs.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
+                fontSize: 12)),
       ),
       title: Text(label),
       subtitle: Text(subtitle),
-      trailing: isSelected ? Icon(Icons.check_rounded, color: cs.primary) : const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+      trailing: isSelected
+          ? Icon(Icons.check_rounded, color: cs.primary)
+          : const Icon(Icons.arrow_forward_ios_rounded, size: 16),
       onTap: onTap,
     );
   }

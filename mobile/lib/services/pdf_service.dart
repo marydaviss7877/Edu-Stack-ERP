@@ -16,7 +16,7 @@ class PdfService {
     final pdf = pw.Document();
 
     final primaryColor = _hexColor(org.primaryColor);
-    final resultColor  = result.isPassed ? PdfColors.green700 : PdfColors.red700;
+    final resultColor = result.isPassed ? PdfColors.green700 : PdfColors.red700;
 
     pdf.addPage(
       pw.Page(
@@ -53,10 +53,12 @@ class PdfService {
     required StudentProfile student,
     required OrgConfig org,
   }) async {
-    final bytes = await generateResultCard(result: result, student: student, org: org);
+    final bytes =
+        await generateResultCard(result: result, student: student, org: org);
     await Printing.sharePdf(
       bytes: bytes,
-      filename: 'result_${student.name.replaceAll(' ', '_')}_${result.examName.replaceAll(' ', '_')}.pdf',
+      filename:
+          'result_${student.name.replaceAll(' ', '_')}_${result.examName.replaceAll(' ', '_')}.pdf',
     );
   }
 
@@ -75,7 +77,10 @@ class PdfService {
           alignment: pw.Alignment.center,
           child: pw.Text(
             org.name.isNotEmpty ? org.name[0].toUpperCase() : 'E',
-            style: pw.TextStyle(color: PdfColors.white, fontSize: 26, fontWeight: pw.FontWeight.bold),
+            style: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: 26,
+                fontWeight: pw.FontWeight.bold),
           ),
         ),
         pw.SizedBox(width: 14),
@@ -85,12 +90,16 @@ class PdfService {
             children: [
               pw.Text(
                 org.name,
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: primary),
+                style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                    color: primary),
               ),
               pw.SizedBox(height: 2),
               pw.Text(
                 'RESULT CARD',
-                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600, letterSpacing: 2.5),
+                style: const pw.TextStyle(
+                    fontSize: 10, color: PdfColors.grey600, letterSpacing: 2.5),
               ),
             ],
           ),
@@ -99,21 +108,27 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildStudentInfo(StudentProfile student, ExamResult result) {
+  static pw.Widget _buildStudentInfo(
+      StudentProfile student, ExamResult result) {
     final leftItems = <_InfoItem>[
       _InfoItem('Student', student.name),
       if (student.rollNo != null) _InfoItem('Roll No.', student.rollNo!),
       if (student.className != null)
         _InfoItem(
           'Class',
-          [student.className!, if (student.sectionName != null) student.sectionName!].join(' — '),
+          [
+            student.className!,
+            if (student.sectionName != null) student.sectionName!
+          ].join(' — '),
         ),
     ];
 
     final rightItems = <_InfoItem>[
       _InfoItem('Exam', result.examName),
-      if (result.classPosition != null) _InfoItem('Class Position', '${result.classPosition}'),
-      if (result.sectionPosition != null) _InfoItem('Section Position', '${result.sectionPosition}'),
+      if (result.classPosition != null)
+        _InfoItem('Class Position', '${result.classPosition}'),
+      if (result.sectionPosition != null)
+        _InfoItem('Section Position', '${result.sectionPosition}'),
     ];
 
     return pw.Container(
@@ -151,7 +166,7 @@ class PdfService {
           children: [
             pw.TextSpan(
               text: '${item.label}:  ',
-              style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
             ),
             pw.TextSpan(
               text: item.value,
@@ -212,10 +227,13 @@ class PdfService {
         padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 7),
         child: pw.Text(text,
             style: pw.TextStyle(
-                fontSize: 9, color: PdfColors.white, fontWeight: pw.FontWeight.bold)),
+                fontSize: 9,
+                color: PdfColors.white,
+                fontWeight: pw.FontWeight.bold)),
       );
 
-  static pw.Widget _td(String text, {PdfColor? color, bool bold = false}) => pw.Padding(
+  static pw.Widget _td(String text, {PdfColor? color, bool bold = false}) =>
+      pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         child: pw.Text(
           text,
@@ -227,12 +245,14 @@ class PdfService {
         ),
       );
 
-  static pw.Widget _buildSummaryRow(ExamResult result, PdfColor primary, PdfColor resultColor) {
+  static pw.Widget _buildSummaryRow(
+      ExamResult result, PdfColor primary, PdfColor resultColor) {
     return pw.Row(
       children: [
         _summaryBox(
           label: 'Total Marks',
-          value: '${result.totalMarksObtained.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)}',
+          value:
+              '${result.totalMarksObtained.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)}',
           borderColor: primary,
         ),
         pw.SizedBox(width: 10),
@@ -289,7 +309,8 @@ class PdfService {
                     color: borderColor)),
             pw.SizedBox(height: 3),
             pw.Text(label,
-                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                style:
+                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
           ],
         ),
       ),
@@ -326,9 +347,11 @@ class PdfService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text('Generated by EduStack PK — WolfStack',
-                style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey500)),
+                style:
+                    const pw.TextStyle(fontSize: 7, color: PdfColors.grey500)),
             pw.Text('This is a computer-generated document.',
-                style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey500)),
+                style:
+                    const pw.TextStyle(fontSize: 7, color: PdfColors.grey500)),
           ],
         ),
       ],

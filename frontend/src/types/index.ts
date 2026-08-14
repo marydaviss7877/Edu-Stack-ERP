@@ -100,6 +100,11 @@ export interface Branch {
     periodsPerDay: number;
     workingDays: number[];
   };
+  academicThresholds?: {
+    weakThreshold: number;
+    failingThreshold: number;
+    clearancePassMark: number;
+  };
 }
 
 export type ResourceType = 'notes' | 'book' | 'past_paper' | 'video_link' | 'other';

@@ -41,14 +41,21 @@ class _MyAssignmentsState extends ConsumerState<MyAssignments>
       ),
       body: allAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorRetry(message: e.toString(), onRetry: () => ref.invalidate(myAssignmentsProvider)),
+        error: (e, _) => _ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(myAssignmentsProvider)),
         data: (assignments) {
-          final pending = assignments.where((a) => !a.isOverdue && a.isActive).toList();
+          final pending =
+              assignments.where((a) => !a.isOverdue && a.isActive).toList();
           return TabBarView(
             controller: _tabCtrl,
             children: [
-              _AssignmentList(assignments: assignments, onRefresh: () async => ref.invalidate(myAssignmentsProvider)),
-              _AssignmentList(assignments: pending, onRefresh: () async => ref.invalidate(myAssignmentsProvider)),
+              _AssignmentList(
+                  assignments: assignments,
+                  onRefresh: () async => ref.invalidate(myAssignmentsProvider)),
+              _AssignmentList(
+                  assignments: pending,
+                  onRefresh: () async => ref.invalidate(myAssignmentsProvider)),
             ],
           );
         },
@@ -69,7 +76,8 @@ class _AssignmentList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.assignment_turned_in_rounded, size: 56, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(Icons.assignment_turned_in_rounded,
+                size: 56, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: 12),
             const Text('No assignments here.'),
           ],
@@ -82,7 +90,8 @@ class _AssignmentList extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: assignments.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) => _AssignmentCard(assignment: assignments[i]),
+        itemBuilder: (context, i) =>
+            _AssignmentCard(assignment: assignments[i]),
       ),
     );
   }
@@ -94,16 +103,19 @@ class _AssignmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs   = Theme.of(context).colorScheme;
-    final tt   = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final days = assignment.daysLeft;
     final overdue = assignment.isOverdue;
 
     final (urgencyColor, urgencyLabel) = switch (days) {
-      _ when overdue        => (cs.error, 'Overdue'),
-      _ when days == 0      => (cs.error, 'Due today'),
-      _ when days <= 2      => (cs.tertiary, 'Due in $days day${days == 1 ? '' : 's'}'),
-      _                     => (cs.primary, 'Due in $days days'),
+      _ when overdue => (cs.error, 'Overdue'),
+      _ when days == 0 => (cs.error, 'Due today'),
+      _ when days <= 2 => (
+          cs.tertiary,
+          'Due in $days day${days == 1 ? '' : 's'}'
+        ),
+      _ => (cs.primary, 'Due in $days days'),
     };
 
     return Card(
@@ -118,32 +130,37 @@ class _AssignmentCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: cs.secondaryContainer,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       assignment.subjectName,
-                      style: tt.labelSmall?.copyWith(color: cs.onSecondaryContainer),
+                      style: tt.labelSmall
+                          ?.copyWith(color: cs.onSecondaryContainer),
                     ),
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: urgencyColor.withOpacity(0.12),
+                      color: urgencyColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       urgencyLabel,
-                      style: tt.labelSmall?.copyWith(color: urgencyColor, fontWeight: FontWeight.bold),
+                      style: tt.labelSmall?.copyWith(
+                          color: urgencyColor, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(assignment.title, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+              Text(assignment.title,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
               Text(
                 assignment.description,
@@ -154,7 +171,8 @@ class _AssignmentCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded, size: 14, color: cs.onSurfaceVariant),
+                  Icon(Icons.calendar_today_rounded,
+                      size: 14, color: cs.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     'Due: ${DateFormat('d MMM yyyy').format(assignment.dueDate)}',
@@ -162,7 +180,8 @@ class _AssignmentCard extends StatelessWidget {
                   ),
                   if (assignment.totalMarks != null) ...[
                     const SizedBox(width: 12),
-                    Icon(Icons.star_outline_rounded, size: 14, color: cs.onSurfaceVariant),
+                    Icon(Icons.star_outline_rounded,
+                        size: 14, color: cs.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       '${assignment.totalMarks!.toStringAsFixed(0)} marks',
@@ -206,11 +225,14 @@ class _AssignmentDetail extends StatelessWidget {
         controller: ctrl,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
-          Text(assignment.title, style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(assignment.title,
+              style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(assignment.subjectName, style: tt.labelMedium?.copyWith(color: cs.primary)),
+          Text(assignment.subjectName,
+              style: tt.labelMedium?.copyWith(color: cs.primary)),
           const Divider(height: 24),
-          Text('Description', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+          Text('Description',
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text(assignment.description, style: tt.bodyMedium),
           const SizedBox(height: 16),
@@ -248,7 +270,8 @@ class _AssignmentDetail extends StatelessWidget {
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label, required this.value});
+  const _InfoChip(
+      {required this.icon, required this.label, required this.value});
   final IconData icon;
   final String label;
   final String value;
@@ -264,10 +287,12 @@ class _InfoChip extends StatelessWidget {
           children: [
             Icon(icon, size: 14, color: cs.primary),
             const SizedBox(width: 4),
-            Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+            Text(label,
+                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
           ],
         ),
-        Text(value, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+        Text(value,
+            style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -283,7 +308,8 @@ class _ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

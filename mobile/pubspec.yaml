@@ -1,7 +1,7 @@
 name: edustack_mobile
 description: EduStack PK — School ERP for students, teachers and staff.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -18,7 +18,6 @@ dependencies:
 
   # State management
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
 
   # HTTP client
   dio: ^5.4.3
@@ -77,9 +76,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  riverpod_generator: ^2.4.3
-  build_runner: ^2.4.11
-  hive_generator: ^2.0.1
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.1
 
@@ -98,16 +94,16 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  ios: true
+  ios: false
   image_path: "assets/images/icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#1e3a5f"
+  adaptive_icon_background: "#0343A0"
   adaptive_icon_foreground: "assets/images/icon_foreground.png"
 
 flutter_native_splash:
-  color: "#1e3a5f"
+  color: "#0343A0"
   image: assets/images/splash_logo.png
   android_12:
-    color: "#1e3a5f"
+    color: "#0343A0"
     image: assets/images/splash_logo.png
   fullscreen: false

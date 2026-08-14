@@ -24,7 +24,9 @@ class SelectClassScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(e.toString(), textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: () => ref.invalidate(myClassesProvider), child: const Text('Retry')),
+              ElevatedButton(
+                  onPressed: () => ref.invalidate(myClassesProvider),
+                  child: const Text('Retry')),
             ],
           ),
         ),
@@ -47,10 +49,12 @@ class SelectClassScreen extends ConsumerWidget {
             itemCount: classes.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
-              final cls         = classes[i];
-              final classId     = cls['classId'] as String? ?? cls['_id'] as String? ?? '';
-              final sectionId   = cls['sectionId'] as String? ?? '';
-              final className   = cls['className'] as String? ?? cls['name'] as String? ?? '';
+              final cls = classes[i];
+              final classId =
+                  cls['classId'] as String? ?? cls['_id'] as String? ?? '';
+              final sectionId = cls['sectionId'] as String? ?? '';
+              final className =
+                  cls['className'] as String? ?? cls['name'] as String? ?? '';
               final sectionName = cls['sectionName'] as String? ?? '';
               final subjectName = cls['subjectName'] as String? ?? '';
               final studentCount = cls['studentCount'] as int? ?? 0;
@@ -61,9 +65,9 @@ class SelectClassScreen extends ConsumerWidget {
                   onTap: () => context.push(
                     '/teacher/attendance/mark',
                     extra: {
-                      'classId':     classId,
-                      'sectionId':   sectionId,
-                      'className':   className,
+                      'classId': classId,
+                      'sectionId': sectionId,
+                      'className': className,
                       'sectionName': sectionName,
                       'subjectName': subjectName,
                     },
@@ -82,7 +86,9 @@ class SelectClassScreen extends ConsumerWidget {
                           alignment: Alignment.center,
                           child: Text(
                             className.isNotEmpty ? className[0] : '?',
-                            style: tt.titleLarge?.copyWith(color: cs.onPrimaryContainer, fontWeight: FontWeight.bold),
+                            style: tt.titleLarge?.copyWith(
+                                color: cs.onPrimaryContainer,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -92,21 +98,26 @@ class SelectClassScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 '$className${sectionName.isNotEmpty ? " · Section $sectionName" : ""}',
-                                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                                style: tt.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                               if (subjectName.isNotEmpty) ...[
                                 const SizedBox(height: 2),
-                                Text(subjectName, style: tt.bodySmall?.copyWith(color: cs.primary)),
+                                Text(subjectName,
+                                    style: tt.bodySmall
+                                        ?.copyWith(color: cs.primary)),
                               ],
                               const SizedBox(height: 2),
                               Text(
                                 '$studentCount student${studentCount == 1 ? '' : 's'}',
-                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                style: tt.bodySmall
+                                    ?.copyWith(color: cs.onSurfaceVariant),
                               ),
                             ],
                           ),
                         ),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 16, color: cs.onSurfaceVariant),
+                        Icon(Icons.arrow_forward_ios_rounded,
+                            size: 16, color: cs.onSurfaceVariant),
                       ],
                     ),
                   ),

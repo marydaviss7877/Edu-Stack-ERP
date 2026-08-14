@@ -14,11 +14,15 @@ class AuthState {
 
   bool get isAuthenticated => user != null;
 
-  AuthState copyWith({AppUser? user, bool? isLoading, String? error, bool clearUser = false}) =>
+  AuthState copyWith(
+          {AppUser? user,
+          bool? isLoading,
+          String? error,
+          bool clearUser = false}) =>
       AuthState(
-        user:      clearUser ? null : (user ?? this.user),
+        user: clearUser ? null : (user ?? this.user),
         isLoading: isLoading ?? this.isLoading,
-        error:     error,
+        error: error,
       );
 }
 
@@ -51,9 +55,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Verify token by calling /auth/me (8s max so splash doesn't hang)
       final user = await _authService.getMe().timeout(
-        const Duration(seconds: 8),
-        onTimeout: () => throw Exception('session_timeout'),
-      );
+            const Duration(seconds: 8),
+            onTimeout: () => throw Exception('session_timeout'),
+          );
       LocalStorageService.updateLastActive();
       state = state.copyWith(user: user, isLoading: false);
     } catch (_) {
@@ -78,14 +82,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         loginAs: loginAs,
       );
       await _secureStorage.saveTokens(
-        accessToken:  result['accessToken'] as String,
+        accessToken: result['accessToken'] as String,
         refreshToken: result['refreshToken'] as String,
       );
       LocalStorageService.updateLastActive();
       final user = AppUser.fromJson(result['user'] as Map<String, dynamic>);
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString(), clearUser: true);
+      state = state.copyWith(
+          isLoading: false, error: e.toString(), clearUser: true);
       rethrow;
     }
   }
@@ -93,7 +98,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     try {
       await _authService.logout();
-    } catch (_) { /* best effort */ }
+    } catch (_) {/* best effort */}
     await _secureStorage.clearTokens();
     state = const AuthState();
   }
@@ -114,5 +119,7 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
 );
 
 // Convenience selectors
-final currentUserProvider = Provider<AppUser?>((ref) => ref.watch(authProvider).user);
-final isAuthenticatedProvider = Provider<bool>((ref) => ref.watch(authProvider).isAuthenticated);
+final currentUserProvider =
+    Provider<AppUser?>((ref) => ref.watch(authProvider).user);
+final isAuthenticatedProvider =
+    Provider<bool>((ref) => ref.watch(authProvider).isAuthenticated);

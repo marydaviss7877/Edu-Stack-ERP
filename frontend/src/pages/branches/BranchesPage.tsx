@@ -22,6 +22,11 @@ interface EditForm {
   phone: string;
   email: string;
   principalName: string;
+  academicThresholds: {
+    weakThreshold: number;
+    failingThreshold: number;
+    clearancePassMark: number;
+  };
 }
 
 const EMPTY_CREATE: CreateForm = { name: '', city: '', code: '', address: '', phone: '', email: '' };
@@ -38,7 +43,10 @@ export default function BranchesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editBranch, setEditBranch] = useState<Branch | null>(null);
   const [form, setForm] = useState<CreateForm>(EMPTY_CREATE);
-  const [editForm, setEditForm] = useState<EditForm>({ name: '', city: '', address: '', phone: '', email: '', principalName: '' });
+  const [editForm, setEditForm] = useState<EditForm>({
+    name: '', city: '', address: '', phone: '', email: '', principalName: '',
+    academicThresholds: { weakThreshold: 50, failingThreshold: 40, clearancePassMark: 40 },
+  });
   const [createError, setCreateError] = useState('');
   const [editError, setEditError] = useState('');
 
@@ -88,6 +96,11 @@ export default function BranchesPage() {
       phone: (branch as any).phone ?? '',
       email: (branch as any).email ?? '',
       principalName: (branch as any).principalName ?? '',
+      academicThresholds: {
+        weakThreshold: branch.academicThresholds?.weakThreshold ?? 50,
+        failingThreshold: branch.academicThresholds?.failingThreshold ?? 40,
+        clearancePassMark: branch.academicThresholds?.clearancePassMark ?? 40,
+      },
     });
     setEditError('');
   };
@@ -349,6 +362,39 @@ export default function BranchesPage() {
                 onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1.5">Weak-Topic &amp; Clearance Thresholds</label>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[10px] text-gray-400 dark:text-slate-500 mb-1">Weak %</label>
+                <input
+                  type="number" min={0} max={100}
+                  className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
+                  value={editForm.academicThresholds.weakThreshold}
+                  onChange={e => setEditForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, weakThreshold: Number(e.target.value) } }))}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-400 dark:text-slate-500 mb-1">Failing %</label>
+                <input
+                  type="number" min={0} max={100}
+                  className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
+                  value={editForm.academicThresholds.failingThreshold}
+                  onChange={e => setEditForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, failingThreshold: Number(e.target.value) } }))}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-400 dark:text-slate-500 mb-1">Clearance Pass %</label>
+                <input
+                  type="number" min={0} max={100}
+                  className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
+                  value={editForm.academicThresholds.clearancePassMark}
+                  onChange={e => setEditForm(f => ({ ...f, academicThresholds: { ...f.academicThresholds, clearancePassMark: Number(e.target.value) } }))}
+                />
+              </div>
+            </div>
+            <p className="text-[10.5px] text-gray-400 dark:text-slate-500 mt-1.5">Below "Weak %" flags a weekly-test topic; below "Failing %" auto-triggers a clearance exam; "Clearance Pass %" clears the flag.</p>
           </div>
           <button
             type="submit"

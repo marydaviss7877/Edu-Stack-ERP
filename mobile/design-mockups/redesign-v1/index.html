@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="EduStack mobile redesign v1 — refined from the approved Stitch direction." />
+  <title>EduStack · Redesign v1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0&family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="redesign.css" />
+</head>
+<body>
+  <div class="studio-shell">
+    <aside class="rail">
+      <div class="brand-lockup">
+        <div class="brand-mark"><span class="material-symbols-rounded">account_balance</span></div>
+        <div><strong>EduStack</strong><span>Redesign · Direction 01</span></div>
+      </div>
+      <div class="rail-copy">
+        <span class="eyebrow">Reviewed direction</span>
+        <h1>Academic clarity</h1>
+        <p>Deep indigo, warm institutional accents, role-specific hierarchy, and actionable daily views.</p>
+      </div>
+      <div class="review-score"><strong>8.2</strong><span>/ 10<br>adapted, not copied</span></div>
+      <label class="search-box"><span class="material-symbols-rounded">search</span><input id="screen-search" type="search" placeholder="Find a redesigned screen" /></label>
+      <nav id="screen-nav" class="screen-nav" aria-label="Redesigned app screens"></nav>
+      <div class="rail-footer"><span class="dot"></span><span id="screen-count">26 screens</span></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <div class="breadcrumb"><span id="route-role">Student</span><span>/</span><span id="route-path">Dashboard</span></div>
+          <h2 id="screen-title">Student dashboard</h2>
+        </div>
+        <div class="toolbar">
+          <a class="compare-link" href="../current/index.html"><span class="material-symbols-rounded">compare</span> Current UI</a>
+          <button id="theme-toggle" class="icon-button" type="button" title="Toggle theme"><span class="material-symbols-rounded">dark_mode</span></button>
+          <button id="tokens-toggle" class="toolbar-button" type="button"><span class="material-symbols-rounded">palette</span> Brand kit</button>
+          <input id="seed-color" type="color" value="#4f378a" hidden />
+        </div>
+      </header>
+
+      <section class="canvas">
+        <div class="canvas-note"><span class="material-symbols-rounded">verified</span> Refined after design review · mobile-first · implementation reference</div>
+        <div class="phone-wrap"><div class="phone"><div class="phone-speaker"></div><div class="device-screen" id="device-screen"></div></div></div>
+        <aside class="screen-notes">
+          <span class="eyebrow">Redesign rationale</span>
+          <h3 id="pattern-title">Action-first dashboard</h3>
+          <p id="pattern-copy">Daily priorities are promoted above summary data, with clear hierarchy and less decorative surface area.</p>
+          <div class="measure-list" id="measure-list"></div>
+          <div class="adoption-note"><span class="material-symbols-rounded">lightbulb</span><div><b>What changed</b><p id="change-note">The role hero is replaced by a compact greeting and urgent fee notice.</p></div></div>
+        </aside>
+      </section>
+    </main>
+
+    <aside class="token-panel" id="token-panel">
+      <div class="token-head"><div><span class="eyebrow">Finalized direction 01</span><h2>EduStack brand kit</h2></div><button id="tokens-close" class="icon-button" type="button"><span class="material-symbols-rounded">close</span></button></div>
+      <p class="token-intro">The Stitch palette was retained as a starting point, then corrected for semantic clarity, Urdu support, contrast, and school-level customization.</p>
+      <section class="token-group"><h3>Core identity</h3><div class="swatches">
+        <div class="swatch"><i style="--swatch:#4f378a"></i><span><b>EduStack indigo</b><code>#4F378A</code></span></div>
+        <div class="swatch"><i style="--swatch:#63597c"></i><span><b>Academic violet</b><code>#63597C</code></span></div>
+        <div class="swatch"><i style="--swatch:#9a7611"></i><span><b>Achievement gold</b><code>#9A7611</code></span></div>
+        <div class="swatch"><i style="--swatch:#13766f"></i><span><b>Progress teal</b><code>#13766F</code></span></div>
+        <div class="swatch"><i style="--swatch:#fbf9fe"></i><span><b>Canvas</b><code>#FBF9FE</code></span></div>
+      </div></section>
+      <section class="token-group"><h3>Semantic color</h3><dl class="component-table">
+        <div><dt>Success / present / paid</dt><dd>#13766F</dd></div>
+        <div><dt>Warning / due soon</dt><dd>#9A6700</dd></div>
+        <div><dt>Error / absent / overdue</dt><dd>#BA1A1A</dd></div>
+        <div><dt>Information</dt><dd>#365F91</dd></div>
+      </dl></section>
+      <section class="token-group"><h3>Typography</h3><div class="type-row"><strong style="font-family:'Hanken Grotesk';font-size:28px">Hanken</strong><span>Headlines · 600/700</span></div><div class="type-row"><strong style="font-size:16px">Inter</strong><span>UI and body · 400–700</span></div><div class="type-row"><strong lang="ur" dir="rtl" style="font-family:'Noto Nastaliq Urdu';font-size:18px">ایجو اسٹیک</strong><span>Urdu · 32px line height</span></div></section>
+      <section class="token-group"><h3>System rules</h3><dl class="component-table">
+        <div><dt>Spacing</dt><dd>4 · 8 · 12 · 16 · 24 · 32</dd></div>
+        <div><dt>Radius</dt><dd>8 · 12 · 16 · 24 · pill</dd></div>
+        <div><dt>Touch target</dt><dd>44px minimum</dd></div>
+        <div><dt>Page gutter</dt><dd>16px mobile</dd></div>
+        <div><dt>Motion</dt><dd>150–240ms, reduced-motion safe</dd></div>
+      </dl></section>
+      <section class="token-group"><h3>Tenant branding</h3><p class="token-intro">School color may affect the logo tile, active navigation indicator, selected chips, primary buttons, and small identity accents. Semantic states and neutral surfaces never inherit tenant colors.</p></section>
+    </aside>
+  </div>
+  <script src="base.js"></script>
+  <script src="redesign.js"></script>
+</body>
+</html>

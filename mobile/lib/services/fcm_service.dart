@@ -12,7 +12,7 @@ class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
 
-  final _messaging   = FirebaseMessaging.instance;
+  final _messaging = FirebaseMessaging.instance;
   final _localNotifs = FlutterLocalNotificationsPlugin();
 
   static const _androidChannel = AndroidNotificationChannel(
@@ -26,26 +26,27 @@ class FcmService {
   Future<void> init() async {
     // Request permission (iOS + Android 13+)
     final settings = await _messaging.requestPermission(
-      alert:         true,
-      announcement:  false,
-      badge:         true,
-      carPlay:       false,
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
       criticalAlert: false,
-      provisional:   false,
-      sound:         true,
+      provisional: false,
+      sound: true,
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.denied) return;
 
     // Create Android notification channel
     await _localNotifs
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_androidChannel);
 
     // Init local notifications (for foreground display)
     const initSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS:     DarwinInitializationSettings(),
+      iOS: DarwinInitializationSettings(),
     );
     await _localNotifs.initialize(initSettings);
 
@@ -104,9 +105,9 @@ class FcmService {
           _androidChannel.id,
           _androidChannel.name,
           channelDescription: _androidChannel.description,
-          importance:         Importance.max,
-          priority:           Priority.high,
-          icon:               '@mipmap/ic_launcher',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -120,7 +121,6 @@ class FcmService {
   void _handleMessageTap(RemoteMessage message) {
     // Navigate based on notification type
     // Routing handled via navigatorKey or GoRouter after app is mounted
-    final type = message.data['type'] as String?;
     // Store pending route for post-mount navigation if needed
   }
 }

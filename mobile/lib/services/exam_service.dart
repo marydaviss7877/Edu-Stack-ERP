@@ -9,7 +9,7 @@ class ExamService {
 
   // Student: all results ordered by exam date desc
   Future<List<ExamResult>> getMyResults() async {
-    final res  = await _dio.get('${ApiConstants.exams}/my-results');
+    final res = await _dio.get('${ApiConstants.exams}/my-results');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) throw Exception('Failed to load results');
     return (data['data'] as List)
@@ -25,7 +25,8 @@ class ExamService {
 
   // Upcoming exams that haven't started yet
   Future<List<UpcomingExam>> getUpcomingExams() async {
-    final res  = await _dio.get(ApiConstants.exams, queryParameters: {'upcoming': true});
+    final res =
+        await _dio.get(ApiConstants.exams, queryParameters: {'upcoming': true});
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) return [];
     return (data['data'] as List)
@@ -34,7 +35,8 @@ class ExamService {
   }
 
   // Teacher: get class marks for an exam
-  Future<List<Map<String, dynamic>>> getClassMarks(String examId, String classId, String sectionId) async {
+  Future<List<Map<String, dynamic>>> getClassMarks(
+      String examId, String classId, String sectionId) async {
     final res = await _dio.get(
       '${ApiConstants.exams}/$examId/marks',
       queryParameters: {'classId': classId, 'sectionId': sectionId},

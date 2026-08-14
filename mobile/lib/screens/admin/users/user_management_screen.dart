@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/admin_providers.dart';
+import '../../../core/layout/responsive.dart';
 
 class UserManagementScreen extends ConsumerStatefulWidget {
   const UserManagementScreen({super.key});
@@ -13,7 +14,7 @@ class _UserManagementState extends ConsumerState<UserManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   static const _filters = [null, 'teacher', 'student', 'accountant'];
-  static const _labels  = ['All', 'Teachers', 'Students', 'Accountants'];
+  static const _labels = ['All', 'Teachers', 'Students', 'Accountants'];
 
   @override
   void initState() {
@@ -66,7 +67,9 @@ class _UserList extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(e.toString(), textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: () => ref.invalidate(usersListProvider(role)), child: const Text('Retry')),
+            ElevatedButton(
+                onPressed: () => ref.invalidate(usersListProvider(role)),
+                child: const Text('Retry')),
           ],
         ),
       ),
@@ -76,7 +79,8 @@ class _UserList extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.people_outline_rounded, size: 56, color: cs.outlineVariant),
+                Icon(Icons.people_outline_rounded,
+                    size: 56, color: cs.outlineVariant),
                 const SizedBox(height: 12),
                 const Text('No users found.'),
               ],
@@ -90,54 +94,69 @@ class _UserList extends ConsumerWidget {
             itemCount: users.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
-              final u        = users[i];
-              final name     = u['name'] as String? ?? 'Unknown';
-              final email    = u['email'] as String? ?? '';
+              final u = users[i];
+              final name = u['name'] as String? ?? 'Unknown';
+              final email = u['email'] as String? ?? '';
               final userRole = u['role'] as String? ?? '';
               final isActive = u['isActive'] as bool? ?? true;
 
               return Card(
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: isActive ? cs.primaryContainer : cs.surfaceContainerHighest,
+                    backgroundColor: isActive
+                        ? cs.primaryContainer
+                        : cs.surfaceContainerHighest,
                     child: Text(
                       name.isNotEmpty ? name[0].toUpperCase() : '?',
                       style: TextStyle(
-                        color: isActive ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                        color: isActive
+                            ? cs.onPrimaryContainer
+                            : cs.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  title: Text(name, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text(email, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant), overflow: TextOverflow.ellipsis),
+                  title: Text(name,
+                      style:
+                          tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  subtitle: Text(email,
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      overflow: TextOverflow.ellipsis),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
+                      if (!context.isNarrowPhone) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(_roleShort(userRole),
+                              style: tt.labelSmall
+                                  ?.copyWith(color: cs.onSurfaceVariant)),
                         ),
-                        child: Text(_roleShort(userRole), style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-                      ),
-                      const SizedBox(width: 6),
+                        const SizedBox(width: 6),
+                      ],
                       Switch.adaptive(
                         value: isActive,
                         onChanged: (v) async {
-                          final id = u['_id'] as String?
-                              ?? u['id'] as String?
-                              ?? '';
+                          final id =
+                              u['_id'] as String? ?? u['id'] as String? ?? '';
                           if (id.isEmpty) return;
                           try {
-                            await ref.read(adminServiceProvider).toggleUserStatus(id, v);
+                            await ref
+                                .read(adminServiceProvider)
+                                .toggleUserStatus(id, v);
                             ref.invalidate(usersListProvider(role));
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Failed to update status: $e'),
-                                  backgroundColor: Theme.of(context).colorScheme.error,
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.error,
                                 ),
                               );
                             }
@@ -156,14 +175,14 @@ class _UserList extends ConsumerWidget {
   }
 
   String _roleShort(String role) => switch (role) {
-    'teacher'          => 'Teacher',
-    'student'          => 'Student',
-    'accountant'       => 'Accountant',
-    'branch_principal' => 'Principal',
-    'coordinator'      => 'Coord.',
-    'it_admin'         => 'IT Admin',
-    'group_admin'      => 'Grp Admin',
-    'super_admin'      => 'Super',
-    _                  => role,
-  };
+        'teacher' => 'Teacher',
+        'student' => 'Student',
+        'accountant' => 'Accountant',
+        'branch_principal' => 'Principal',
+        'coordinator' => 'Coord.',
+        'it_admin' => 'IT Admin',
+        'group_admin' => 'Grp Admin',
+        'super_admin' => 'Super',
+        _ => role,
+      };
 }

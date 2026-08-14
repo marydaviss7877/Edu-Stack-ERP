@@ -2,8 +2,8 @@ class ChallanItem {
   final String name;
   final double amount;
   const ChallanItem({required this.name, required this.amount});
-  factory ChallanItem.fromJson(Map<String, dynamic> j) =>
-      ChallanItem(name: j['name'] as String, amount: (j['amount'] as num).toDouble());
+  factory ChallanItem.fromJson(Map<String, dynamic> j) => ChallanItem(
+      name: j['name'] as String, amount: (j['amount'] as num).toDouble());
 }
 
 class Challan {
@@ -30,18 +30,20 @@ class Challan {
   });
 
   double get balance => netAmount - paidAmount;
-  bool get isPaid    => status == 'paid' || status == 'waived';
+  bool get isPaid => status == 'paid' || status == 'waived';
   bool get isOverdue => status == 'overdue';
 
   factory Challan.fromJson(Map<String, dynamic> j) => Challan(
-        id:          j['_id'] as String,
-        month:       j['month'] as String,
-        challanNo:   j['challanNo'] as String,
-        items:       (j['items'] as List? ?? []).map((i) => ChallanItem.fromJson(i as Map<String, dynamic>)).toList(),
+        id: j['_id'] as String,
+        month: j['month'] as String,
+        challanNo: j['challanNo'] as String,
+        items: (j['items'] as List? ?? [])
+            .map((i) => ChallanItem.fromJson(i as Map<String, dynamic>))
+            .toList(),
         totalAmount: (j['totalAmount'] as num).toDouble(),
-        netAmount:   (j['netAmount'] as num).toDouble(),
-        paidAmount:  (j['paidAmount'] as num? ?? 0).toDouble(),
-        dueDate:     DateTime.parse(j['dueDate'] as String),
-        status:      j['status'] as String,
+        netAmount: (j['netAmount'] as num).toDouble(),
+        paidAmount: (j['paidAmount'] as num? ?? 0).toDouble(),
+        dueDate: DateTime.parse(j['dueDate'] as String),
+        status: j['status'] as String,
       );
 }

@@ -14,12 +14,12 @@ class GenerateQrScreen extends ConsumerStatefulWidget {
 
 class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
   String? _qrPayload;
-  bool    _loading = false;
+  bool _loading = false;
   String? _error;
 
   Future<void> _generate() async {
     final user = ref.read(currentUserProvider);
-    final org  = ref.read(orgProvider);
+    final org = ref.read(orgProvider);
     if (user == null || org == null) return;
 
     // Use orgId from user or org context
@@ -29,21 +29,30 @@ class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
       return;
     }
 
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final svc     = ref.read(adminServiceProvider);
+      final svc = ref.read(adminServiceProvider);
       final payload = await svc.generateQrCode(orgId);
-      setState(() { _qrPayload = payload; _loading = false; });
+      setState(() {
+        _qrPayload = payload;
+        _loading = false;
+      });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final org = ref.watch(orgProvider);
-    final cs  = Theme.of(context).colorScheme;
-    final tt  = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('School QR Code')),
@@ -59,9 +68,12 @@ class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    Icon(Icons.info_outline_rounded, color: cs.primary, size: 20),
+                    Icon(Icons.info_outline_rounded,
+                        color: cs.primary, size: 20),
                     const SizedBox(width: 8),
-                    Text('How it works', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    Text('How it works',
+                        style: tt.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                   ]),
                   const SizedBox(height: 8),
                   Text(
@@ -87,27 +99,37 @@ class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12)],
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black12, blurRadius: 12)
+                              ],
                             ),
                             child: QrImageView(data: _qrPayload!, size: 220),
                           ),
                           const SizedBox(height: 12),
-                          Text(org?.name ?? '', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          Text('/${org?.slug ?? ''}', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                          Text(org?.name ?? '',
+                              style: tt.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('/${org?.slug ?? ''}',
+                              style: tt.bodySmall
+                                  ?.copyWith(color: cs.onSurfaceVariant)),
                         ],
                       )
                     : Column(
                         children: [
-                          Icon(Icons.qr_code_2_rounded, size: 80, color: cs.outlineVariant),
+                          Icon(Icons.qr_code_2_rounded,
+                              size: 80, color: cs.outlineVariant),
                           const SizedBox(height: 12),
-                          Text('Tap Generate to create a QR code', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                          Text('Tap Generate to create a QR code',
+                              style: tt.bodyMedium
+                                  ?.copyWith(color: cs.onSurfaceVariant)),
                         ],
                       ),
           ),
 
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!, style: TextStyle(color: cs.error), textAlign: TextAlign.center),
+            Text(_error!,
+                style: TextStyle(color: cs.error), textAlign: TextAlign.center),
           ],
 
           const SizedBox(height: 24),
@@ -117,7 +139,8 @@ class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
             onPressed: _loading ? null : _generate,
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_qrPayload == null ? 'Generate QR Code' : 'Regenerate'),
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            style:
+                FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           ),
 
           if (_qrPayload != null) ...[
@@ -126,7 +149,8 @@ class _GenerateQrState extends ConsumerState<GenerateQrScreen> {
               onPressed: () {}, // TODO: implement share/print
               icon: const Icon(Icons.share_rounded),
               label: const Text('Share / Print'),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48)),
             ),
           ],
 

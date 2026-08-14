@@ -26,7 +26,9 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
 
   void _nextMonth() {
     final now = DateTime.now();
-    if (_selectedMonth.year == now.year && _selectedMonth.month == now.month) return;
+    if (_selectedMonth.year == now.year && _selectedMonth.month == now.month) {
+      return;
+    }
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
     });
@@ -34,8 +36,8 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
 
   @override
   Widget build(BuildContext context) {
-    final summaryAsync  = ref.watch(myAttendanceSummaryProvider);
-    final recordsAsync  = ref.watch(myAttendanceProvider(_monthParam));
+    final summaryAsync = ref.watch(myAttendanceSummaryProvider);
+    final recordsAsync = ref.watch(myAttendanceProvider(_monthParam));
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -61,7 +63,9 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(onPressed: _previousMonth, icon: const Icon(Icons.chevron_left_rounded)),
+                IconButton(
+                    onPressed: _previousMonth,
+                    icon: const Icon(Icons.chevron_left_rounded)),
                 Text(
                   _monthLabel(_selectedMonth),
                   style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -77,9 +81,13 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
 
             // ── Calendar ──────────────────────────────────────
             recordsAsync.when(
-              loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
+              loading: () => const Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: CircularProgressIndicator())),
               error: (e, _) => Center(child: Text(e.toString())),
-              data: (records) => _AttendanceCalendar(month: _selectedMonth, records: records),
+              data: (records) =>
+                  _AttendanceCalendar(month: _selectedMonth, records: records),
             ),
 
             const SizedBox(height: 20),
@@ -94,12 +102,25 @@ class _MyAttendanceState extends ConsumerState<MyAttendance> {
 
   bool get _canGoNext {
     final now = DateTime.now();
-    return !(_selectedMonth.year == now.year && _selectedMonth.month == now.month);
+    return !(_selectedMonth.year == now.year &&
+        _selectedMonth.month == now.month);
   }
 
   String _monthLabel(DateTime dt) {
-    const months = ['January','February','March','April','May','June',
-                    'July','August','September','October','November','December'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
     return '${months[dt.month - 1]} ${dt.year}';
   }
 }
@@ -110,8 +131,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs  = Theme.of(context).colorScheme;
-    final tt  = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final pct = summary.percentage;
     final low = pct < 75;
 
@@ -149,7 +170,7 @@ class _SummaryCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: pct / 100,
                 minHeight: 8,
-                backgroundColor: cs.surface.withOpacity(0.4),
+                backgroundColor: cs.surface.withValues(alpha: 0.4),
                 valueColor: AlwaysStoppedAnimation(low ? cs.error : cs.primary),
               ),
             ),
@@ -157,10 +178,22 @@ class _SummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _StatPill(label: 'attendance.present'.tr(), value: '${summary.presentDays}', color: cs.primary),
-                _StatPill(label: 'attendance.absent'.tr(),  value: '${summary.absentDays}',  color: cs.error),
-                _StatPill(label: 'attendance.late'.tr(),    value: '${summary.lateDays}',    color: cs.tertiary),
-                _StatPill(label: 'Total', value: '${summary.totalDays}', color: cs.outline),
+                _StatPill(
+                    label: 'attendance.present'.tr(),
+                    value: '${summary.presentDays}',
+                    color: cs.primary),
+                _StatPill(
+                    label: 'attendance.absent'.tr(),
+                    value: '${summary.absentDays}',
+                    color: cs.error),
+                _StatPill(
+                    label: 'attendance.late'.tr(),
+                    value: '${summary.lateDays}',
+                    color: cs.tertiary),
+                _StatPill(
+                    label: 'Total',
+                    value: '${summary.totalDays}',
+                    color: cs.outline),
               ],
             ),
             if (low) ...[
@@ -178,7 +211,8 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _StatPill extends StatelessWidget {
-  const _StatPill({required this.label, required this.value, required this.color});
+  const _StatPill(
+      {required this.label, required this.value, required this.color});
   final String label;
   final String value;
   final Color color;
@@ -188,7 +222,9 @@ class _StatPill extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Column(
       children: [
-        Text(value, style: tt.titleMedium?.copyWith(color: color, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: tt.titleMedium
+                ?.copyWith(color: color, fontWeight: FontWeight.bold)),
         Text(label, style: tt.labelSmall?.copyWith(color: color)),
       ],
     );
@@ -199,8 +235,10 @@ class _SummaryLoading extends StatelessWidget {
   const _SummaryLoading();
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: const Padding(padding: EdgeInsets.all(60), child: Center(child: CircularProgressIndicator())),
+  Widget build(BuildContext context) => const Card(
+        child: Padding(
+            padding: EdgeInsets.all(60),
+            child: Center(child: CircularProgressIndicator())),
       );
 }
 
@@ -234,7 +272,9 @@ class _AttendanceCalendar extends StatelessWidget {
               children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
                   .map((d) => Expanded(
                         child: Center(
-                          child: Text(d, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                          child: Text(d,
+                              style: tt.labelSmall
+                                  ?.copyWith(color: cs.onSurfaceVariant)),
                         ),
                       ))
                   .toList(),
@@ -252,7 +292,7 @@ class _AttendanceCalendar extends StatelessWidget {
               itemCount: offset + daysInMonth,
               itemBuilder: (_, i) {
                 if (i < offset) return const SizedBox.shrink();
-                final day    = i - offset + 1;
+                final day = i - offset + 1;
                 final status = statusMap[day];
                 return _DayCell(day: day, status: status);
               },
@@ -273,17 +313,17 @@ class _DayCell extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return switch (s) {
       'present' => cs.primary,
-      'absent'  => cs.error,
-      'late'    => cs.tertiary,
+      'absent' => cs.error,
+      'late' => cs.tertiary,
       'excused' => cs.secondary,
-      _         => Colors.transparent,
+      _ => Colors.transparent,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs    = Theme.of(context).colorScheme;
-    final tt    = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final color = _color(context, status);
     final today = DateTime.now();
     final isToday = DateTime(today.year, today.month, today.day) ==
@@ -291,7 +331,7 @@ class _DayCell extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: status != null ? color.withOpacity(0.18) : null,
+        color: status != null ? color.withValues(alpha: 0.18) : null,
         border: isToday ? Border.all(color: cs.primary, width: 1.5) : null,
         borderRadius: BorderRadius.circular(6),
       ),
@@ -317,10 +357,10 @@ class _Legend extends StatelessWidget {
       spacing: 16,
       runSpacing: 8,
       children: [
-        _LegendDot(color: cs.primary,    label: 'attendance.present'.tr()),
-        _LegendDot(color: cs.error,      label: 'attendance.absent'.tr()),
-        _LegendDot(color: cs.tertiary,   label: 'attendance.late'.tr()),
-        _LegendDot(color: cs.secondary,  label: 'attendance.excused'.tr()),
+        _LegendDot(color: cs.primary, label: 'attendance.present'.tr()),
+        _LegendDot(color: cs.error, label: 'attendance.absent'.tr()),
+        _LegendDot(color: cs.tertiary, label: 'attendance.late'.tr()),
+        _LegendDot(color: cs.secondary, label: 'attendance.excused'.tr()),
       ],
     );
   }
@@ -335,7 +375,10 @@ class _LegendDot extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 4),
           Text(label, style: Theme.of(context).textTheme.labelSmall),
         ],

@@ -7,16 +7,19 @@ class NotificationService {
   final Dio _dio = DioClient.instance;
 
   Future<List<AppNotification>> getNotifications({int page = 1}) async {
-    final res  = await _dio.get(ApiConstants.notifications, queryParameters: {'page': page, 'limit': 20});
+    final res = await _dio.get(ApiConstants.notifications,
+        queryParameters: {'page': page, 'limit': 20});
     final data = res.data as Map<String, dynamic>;
-    if (data['success'] != true) throw Exception('Failed to load notifications');
+    if (data['success'] != true) {
+      throw Exception('Failed to load notifications');
+    }
     return (data['data'] as List)
         .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<int> getUnreadCount() async {
-    final res  = await _dio.get(ApiConstants.unreadCount);
+    final res = await _dio.get(ApiConstants.unreadCount);
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) return 0;
     return (data['data']?['count'] as int?) ?? 0;

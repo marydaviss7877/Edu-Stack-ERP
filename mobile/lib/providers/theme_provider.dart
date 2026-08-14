@@ -7,14 +7,14 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
 
   static ThemeMode _fromString(String s) => switch (s) {
         'light' => ThemeMode.light,
-        'dark'  => ThemeMode.dark,
-        _       => ThemeMode.system,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
       };
 
   void setMode(ThemeMode mode) {
     LocalStorageService.setThemeMode(switch (mode) {
-      ThemeMode.light  => 'light',
-      ThemeMode.dark   => 'dark',
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
       ThemeMode.system => 'system',
     });
     state = mode;

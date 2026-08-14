@@ -17,7 +17,9 @@ class ResultsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Results')),
       body: resultsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => _ErrorRetry(message: e.toString(), onRetry: () => ref.invalidate(myResultsProvider)),
+        error: (e, _) => _ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(myResultsProvider)),
         data: (results) {
           if (results.isEmpty) {
             return const _Empty(message: 'No results published yet.');
@@ -61,7 +63,7 @@ class _ResultCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: gradeColor.withOpacity(0.12),
+                  color: gradeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
@@ -78,7 +80,9 @@ class _ResultCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(result.examName, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(result.examName,
+                        style: tt.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Text(
                       '${result.totalMarksObtained.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)} marks',
@@ -88,7 +92,8 @@ class _ResultCard extends StatelessWidget {
                     if (result.classPosition != null)
                       Text(
                         'Class Position: ${result.classPosition}',
-                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        style:
+                            tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       ),
                   ],
                 ),
@@ -105,13 +110,16 @@ class _ResultCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: gradeColor.withOpacity(0.12),
+                      color: gradeColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      result.isPassed ? 'results.passed'.tr().toUpperCase() : 'results.failed'.tr().toUpperCase(),
+                      result.isPassed
+                          ? 'results.passed'.tr().toUpperCase()
+                          : 'results.failed'.tr().toUpperCase(),
                       style: tt.labelSmall?.copyWith(
                         color: gradeColor,
                         fontWeight: FontWeight.bold,
@@ -151,16 +159,19 @@ class _ResultDetailState extends ConsumerState<_ResultDetail> {
 
   Future<void> _download() async {
     final profile = ref.read(studentProfileProvider).valueOrNull;
-    final org     = ref.read(orgProvider);
+    final org = ref.read(orgProvider);
     if (profile == null || org == null) return;
 
     setState(() => _downloading = true);
     try {
-      await PdfService.shareResultCard(result: widget.result, student: profile, org: org);
+      await PdfService.shareResultCard(
+          result: widget.result, student: profile, org: org);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate PDF: $e'), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+              content: Text('Failed to generate PDF: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -181,7 +192,8 @@ class _ResultDetailState extends ConsumerState<_ResultDetail> {
         controller: ctrl,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
-          Text(widget.result.examName, style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(widget.result.examName,
+              style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
             'Total: ${widget.result.totalMarksObtained.toStringAsFixed(0)} / ${widget.result.totalMarks.toStringAsFixed(0)}  •  ${widget.result.percentage.toStringAsFixed(1)}%  •  Grade ${widget.result.grade}',
@@ -189,15 +201,18 @@ class _ResultDetailState extends ConsumerState<_ResultDetail> {
           ),
           if (widget.result.classPosition != null) ...[
             const SizedBox(height: 2),
-            Text('Class Position: ${widget.result.classPosition}', style: tt.bodySmall?.copyWith(color: cs.primary)),
+            Text('Class Position: ${widget.result.classPosition}',
+                style: tt.bodySmall?.copyWith(color: cs.primary)),
           ],
           const Divider(height: 28),
-          Text('Subject Breakdown', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text('Subject Breakdown',
+              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           ...widget.result.subjectMarks.map((sm) => _SubjectRow(mark: sm)),
           if (widget.result.remarks != null) ...[
             const Divider(height: 28),
-            Text('Remarks', style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+            Text('Remarks',
+                style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
             const SizedBox(height: 6),
             Text(widget.result.remarks!, style: tt.bodyMedium),
           ],
@@ -205,7 +220,11 @@ class _ResultDetailState extends ConsumerState<_ResultDetail> {
           FilledButton.icon(
             onPressed: _downloading ? null : _download,
             icon: _downloading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.download_rounded),
             label: Text('results.downloadPdf'.tr()),
           ),
@@ -221,10 +240,10 @@ class _SubjectRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs    = Theme.of(context).colorScheme;
-    final tt    = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final color = mark.isPassed ? cs.primary : cs.error;
-    final pct   = mark.percentage;
+    final pct = mark.percentage;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -235,8 +254,11 @@ class _SubjectRow extends StatelessWidget {
             children: [
               Expanded(child: Text(mark.subjectName, style: tt.bodyMedium)),
               Text(
-                mark.isAbsent ? 'Absent' : '${mark.marksObtained.toStringAsFixed(0)} / ${mark.totalMarks.toStringAsFixed(0)}',
-                style: tt.bodyMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
+                mark.isAbsent
+                    ? 'Absent'
+                    : '${mark.marksObtained.toStringAsFixed(0)} / ${mark.totalMarks.toStringAsFixed(0)}',
+                style: tt.bodyMedium
+                    ?.copyWith(color: color, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -265,7 +287,8 @@ class _Empty extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.school_rounded, size: 56, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(Icons.school_rounded,
+                size: 56, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: 12),
             Text(message),
           ],
@@ -283,7 +306,8 @@ class _ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

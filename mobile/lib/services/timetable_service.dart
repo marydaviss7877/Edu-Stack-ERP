@@ -7,7 +7,7 @@ class TimetableService {
   final Dio _dio = DioClient.instance;
 
   Future<Timetable?> getMyTimetable() async {
-    final res  = await _dio.get('${ApiConstants.timetable}/my');
+    final res = await _dio.get('${ApiConstants.timetable}/my');
     final data = res.data as Map<String, dynamic>;
     if (data['success'] != true) return null;
     final raw = data['data'];
@@ -24,7 +24,8 @@ class TimetableService {
   }
 
   // For teacher: timetable for a specific class/section
-  Future<Timetable?> getTimetableForSection(String classId, String sectionId) async {
+  Future<Timetable?> getTimetableForSection(
+      String classId, String sectionId) async {
     final res = await _dio.get(
       ApiConstants.timetable,
       queryParameters: {'classId': classId, 'sectionId': sectionId},
