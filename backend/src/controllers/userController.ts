@@ -9,6 +9,35 @@ const CREATABLE_ROLES: Partial<Record<UserRole, UserRole[]>> = {
   branch_principal: ['teacher', 'accountant', 'it_admin'],
 };
 
+// A caller may only update / reset the password of a target ranked strictly
+// below them — otherwise e.g. an it_admin or branch_principal could hijack
+// the group_admin (org owner) account via these shared endpoints.
+const ROLE_RANK: Record<UserRole, number> = {
+  super_admin: 6,
+  group_admin: 5,
+  branch_principal: 4,
+  it_admin: 3,
+  coordinator: 2,
+  accountant: 2,
+  teacher: 2,
+  student: 1,
+};
+
+// Roles whose management authority is limited to their own branch.
+const BRANCH_SCOPED_ROLES: UserRole[] = ['branch_principal', 'it_admin'];
+
+function canManage(
+  caller: { role: UserRole; branchId?: string },
+  target: { role: UserRole; branchId?: unknown },
+): boolean {
+  if (caller.role === 'super_admin') return true;
+  if (ROLE_RANK[target.role] >= ROLE_RANK[caller.role]) return false;
+  if (BRANCH_SCOPED_ROLES.includes(caller.role)) {
+    return caller.branchId === target.branchId?.toString();
+  }
+  return true;
+}
+
 export const createUserValidators = [
   body('name').trim().notEmpty(),
   body('email').isEmail().normalizeEmail(),
@@ -122,6 +151,12 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
   const filter: Record<string, unknown> = { _id: req.params.id };
   if (callerRole !== 'super_admin') filter.orgId = req.user!.orgId;
 
+  const target = await User.findOne(filter).select('role branchId');
+  if (!target || !canManage(req.user!, target)) {
+    res.status(404).json({ success: false, message: 'User not found' });
+    return;
+  }
+
   const user = await User.findOneAndUpdate(filter, update, { new: true }).select('-passwordHash');
   if (!user) {
     res.status(404).json({ success: false, message: 'User not found' });
@@ -168,7 +203,7 @@ export async function resetUserPassword(req: Request, res: Response): Promise<vo
   if (callerRole !== 'super_admin') filter.orgId = req.user!.orgId;
 
   const user = await User.findOne(filter);
-  if (!user) {
+  if (!user || !canManage(req.user!, user)) {
     res.status(404).json({ success: false, message: 'User not found' });
     return;
   }
