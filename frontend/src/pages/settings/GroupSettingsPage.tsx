@@ -3,10 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeCanvas } from 'qrcode.react';
 import api from '../../services/api';
-import type { Organization, ApiResponse } from '../../types';
+import type { Organization, ApiResponse, UsageMetric, Branch } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
 import PageHeader from '../../components/ui/PageHeader';
-import { cn } from '../../lib/utils';
+import { cn, formatCurrency } from '../../lib/utils';
 import WebsiteBuilderTab from './WebsiteBuilderTab';
 import { gatewayService, type GatewayConfig, type TestResult } from '../../services/gatewayService';
 
@@ -262,6 +262,20 @@ export default function GroupSettingsPage() {
     queryFn: gatewayService.list,
     enabled: activeTab === 'gateways',
   });
+
+  // ── Usage / billing history (subscription tab) ──
+  const { data: usageMetrics = [] } = useQuery({
+    queryKey: ['usage-metrics', user?.orgId],
+    queryFn: () =>
+      api.get<ApiResponse<UsageMetric[]>>(`/organizations/${user!.orgId}/usage-metrics`).then(r => r.data.data ?? []),
+    enabled: !!user?.orgId && activeTab === 'subscription',
+  });
+  const { data: usageBranches = [] } = useQuery({
+    queryKey: ['branches'],
+    queryFn: () => api.get<ApiResponse<Branch[]>>('/branches').then(r => r.data.data ?? []),
+    enabled: activeTab === 'subscription',
+  });
+  const branchNameById = Object.fromEntries(usageBranches.map(b => [b._id, b.name]));
 
   const gwConfigMap = gwConfigs.reduce<Record<string, GatewayConfig>>((acc, c) => { acc[c.gateway] = c; return acc; }, {});
 
@@ -831,11 +845,55 @@ export default function GroupSettingsPage() {
                 </div>
 
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-5">
-                  To change your plan or view invoices, contact{' '}
+                  To change your plan, contact{' '}
                   <a href="mailto:billing@tws.enterprises" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                     billing@tws.enterprises
                   </a>.
                 </p>
+              </SectionCard>
+            )}
+
+            {/* ════ USAGE / BILLING HISTORY ════ */}
+            {activeTab === 'subscription' && org && (
+              <SectionCard title="Usage & Billing History" subtitle="Per-branch active-student counts used to calculate your monthly bill.">
+                {usageMetrics.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-slate-500">No billing history yet — usage is calculated at the end of each month.</p>
+                ) : (
+                  (() => {
+                    const months = Array.from(new Set(usageMetrics.map(m => m.month))).slice(0, 6);
+                    return (
+                      <div className="space-y-6">
+                        {months.map(month => {
+                          const rows = usageMetrics.filter(m => m.month === month);
+                          const total = rows.reduce((s, r) => s + r.totalAmount, 0);
+                          const totalStudents = rows.reduce((s, r) => s + r.activeStudents, 0);
+                          return (
+                            <div key={month}>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">{month}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{formatCurrency(total)}</p>
+                              </div>
+                              <div className="rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
+                                <table className="w-full text-sm">
+                                  <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                                    {rows.map(r => (
+                                      <tr key={r._id}>
+                                        <td className="px-4 py-2 text-gray-600 dark:text-slate-300">{branchNameById[r.branchId] ?? 'Branch'}</td>
+                                        <td className="px-4 py-2 text-gray-400 dark:text-slate-500 text-xs">{r.activeStudents} students × {formatCurrency(r.ratePerStudent)}</td>
+                                        <td className="px-4 py-2 text-right font-medium text-gray-700 dark:text-slate-300">{formatCurrency(r.totalAmount)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">{totalStudents} active students across {rows.length} branch{rows.length !== 1 ? 'es' : ''}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
+                )}
               </SectionCard>
             )}
 

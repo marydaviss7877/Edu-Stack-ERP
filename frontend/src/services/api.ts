@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
+import { useAuthStore } from '../stores/authStore';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -7,6 +8,17 @@ const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // Sends HttpOnly cookies on every request
+});
+
+// Tell the backend which branch a group_admin is currently viewing, so
+// branch-scoped endpoints (students, attendance, timetable, ...) resolve
+// against that branch instead of returning empty (group_admin has no fixed branchId).
+api.interceptors.request.use((config) => {
+  const { user, activeBranch } = useAuthStore.getState();
+  if (user?.role === 'group_admin' && activeBranch?.id) {
+    config.headers.set('X-Branch-Id', activeBranch.id);
+  }
+  return config;
 });
 
 let isRefreshing = false;

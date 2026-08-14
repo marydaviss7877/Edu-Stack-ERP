@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         orgSlug: state.orgSlug,
+        activeBranch: state.activeBranch,
       }),
     }
   )

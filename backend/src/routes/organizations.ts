@@ -9,6 +9,7 @@ import {
   updateOrganization,
   updateSite,
   getUsageMetrics,
+  getOwnUsageMetrics,
   getLogoUploadUrl,
   generateMobileQr,
   getMobileConfig,
@@ -37,6 +38,7 @@ router.get('/:id', getOrganization);
 router.put('/:id', updateOrganization);
 router.put('/:id/site', updateSite);
 router.post('/:id/upload-logo', getLogoUploadUrl);
+router.get('/:id/usage-metrics', getOwnUsageMetrics);
 
 // Group admin: generate printable QR for mobile onboarding
 router.post('/:id/generate-qr', generateMobileQr);

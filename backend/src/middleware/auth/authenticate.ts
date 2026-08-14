@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { env } from '../../config/env';
 import { TokenBlacklist } from '../../models/TokenBlacklist';
+import { Branch } from '../../models/Branch';
 import type { IUser, UserRole } from '../../models/User';
 
 interface JwtPayload {
@@ -84,6 +86,19 @@ export async function authenticate(
 
     if (!req.orgId && payload.orgId) {
       req.orgId = payload.orgId;
+    }
+
+    // group_admin has no fixed branchId — it oversees every branch in the org.
+    // When it's viewing a specific branch (dashboard "Enter Branch View"), the
+    // frontend sends the chosen branch in X-Branch-Id. Resolve + validate it here,
+    // once, so every branch-scoped controller downstream keeps working unchanged.
+    if (req.user.role === 'group_admin') {
+      const branchHeader = req.headers['x-branch-id'];
+      const branchId = typeof branchHeader === 'string' ? branchHeader.trim() : undefined;
+      if (branchId && mongoose.isValidObjectId(branchId)) {
+        const branch = await Branch.findOne({ _id: branchId, orgId: req.orgId }).select('_id').lean();
+        if (branch) req.user.branchId = branchId;
+      }
     }
 
     next();

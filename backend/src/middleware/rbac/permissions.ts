@@ -171,6 +171,7 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
   ],
 
   exam_paper: [
+    { roles: ['group_admin'], actions: ['read', 'approve'] },
     { roles: ['branch_principal'], actions: ['read', 'create', 'update', 'submit', 'approve', 'configure'] },
     { roles: ['coordinator'], actions: ['read', 'create', 'update', 'delete', 'submit', 'approve'] },
     { roles: ['teacher'], actions: ['read', 'create', 'update', 'delete', 'submit'] },

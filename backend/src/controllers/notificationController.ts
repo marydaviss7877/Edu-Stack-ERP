@@ -68,25 +68,32 @@ export async function broadcast(req: Request, res: Response, next: NextFunction)
     // targetStudents: array of user IDs for direct messages
 
     const orgId = req.orgId;
-    const branchId = req.user!.branchId;
+    // group_admin has no fixed branchId — a plain broadcast() call from that role
+    // is meant to reach the whole org, not a single (nonexistent) branch.
+    const senderBranchId = req.user!.branchId;
 
-    let recipientIds: Types.ObjectId[] = [];
+    let recipients: { _id: Types.ObjectId; branchId: Types.ObjectId }[] = [];
 
     if (targetStudents?.length) {
-      recipientIds = (targetStudents as string[]).map(id => new Types.ObjectId(id));
+      const users = await User.find({
+        orgId: req.orgId,
+        _id: { $in: (targetStudents as string[]).map(id => new Types.ObjectId(id)) },
+      }).select('_id branchId').lean();
+      recipients = users.map(u => ({ _id: u._id as Types.ObjectId, branchId: u.branchId as Types.ObjectId }));
     } else {
-      const userFilter: Record<string, unknown> = { orgId: req.orgId, branchId, active: true };
+      const userFilter: Record<string, unknown> = { orgId: req.orgId, active: true };
+      if (senderBranchId) userFilter['branchId'] = senderBranchId;
       if (targetRole && targetRole !== 'all') userFilter['role'] = targetRole;
-      const users = await User.find(userFilter).select('_id').lean();
-      recipientIds = users.map(u => u._id as Types.ObjectId);
+      const users = await User.find(userFilter).select('_id branchId').lean();
+      recipients = users.map(u => ({ _id: u._id as Types.ObjectId, branchId: u.branchId as Types.ObjectId }));
     }
 
-    if (recipientIds.length === 0) throw new AppError('No recipients found', 400);
+    if (recipients.length === 0) throw new AppError('No recipients found', 400);
 
-    const docs = recipientIds.map(id => ({
+    const docs = recipients.map(({ _id, branchId }) => ({
       orgId,
       branchId,
-      recipientId: id,
+      recipientId: _id,
       senderId: new Types.ObjectId(req.user!.id),
       type: 'broadcast' as const,
       title,
@@ -98,9 +105,9 @@ export async function broadcast(req: Request, res: Response, next: NextFunction)
 
     // Push real-time to each recipient
     const payload = { type: 'broadcast', title, message };
-    recipientIds.forEach(id => emitToUser(id.toString(), 'notification', payload));
+    recipients.forEach(({ _id }) => emitToUser(_id.toString(), 'notification', payload));
 
-    res.status(201).json({ success: true, data: { recipientCount: recipientIds.length } });
+    res.status(201).json({ success: true, data: { recipientCount: recipients.length } });
   } catch (err) { next(err); }
 }
 

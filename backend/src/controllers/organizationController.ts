@@ -208,6 +208,26 @@ export async function getUsageMetrics(req: Request, res: Response): Promise<void
   res.json({ success: true, data: metrics });
 }
 
+/** Group admin's own-org usage/billing history — per-branch, per-month. Read-only. */
+export async function getOwnUsageMetrics(req: Request, res: Response): Promise<void> {
+  const callerRole = req.user!.role;
+  const { id } = req.params;
+
+  if (callerRole !== 'super_admin' && req.user!.orgId?.toString() !== id) {
+    res.status(403).json({ success: false, message: 'Access denied' });
+    return;
+  }
+
+  const { month } = req.query;
+  const filter: Record<string, unknown> = { orgId: id };
+  if (month) filter.month = month;
+
+  const { UsageMetric } = await import('../models/UsageMetric');
+  const metrics = await UsageMetric.find(filter).sort({ month: -1 }).lean();
+
+  res.json({ success: true, data: metrics });
+}
+
 export async function getLogoUploadUrl(req: Request, res: Response): Promise<void> {
   const callerRole = req.user!.role;
   const { id } = req.params;

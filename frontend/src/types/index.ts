@@ -75,6 +75,18 @@ export interface Organization {
   createdAt: string;
 }
 
+export interface UsageMetric {
+  _id: string;
+  orgId: string;
+  branchId: string;
+  month: string;
+  activeStudents: number;
+  plan: string;
+  ratePerStudent: number;
+  totalAmount: number;
+  generatedAt: string;
+}
+
 export interface Branch {
   _id: string;
   orgId: string;

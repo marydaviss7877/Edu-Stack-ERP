@@ -146,6 +146,7 @@ export async function getBranchStats(req: Request, res: Response): Promise<void>
       code: b.code,
       city: b.city,
       status: b.status,
+      principalName: b.principalName,
       studentCount: studentMap.get(bid) ?? 0,
       staffCount: staffMap.get(bid) ?? 0,
       feeCollected: fees.collected,
