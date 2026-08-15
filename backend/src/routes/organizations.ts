@@ -9,6 +9,7 @@ import {
   updateOrganization,
   updateSite,
   getUsageMetrics,
+  recalculateUsageMetrics,
   getOwnUsageMetrics,
   getLogoUploadUrl,
   generateMobileQr,
@@ -26,6 +27,7 @@ router.use(authenticate);
 router.post('/', requireSuperAdmin, createOrgValidators, createOrganization);
 router.get('/', requireSuperAdmin, listOrganizations);
 router.get('/usage-metrics', requireSuperAdmin, getUsageMetrics);
+router.post('/usage-metrics/recalculate', requireSuperAdmin, recalculateUsageMetrics);
 
 // Super-admin only — mobile configuration dashboard
 router.get('/mobile-config', requireSuperAdmin, getMobileConfig);

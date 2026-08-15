@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
 import { formatCurrency, formatDate } from '../../lib/utils';
@@ -12,7 +12,7 @@ interface UsageMetric {
   month: string;
   activeStudents: number;
   plan: string;
-  pricePerStudent: number;
+  ratePerStudent: number;
   totalAmount: number;
 }
 
@@ -31,6 +31,7 @@ const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padS
 
 export default function BillingPage() {
   const [month, setMonth] = useState(currentMonth);
+  const qc = useQueryClient();
 
   const { data: orgsData } = useQuery({
     queryKey: ['admin', 'organizations'],
@@ -40,6 +41,14 @@ export default function BillingPage() {
   const { data: usageData, isLoading } = useQuery({
     queryKey: ['admin', 'usage-metrics', month],
     queryFn: () => api.get<ApiResponse<UsageMetric[]>>('/organizations/usage-metrics', { params: { month } }).then(r => r.data),
+  });
+
+  const recalculate = useMutation({
+    mutationFn: () => api.post('/organizations/usage-metrics/recalculate', { month }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'usage-metrics', month] });
+      qc.invalidateQueries({ queryKey: ['admin', 'organizations'] });
+    },
   });
 
   const orgs = orgsData?.data ?? [];
@@ -64,14 +73,34 @@ export default function BillingPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Usage & Billing</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Per-student billing metrics</p>
         </div>
-        <select
-          value={month}
-          onChange={e => setMonth(e.target.value)}
-          className="text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-1.5"
-        >
-          {months.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            className="text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-3 py-1.5"
+          >
+            {months.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <button
+            onClick={() => recalculate.mutate()}
+            disabled={recalculate.isPending}
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            title="Recompute this month's usage from attendance instead of waiting for the 1st-of-month job"
+          >
+            {recalculate.isPending ? 'Recalculating…' : 'Recalculate'}
+          </button>
+        </div>
       </div>
+      {recalculate.isSuccess && (
+        <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 rounded-lg px-4 py-2.5 text-sm">
+          Usage metrics recalculated for {month}.
+        </div>
+      )}
+      {recalculate.isError && (
+        <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 rounded-lg px-4 py-2.5 text-sm">
+          Failed to recalculate usage metrics.
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <StatCard label="Total Revenue" value={formatCurrency(totalRevenue)} sub={month} />
@@ -110,7 +139,7 @@ export default function BillingPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-slate-400 capitalize">{m.plan}</td>
                   <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-400">{m.activeStudents}</td>
-                  <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-400">{formatCurrency(m.pricePerStudent)}</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-400">{formatCurrency(m.ratePerStudent)}</td>
                   <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-slate-100">{formatCurrency(m.totalAmount)}</td>
                 </tr>
               );

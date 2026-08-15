@@ -44,3 +44,11 @@ certificates/
 certificates.zip
 deployment_cert.der
 *.der
+
+# Database backups / data exports (contain real student, staff, and financial records — NEVER commit these)
+/backups/
+backend/backups/
+economic-transactions-summary.xlsx
+
+# Headless Chrome profile used by store-assets rendering (cache/cookies, not a deliverable)
+mobile/store-assets/.chrome-render-profile/

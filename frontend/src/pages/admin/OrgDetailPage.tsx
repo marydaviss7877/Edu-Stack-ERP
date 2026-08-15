@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
+import UserAvatar from '../../components/ui/UserAvatar';
 import { formatDate } from '../../lib/utils';
 import { schoolUrl } from '../../utils/tenant';
 
@@ -79,9 +80,11 @@ export default function OrgDetailPage() {
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5 mb-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 flex items-center justify-center text-lg font-bold shrink-0">
-              {org.name.slice(0, 2).toUpperCase()}
-            </div>
+            <UserAvatar
+              name={org.name}
+              photoUrl={org.logoUrl}
+              className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 text-lg"
+            />
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">{org.name}</h1>
               <p className="text-sm text-gray-400 dark:text-slate-500 mt-0.5">{schoolUrl(org.slug).replace('https://', '')}</p>

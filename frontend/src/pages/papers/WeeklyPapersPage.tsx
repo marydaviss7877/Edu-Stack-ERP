@@ -11,6 +11,7 @@ import type { ClearanceDoc, ClearanceStatus } from '../../services/clearanceServ
 import PageHeader from '../../components/ui/PageHeader';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
+import UserAvatar from '../../components/ui/UserAvatar';
 import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/utils';
 
@@ -341,6 +342,8 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
           <thead>
             <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Student</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Grade</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Section</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Subject</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Weak Topics</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Avg %</th>
@@ -349,13 +352,20 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-            {loadingReport && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>}
+            {loadingReport && <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Loading...</td></tr>}
             {!loadingReport && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No weak topics for this period.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No weak topics for this period.</td></tr>
             )}
             {rows.map((r, i) => (
               <tr key={i} className={cn(r.isWeak ? 'bg-red-50 dark:bg-red-900/20' : '')}>
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{r.rollNo} — {r.studentName}</td>
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <UserAvatar name={r.studentName} photoUrl={r.photoUrl} className="w-8 h-8 rounded-full text-xs shrink-0" />
+                    <span>{r.rollNo} — {r.studentName}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{r.className ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{r.sectionName ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{r.subjectName}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   {r.weakTopics?.length ? r.weakTopics.join(', ') : 'General subject weakness'}

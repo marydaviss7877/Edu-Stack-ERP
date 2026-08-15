@@ -80,6 +80,9 @@ export interface MonthlyWeakReportRow {
   subjectId: string;
   studentName: string;
   rollNo: string;
+  photoUrl?: string | null;
+  className?: string;
+  sectionName?: string;
   subjectName: string;
   subjectCode: string;
   avgPercentage: number;

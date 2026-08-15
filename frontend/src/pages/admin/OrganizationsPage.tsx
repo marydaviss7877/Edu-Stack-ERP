@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import type { Organization, ApiResponse } from '../../types';
 import Modal from '../../components/ui/Modal';
+import UserAvatar from '../../components/ui/UserAvatar';
 import { formatDate } from '../../lib/utils';
 import { schoolUrl } from '../../utils/tenant';
 
@@ -108,8 +109,17 @@ export default function OrganizationsPage() {
             {orgs.map(org => (
               <tr key={org._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
                 <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900 dark:text-slate-100">{org.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{schoolUrl(org.slug).replace('https://', '')}</p>
+                  <div className="flex items-center gap-3">
+                    <UserAvatar
+                      name={org.name}
+                      photoUrl={org.logoUrl}
+                      className="w-8 h-8 rounded-lg text-xs"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-slate-100">{org.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">{schoolUrl(org.slug).replace('https://', '')}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400 capitalize">{org.plan}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{org.usageBilling.activeStudents ?? 0}</td>

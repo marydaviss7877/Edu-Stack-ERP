@@ -17,8 +17,9 @@ function getRateForCount(tiers: { limit: number; rate: number }[], count: number
   return rate;
 }
 
-export async function countActiveStudents(): Promise<void> {
-  const now = new Date();
+/** Aggregates attendance into a UsageMetric for the given month (defaults to the current month). */
+export async function countActiveStudents(forMonth?: Date): Promise<void> {
+  const now = forMonth ?? new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);

@@ -359,6 +359,24 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
     { $unwind: { path: '$student', preserveNullAndEmptyArrays: true } },
     { $unwind: { path: '$subject', preserveNullAndEmptyArrays: true } },
     {
+      $lookup: {
+        from: 'classes',
+        localField: 'student.classId',
+        foreignField: '_id',
+        as: 'class',
+      },
+    },
+    {
+      $lookup: {
+        from: 'sections',
+        localField: 'student.sectionId',
+        foreignField: '_id',
+        as: 'section',
+      },
+    },
+    { $unwind: { path: '$class', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$section', preserveNullAndEmptyArrays: true } },
+    {
       $addFields: {
         avgPercentage: { $round: ['$avgPercentage', 2] },
         isWeak: { $lt: ['$avgPercentage', weakThreshold] },
@@ -370,6 +388,9 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
         subjectId: '$_id.subjectId',
         studentName: '$student.profile.name',
         rollNo: '$student.rollNo',
+        photoUrl: '$student.profile.photoUrl',
+        className: '$class.name',
+        sectionName: '$section.name',
         subjectName: '$subject.name',
         subjectCode: '$subject.code',
         avgPercentage: 1,

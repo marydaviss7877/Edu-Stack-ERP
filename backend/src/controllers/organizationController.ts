@@ -8,6 +8,7 @@ import { User } from '../models/User';
 import { hashPassword, generateTokens, storeRefreshToken } from '../services/authService';
 import { getUploadUrl, getPublicUrl } from '../services/s3Service';
 import { env } from '../config/env';
+import { withoutTenantEnforcement } from '../utils/tenantPlugin';
 
 export const createOrgValidators = [
   body('name').trim().notEmpty(),
@@ -197,13 +198,34 @@ export async function updateSite(req: Request, res: Response): Promise<void> {
   res.json({ success: true, data: updated?.site ?? null });
 }
 
+/**
+ * Super Admin: recompute UsageMetric for a given month on demand, instead of waiting
+ * for the 1st-of-month cron (jobs/index.ts). Runs the same aggregation synchronously —
+ * it's a single indexed pass over Attendance, fast enough to await in-request.
+ */
+export async function recalculateUsageMetrics(req: Request, res: Response): Promise<void> {
+  const { month } = req.body as { month?: string };
+  if (month !== undefined && !/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ success: false, message: 'month must be in YYYY-MM format' });
+    return;
+  }
+
+  const forMonth = month ? new Date(`${month}-01T00:00:00.000Z`) : undefined;
+
+  const { countActiveStudents } = await import('../jobs/handlers/billingHandler');
+  await countActiveStudents(forMonth);
+
+  res.json({ success: true, message: `Usage metrics recalculated for ${month ?? 'the current month'}.` });
+}
+
 export async function getUsageMetrics(req: Request, res: Response): Promise<void> {
   const { month } = req.query;
   const filter: Record<string, unknown> = {};
   if (month) filter.month = month;
 
   const { UsageMetric } = await import('../models/UsageMetric');
-  const metrics = await UsageMetric.find(filter).sort({ month: -1 }).lean();
+  // Cross-org by design — this is the super-admin platform-wide view, not scoped to one tenant.
+  const metrics = await withoutTenantEnforcement(UsageMetric.find(filter).sort({ month: -1 })).lean();
 
   res.json({ success: true, data: metrics });
 }
