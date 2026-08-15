@@ -35,6 +35,7 @@ class ApiConstants {
   static const String myAttendance = '/attendance/my-records';
   static const String timetable = '/timetable';
   static const String exams = '/exams';
+  static const String papers = '/papers';
   static const String assignments = '/assignments';
   static const String fees = '/fees/challans';
   static const String notifications = '/notifications';

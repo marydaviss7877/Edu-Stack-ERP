@@ -281,7 +281,7 @@ function GradePaperModal({ paper, academicYearId, readOnly, onClose, onGraded }:
 
 // ── Weak Topics tab ──────────────────────────────────────────────────────────
 
-function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStudent: boolean; initialMonth?: string; initialYear?: string }) {
+export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStudent: boolean; initialMonth?: string; initialYear?: string }) {
   const now = new Date();
   const [month, setMonth] = useState(initialMonth || String(now.getMonth() + 1));
   const [year, setYear] = useState(initialYear || String(now.getFullYear()));
@@ -381,7 +381,7 @@ const CLEARANCE_VARIANT: Record<ClearanceStatus, 'warning' | 'info' | 'success' 
   pending_approval: 'warning', scheduled: 'info', completed: 'success', waived: 'default',
 };
 
-function ClearanceTab({ role }: { role?: string }) {
+export function ClearanceTab({ role }: { role?: string }) {
   const qc = useQueryClient();
   const now = new Date();
   const [month, setMonth] = useState(String(now.getMonth() + 1));
@@ -392,6 +392,7 @@ function ClearanceTab({ role }: { role?: string }) {
   const { data: summary } = useQuery({
     queryKey: ['clearance-summary', month, year],
     queryFn: () => clearanceService.getSummary({ month, year }),
+    enabled: role !== 'student',
   });
   const { data: clearances = [], isLoading } = useQuery({
     queryKey: ['clearances', month, year],

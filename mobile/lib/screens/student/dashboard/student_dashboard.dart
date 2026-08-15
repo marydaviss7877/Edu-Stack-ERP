@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/org_provider.dart';
 import '../../../providers/student_providers.dart';
 import '../../../models/timetable.dart';
+import '../../../models/student_progress.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/theme/app_design.dart';
 
@@ -50,6 +52,7 @@ class StudentDashboard extends ConsumerWidget {
                 ref.invalidate(latestResultProvider);
                 ref.invalidate(myChallansProvider);
                 ref.invalidate(unreadCountProvider);
+                ref.invalidate(myProgressProvider);
               },
               child: ListView(
                 padding: EdgeInsets.fromLTRB(
@@ -86,6 +89,8 @@ class StudentDashboard extends ConsumerWidget {
                     onAction: () => context.go('/student/results'),
                   ),
                   _UpcomingExams(),
+                  const AppSectionHeader(title: 'Learning coverage'),
+                  const _LearningCoverageSection(),
                 ],
               ),
             ),
@@ -470,6 +475,441 @@ class _PendingAssignments extends ConsumerWidget {
           }).toList(),
         );
       },
+    );
+  }
+}
+
+// ── Learning Coverage (weekly topics + weak-topic tracking) ───────────
+class _LearningCoverageSection extends ConsumerStatefulWidget {
+  const _LearningCoverageSection();
+
+  @override
+  ConsumerState<_LearningCoverageSection> createState() =>
+      _LearningCoverageSectionState();
+}
+
+class _LearningCoverageSectionState
+    extends ConsumerState<_LearningCoverageSection> {
+  String? _selectedSubjectId;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = ref.watch(myProgressProvider);
+
+    return progress.when(
+      loading: () => const _SkeletonCard(),
+      error: (_, __) =>
+          const _EmptyCard(message: 'Could not load learning progress'),
+      data: (data) {
+        if (data.subjects.isEmpty && data.weekly.isEmpty) {
+          return const _EmptyCard(
+              message: 'No weekly topic tests recorded yet');
+        }
+        final weekly = _selectedSubjectId == null
+            ? data.weekly
+            : data.weekly
+                .where((w) => w.subjectId == _selectedSubjectId)
+                .toList();
+        final weakTopics = weekly
+            .where((w) => w.isWeak && !w.isAbsent)
+            .toList()
+          ..sort((a, b) => a.percentage.compareTo(b.percentage));
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SyllabusMasteryCard(
+              subjects: data.subjects,
+              overallPct: data.overallMasteryPct,
+              overallTotal: data.overallTotalTopics,
+            ),
+            const SizedBox(height: 12),
+            _WeeklyTopicsCard(
+              weekly: weekly,
+              subjects: data.subjects,
+              selectedSubjectId: _selectedSubjectId,
+              onSubjectChanged: (v) => setState(() => _selectedSubjectId = v),
+            ),
+            const SizedBox(height: 12),
+            _WeakTopicsCard(weakTopics: weakTopics.take(8).toList()),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Color _masteryColor(double pct) {
+  if (pct >= 80) return AppColors.success;
+  if (pct >= 50) return AppColors.warning;
+  return AppColors.error;
+}
+
+class _SyllabusMasteryCard extends StatelessWidget {
+  final List<SubjectMastery> subjects;
+  final double overallPct;
+  final int overallTotal;
+  const _SyllabusMasteryCard({
+    required this.subjects,
+    required this.overallPct,
+    required this.overallTotal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (subjects.isEmpty) {
+      return const _EmptyCard(message: 'No weekly topic tests recorded yet');
+    }
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Syllabus mastery',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: cs.onSurface)),
+                if (overallTotal > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _masteryColor(overallPct).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('${overallPct.toStringAsFixed(0)}% overall',
+                        style: TextStyle(
+                            color: _masteryColor(overallPct),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...subjects.map((s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(s.subjectName,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: cs.onSurface),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text('${s.topicsMastered}/${s.totalTopics} topics',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: (s.masteryPct / 100).clamp(0, 1),
+                          minHeight: 6,
+                          backgroundColor: cs.surfaceContainerHighest,
+                          valueColor:
+                              AlwaysStoppedAnimation(_masteryColor(s.masteryPct)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklyTopicsCard extends StatelessWidget {
+  final List<ProgressWeeklyRow> weekly;
+  final List<SubjectMastery> subjects;
+  final String? selectedSubjectId;
+  final ValueChanged<String?> onSubjectChanged;
+
+  const _WeeklyTopicsCard({
+    required this.weekly,
+    required this.subjects,
+    required this.selectedSubjectId,
+    required this.onSubjectChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final rows =
+        weekly.length > 10 ? weekly.sublist(weekly.length - 10) : weekly;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Weekly topics covered',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: cs.onSurface)),
+                ),
+                if (subjects.length > 1)
+                  DropdownButton<String?>(
+                    value: selectedSubjectId,
+                    isDense: true,
+                    underline: const SizedBox.shrink(),
+                    style: TextStyle(fontSize: 12, color: cs.onSurface),
+                    items: [
+                      const DropdownMenuItem(
+                          value: null, child: Text('All subjects')),
+                      ...subjects.map((s) => DropdownMenuItem(
+                          value: s.subjectId, child: Text(s.subjectName))),
+                    ],
+                    onChanged: onSubjectChanged,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                    child: Text('No weekly topic tests recorded yet',
+                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
+              )
+            else ...[
+              SizedBox(
+                height: 170,
+                child: BarChart(
+                  BarChartData(
+                    maxY: 100,
+                    minY: 0,
+                    alignment: BarChartAlignment.spaceAround,
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 25,
+                      getDrawingHorizontalLine: (_) => FlLine(
+                          color: cs.outlineVariant.withValues(alpha: 0.4),
+                          strokeWidth: 1),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 25,
+                          getTitlesWidget: (v, meta) => Text('${v.toInt()}%',
+                              style: TextStyle(
+                                  fontSize: 9, color: cs.onSurfaceVariant)),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          getTitlesWidget: (v, meta) {
+                            final i = v.toInt();
+                            if (i < 0 || i >= rows.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final d = rows[i].scheduledDate;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text('${d.day}/${d.month}',
+                                  style: TextStyle(
+                                      fontSize: 9, color: cs.onSurfaceVariant)),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (_) => cs.inverseSurface,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final row = rows[group.x];
+                          return BarTooltipItem(
+                            '${row.topicName}\n${row.subjectCode.isNotEmpty ? '${row.subjectCode} · ' : ''}${row.percentage.toStringAsFixed(0)}%',
+                            TextStyle(
+                                color: cs.onInverseSurface,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600),
+                          );
+                        },
+                      ),
+                    ),
+                    barGroups: [
+                      for (var i = 0; i < rows.length; i++)
+                        BarChartGroupData(
+                          x: i,
+                          barRods: [
+                            BarChartRodData(
+                              toY: rows[i].percentage,
+                              width: 14,
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(4)),
+                              color: rows[i].isAbsent
+                                  ? Colors.grey
+                                  : (rows[i].isWeak
+                                      ? AppColors.error
+                                      : AppColors.success),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Wrap(
+                spacing: 14,
+                children: [
+                  _LegendDot(color: AppColors.success, label: 'Strong'),
+                  _LegendDot(color: AppColors.error, label: 'Weak'),
+                  _LegendDot(color: Colors.grey, label: 'Absent'),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Text(label, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+      ],
+    );
+  }
+}
+
+class _WeakTopicsCard extends StatelessWidget {
+  final List<ProgressWeeklyRow> weakTopics;
+  const _WeakTopicsCard({required this.weakTopics});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Weak topics to review',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: cs.onSurface)),
+                if (weakTopics.isNotEmpty)
+                  Text('${weakTopics.length} flagged',
+                      style:
+                          TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (weakTopics.isEmpty)
+              Text('No weak topics right now — great work!',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant))
+            else
+              ...weakTopics.map((w) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(w.topicName,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onSurface),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                              Text(
+                                  '${w.subjectName}${w.chapterNumber != null ? ' · Ch.${w.chapterNumber}' : ''}',
+                                  style: TextStyle(
+                                      fontSize: 10, color: cs.onSurfaceVariant),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: (w.percentage / 100).clamp(0, 1),
+                              minHeight: 8,
+                              backgroundColor: cs.surfaceContainerHighest,
+                              valueColor: const AlwaysStoppedAnimation(
+                                  AppColors.error),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 36,
+                          child: Text('${w.percentage.toStringAsFixed(0)}%',
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.error)),
+                        ),
+                      ],
+                    ),
+                  )),
+          ],
+        ),
+      ),
     );
   }
 }

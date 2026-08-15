@@ -216,13 +216,15 @@ class _ChallanCard extends StatelessWidget {
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 10),
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _AmountChip(
                       label: 'Total amount',
                       amount: challan.netAmount,
                       fmt: fmt),
-                  const SizedBox(width: 12),
                   if (challan.paidAmount > 0)
                     _AmountChip(
                         label: 'Paid', amount: challan.paidAmount, fmt: fmt),
@@ -232,7 +234,6 @@ class _ChallanCard extends StatelessWidget {
                         amount: challan.balance,
                         fmt: fmt,
                         highlight: true),
-                  const Spacer(),
                   Text(
                     'Due: ${DateFormat('d MMM').format(challan.dueDate)}',
                     style: tt.bodySmall?.copyWith(

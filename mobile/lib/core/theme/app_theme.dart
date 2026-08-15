@@ -115,7 +115,10 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 48),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600),
           elevation: 0,
         ),
       ),
@@ -185,7 +188,8 @@ class AppTheme {
           minimumSize: const Size(44, 48),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+              fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700),
         ),
       ),
     );

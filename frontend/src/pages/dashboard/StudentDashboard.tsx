@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
@@ -12,7 +13,14 @@ import { examService, type ResultDoc } from '../../services/examService';
 import { assignmentService, type AssignmentDoc } from '../../services/assignmentService';
 import { timetableService, type TimetableDoc } from '../../services/timetableService';
 import { notificationService } from '../../services/notificationService';
+import { weeklyPaperService } from '../../services/weeklyPaperService';
 import { formatCurrency, formatDate, getInitials } from '../../lib/utils';
+
+const STATUS_COLOR: Record<'strong' | 'weak' | 'absent', string> = {
+  strong: '#10b981',
+  weak: '#ef4444',
+  absent: '#94a3b8',
+};
 
 const today = new Date();
 const todayDOW = today.getDay();
@@ -157,6 +165,14 @@ export default function StudentDashboard() {
     queryFn: notificationService.getUnreadCount,
   });
 
+  const [progressSubject, setProgressSubject] = useState('');
+
+  const { data: progress } = useQuery({
+    queryKey: ['student-progress'],
+    queryFn: () => weeklyPaperService.getMyProgress(),
+    enabled: !!me,
+  });
+
   /* ─── Derived data ─── */
 
   const activeTimetable = timetables[0] as TimetableDoc | undefined;
@@ -192,6 +208,26 @@ export default function StudentDashboard() {
 
   const latestResult = results.length > 0 ? results[results.length - 1] : null;
   const pendingFeeTotal = pendingChallans.reduce((s, c) => s + (c.netAmount - c.paidAmount), 0);
+
+  const progressSubjects = progress?.subjects ?? [];
+  const overallMastery = progress?.overall;
+  const filteredWeekly = (progress?.weekly ?? []).filter(
+    w => !progressSubject || w.subjectId === progressSubject
+  );
+
+  const weeklyChartData = filteredWeekly.slice(-12).map(w => ({
+    name: new Date(w.scheduledDate).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' }),
+    pct: Math.round(w.percentage),
+    status: (w.isAbsent ? 'absent' : w.isWeak ? 'weak' : 'strong') as 'strong' | 'weak' | 'absent',
+    topicName: w.topicName ?? (w.chapterNumber ? `Chapter ${w.chapterNumber}` : 'Topic test'),
+    subjectName: w.subjectName ?? '',
+    subjectCode: w.subjectCode ?? '',
+  }));
+
+  const weakTopics = filteredWeekly
+    .filter(w => w.isWeak && !w.isAbsent)
+    .sort((a, b) => a.percentage - b.percentage)
+    .slice(0, 8);
 
   const attStats = attendance?.stats;
   const attPct = attStats?.percentage ?? 0;
@@ -700,6 +736,155 @@ export default function StudentDashboard() {
             </div>
           )}
         </SectionCard>
+      </div>
+
+      {/* ══════════════════════════════════════
+          ROW 4 — Learning Coverage (weekly topics + weak-topic tracking)
+      ══════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* Syllabus Mastery — lg: 1/3 */}
+        <div className="card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-gray-900 dark:text-slate-100 text-sm sm:text-base">Syllabus Mastery</h2>
+            {overallMastery && overallMastery.totalTopics > 0 && (
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                overallMastery.masteryPct >= 80
+                  ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
+                  : overallMastery.masteryPct >= 50
+                  ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                  : 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
+              }`}>
+                {overallMastery.masteryPct}% overall
+              </span>
+            )}
+          </div>
+          {progressSubjects.length === 0 ? (
+            <EmptyState message="No weekly topic tests recorded yet" />
+          ) : (
+            <div className="space-y-3">
+              {progressSubjects.map(s => {
+                const barColor = s.masteryPct >= 80 ? 'bg-emerald-500' : s.masteryPct >= 50 ? 'bg-amber-500' : 'bg-red-500';
+                return (
+                  <div key={s.subjectId}>
+                    <div className="flex items-center justify-between mb-1 gap-2">
+                      <p className="text-xs font-medium text-gray-700 dark:text-slate-300 truncate">{s.subjectName}</p>
+                      <p className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 shrink-0">
+                        {s.topicsMastered}/{s.totalTopics} topics
+                      </p>
+                    </div>
+                    <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-700 ${barColor}`}
+                        style={{ width: `${Math.min(100, s.masteryPct)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Weekly Topics Covered — lg: 2/3 */}
+        <div className="lg:col-span-2 card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <h2 className="font-bold text-gray-900 dark:text-slate-100 text-sm sm:text-base">Weekly Topics Covered</h2>
+            {progressSubjects.length > 1 && (
+              <select
+                value={progressSubject}
+                onChange={e => setProgressSubject(e.target.value)}
+                className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 shrink-0"
+              >
+                <option value="">All Subjects</option>
+                {progressSubjects.map(s => (
+                  <option key={s.subjectId} value={s.subjectId}>{s.subjectName}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {weeklyChartData.length === 0 ? (
+            <EmptyState message="No weekly topic tests recorded yet" />
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={190}>
+                <BarChart data={weeklyChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#f1f5f9'} vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10, fill: axisColor }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v => `${v}%`}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v: unknown) => [`${v}%`, 'Score']}
+                    labelFormatter={(_label, payload) => {
+                      const p = payload?.[0]?.payload as typeof weeklyChartData[number] | undefined;
+                      if (!p) return '';
+                      return `${p.topicName}${p.subjectCode ? ` · ${p.subjectCode}` : ''}`;
+                    }}
+                  />
+                  <Bar dataKey="pct" name="Score" radius={[4, 4, 0, 0]} maxBarSize={22}>
+                    {weeklyChartData.map((entry, i) => (
+                      <Cell key={i} fill={STATUS_COLOR[entry.status]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Status legend */}
+              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                {([
+                  { label: 'Strong', key: 'strong' as const },
+                  { label: 'Weak', key: 'weak' as const },
+                  { label: 'Absent', key: 'absent' as const },
+                ]).map(item => (
+                  <div key={item.key} className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLOR[item.key] }} />
+                    <span className="text-[11px] text-gray-500 dark:text-slate-400">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Weak Topics to Review — full width */}
+      <div className="card p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-gray-900 dark:text-slate-100 text-sm sm:text-base">Weak Topics to Review</h2>
+          {weakTopics.length > 0 && (
+            <span className="text-xs text-gray-400 dark:text-slate-500">{weakTopics.length} flagged</span>
+          )}
+        </div>
+        {weakTopics.length === 0 ? (
+          <EmptyState message="No weak topics right now — great work!" />
+        ) : (
+          <div className="space-y-2.5">
+            {weakTopics.map((w, i) => (
+              <div key={`${w.paperId}-${i}`} className="flex items-center gap-3">
+                <div className="w-32 sm:w-48 shrink-0">
+                  <p className="text-xs font-medium text-gray-700 dark:text-slate-300 truncate">
+                    {w.topicName ?? (w.chapterNumber ? `Chapter ${w.chapterNumber}` : 'Topic test')}
+                  </p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate">
+                    {w.subjectName}{w.chapterNumber ? ` · Ch.${w.chapterNumber}` : ''}
+                  </p>
+                </div>
+                <div className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-700 rounded-full h-2.5">
+                  <div className="h-2.5 rounded-full bg-red-500" style={{ width: `${Math.max(4, Math.round(w.percentage))}%` }} />
+                </div>
+                <span className="text-xs font-bold text-red-600 dark:text-red-400 w-10 text-right shrink-0">
+                  {Math.round(w.percentage)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

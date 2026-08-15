@@ -45,6 +45,7 @@ import BranchesPage from './pages/branches/BranchesPage';
 import ResourcesPage from './pages/resources/ResourcesPage';
 import ExamPaperPage from './pages/examPaper/ExamPaperPage';
 import WeeklyPapersPage from './pages/papers/WeeklyPapersPage';
+import StudentPapersPage from './pages/papers/StudentPapersPage';
 import RolesHierarchyPage from './pages/roles/RolesHierarchyPage';
 import MobileDevicesPage from './pages/admin/MobileDevicesPage';
 import StudentProfilePage from './pages/profile/StudentProfilePage';
@@ -233,8 +234,8 @@ function TenantRouter() {
         <Route path="attendance"     element={<AttendancePage />} />
         <Route path="timetable"      element={<TimetablePage />} />
         <Route path="exams"          element={<ExamsPage />} />
-        <Route path="papers"         element={<WeeklyPapersPage />} />
-        <Route path="papers/monthly-report" element={<WeeklyPapersPage />} />
+        <Route path="papers"         element={<StudentPapersPage />} />
+        <Route path="papers/monthly-report" element={<StudentPapersPage />} />
         <Route path="assignments"    element={<AssignmentsPage />} />
         <Route path="notifications"  element={<NotificationsPage />} />
         <Route path="fees"           element={<FeesPage />} />

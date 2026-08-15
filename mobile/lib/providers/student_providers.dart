@@ -6,6 +6,7 @@ import '../services/attendance_service.dart';
 import '../services/fee_service.dart';
 import '../services/notification_service.dart';
 import '../services/assignment_service.dart';
+import '../services/progress_service.dart';
 import '../models/timetable.dart';
 import '../models/result.dart';
 import '../models/challan.dart';
@@ -13,6 +14,7 @@ import '../models/assignment.dart';
 import '../models/notification.dart';
 import '../models/attendance.dart';
 import '../models/student_profile.dart';
+import '../models/student_progress.dart';
 
 // ── Service singletons ───────────────────────────────────────────────
 
@@ -23,6 +25,7 @@ final attendanceServiceProvider = Provider((_) => AttendanceService());
 final feeServiceProvider = Provider((_) => FeeService());
 final notificationServiceProvider = Provider((_) => NotificationService());
 final assignmentServiceProvider = Provider((_) => AssignmentService());
+final progressServiceProvider = Provider((_) => ProgressService());
 
 // ── Student data providers ───────────────────────────────────────────
 
@@ -84,6 +87,11 @@ final pendingAssignmentsProvider = FutureProvider<List<Assignment>>((ref) {
 
 final classFellowsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(studentServiceProvider).getClassFellows();
+});
+
+// Full weekly-topic coverage + syllabus mastery (unfiltered — screens filter client-side)
+final myProgressProvider = FutureProvider<StudentProgress>((ref) {
+  return ref.watch(progressServiceProvider).getMyProgress();
 });
 
 // ── Offline attendance queue count ────────────────────────────────────

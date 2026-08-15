@@ -52,6 +52,16 @@ export async function listPapers(req: Request, res: Response): Promise<void> {
   if (status) filter.status = status;
   if (role === 'teacher') filter.teacherId = userId;
 
+  if (role === 'student') {
+    const student = await Student.findOne({
+      ...orgBranchScope({ orgId, branchId }),
+      userId,
+    }).select('classId sectionId').lean();
+    if (!student) { res.json({ success: true, data: [] }); return; }
+    filter.classId = student.classId;
+    filter.sectionId = student.sectionId;
+  }
+
   const papers = await Paper.find(filter)
     .populate('topicId', 'topicName chapterNumber')
     .populate('subjectId', 'name code')
@@ -144,8 +154,20 @@ export async function enterPaperMarks(req: Request, res: Response): Promise<void
 // ─── Paper Results (for a single paper) ──────────────────────────────────────
 
 export async function getPaperResults(req: Request, res: Response): Promise<void> {
-  const { orgId } = req.user!;
-  const results = await PaperResult.find({ orgId, paperId: req.params.id })
+  const { orgId, branchId, id: userId, role } = req.user!;
+  const filter: Record<string, unknown> = { orgId, paperId: req.params.id };
+
+  // Students may only ever see their own result, never classmates' names/scores
+  if (role === 'student') {
+    const student = await Student.findOne({
+      ...orgBranchScope({ orgId, branchId }),
+      userId,
+    }).select('_id').lean();
+    if (!student) { res.json({ success: true, data: [] }); return; }
+    filter.studentId = student._id;
+  }
+
+  const results = await PaperResult.find(filter)
     .populate('studentId', 'profile.name rollNo')
     .sort({ percentage: -1 })
     .lean();
