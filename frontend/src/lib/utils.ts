@@ -15,6 +15,13 @@ export function formatDate(date: string | Date): string {
   );
 }
 
+/** Client-side pagination for an already-fetched array. */
+export function paginate<T>(items: T[], page: number, pageSize: number) {
+  const pages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), pages);
+  return { visible: items.slice((safePage - 1) * pageSize, safePage * pageSize), pages, safePage };
+}
+
 export function getInitials(name: string): string {
   return name
     .split(' ')

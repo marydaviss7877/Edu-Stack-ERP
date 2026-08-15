@@ -36,7 +36,7 @@ export async function listClearances(req: Request, res: Response): Promise<void>
   } else if (studentId) filter.studentId = studentId;
 
   const clearances = await ClearanceExam.find(filter)
-    .populate('studentId', 'profile.name rollNo')
+    .populate('studentId', 'profile.name profile.photoUrl rollNo')
     .populate('subjectId', 'name code')
     .populate('classId', 'name level')
     .populate('sectionId', 'name')

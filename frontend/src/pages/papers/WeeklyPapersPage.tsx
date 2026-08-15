@@ -12,10 +12,13 @@ import PageHeader from '../../components/ui/PageHeader';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
 import UserAvatar from '../../components/ui/UserAvatar';
+import PageFooter from '../../components/ui/PageFooter';
 import { useAuthStore } from '../../stores/authStore';
-import { cn } from '../../lib/utils';
+import { cn, paginate } from '../../lib/utils';
 
 type Tab = 'tests' | 'weak' | 'clearance';
+
+const PAGE_SIZE = 15;
 
 const MONTH_NAMES = Array.from({ length: 12 }, (_, i) => new Date(2000, i).toLocaleString('default', { month: 'long' }));
 
@@ -31,6 +34,7 @@ function WeeklyTestsTab({ isTeacher }: { isTeacher: boolean }) {
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [gradingPaper, setGradingPaper] = useState<PaperDoc | null>(null);
+  const [page, setPage] = useState(1);
 
   const { data: years = [] } = useQuery({ queryKey: ['years'], queryFn: academicService.getYears });
   const currentYear = years.find(y => y.isCurrent) ?? years[0];
@@ -40,6 +44,8 @@ function WeeklyTestsTab({ isTeacher }: { isTeacher: boolean }) {
     queryFn: () => weeklyPaperService.list({}),
   });
 
+  const { visible, pages, safePage } = paginate(papers, page, PAGE_SIZE);
+
   return (
     <div>
       {isTeacher && (
@@ -48,32 +54,47 @@ function WeeklyTestsTab({ isTeacher }: { isTeacher: boolean }) {
         </div>
       )}
 
-      <div className="card divide-y divide-gray-100 dark:divide-slate-700">
-        {isLoading && <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading...</div>}
-        {!isLoading && papers.length === 0 && (
-          <div className="px-5 py-8 text-center text-gray-400 text-sm">No weekly tests yet.</div>
-        )}
-        {papers.map(p => (
-          <div key={p._id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/40">
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-slate-100">
-                {populatedName(p.subjectId)} — {populatedName(p.classId)} / {populatedName(p.sectionId)}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-slate-500">
-                {p.topicId ? populatedName(p.topicId, 'topicName') : 'No topic'} · {new Date(p.scheduledDate).toLocaleDateString()} · {p.totalMarks} marks
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={p.status === 'graded' ? 'success' : 'default'}>{p.status}</Badge>
-              {isTeacher && p.status !== 'graded' && (
-                <button onClick={() => setGradingPaper(p)} className="btn-secondary text-xs">Enter Marks</button>
-              )}
-              {p.status === 'graded' && (
-                <button onClick={() => setGradingPaper(p)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">View Results</button>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Subject</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Grade</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Section</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Topic</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Date</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Marks</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+            {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">Loading...</td></tr>}
+            {!isLoading && papers.length === 0 && (
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">No weekly tests yet.</td></tr>
+            )}
+            {visible.map(p => (
+              <tr key={p._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{populatedName(p.subjectId)}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{populatedName(p.classId)}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{populatedName(p.sectionId)}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{p.topicId ? populatedName(p.topicId, 'topicName') : 'No topic'}</td>
+                <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{new Date(p.scheduledDate).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-300">{p.totalMarks}</td>
+                <td className="px-4 py-3 text-center"><Badge variant={p.status === 'graded' ? 'success' : 'default'}>{p.status}</Badge></td>
+                <td className="px-4 py-3 text-right">
+                  {isTeacher && p.status !== 'graded' && (
+                    <button onClick={() => setGradingPaper(p)} className="btn-secondary text-xs">Enter Marks</button>
+                  )}
+                  {p.status === 'graded' && (
+                    <button onClick={() => setGradingPaper(p)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">View Results</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <PageFooter total={papers.length} page={safePage} pages={pages} onPageChange={setPage} />
       </div>
 
       {createOpen && currentYear && (
@@ -286,6 +307,7 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
   const now = new Date();
   const [month, setMonth] = useState(initialMonth || String(now.getMonth() + 1));
   const [year, setYear] = useState(initialYear || String(now.getFullYear()));
+  const [page, setPage] = useState(1);
 
   const { data: myWeak = [], isLoading: loadingMine } = useQuery({
     queryKey: ['my-weak-topics', month, year],
@@ -301,10 +323,10 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
 
   const MonthYearPicker = (
     <div className="flex gap-3 mb-4">
-      <select value={month} onChange={e => setMonth(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+      <select value={month} onChange={e => { setMonth(e.target.value); setPage(1); }} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
         {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
       </select>
-      <select value={year} onChange={e => setYear(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+      <select value={year} onChange={e => { setYear(e.target.value); setPage(1); }} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
         {[2024, 2025, 2026, 2027].map(y => <option key={y} value={String(y)}>{y}</option>)}
       </select>
     </div>
@@ -334,6 +356,7 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
   }
 
   const rows = (report?.data ?? []).filter(r => r.isWeak || r.weakCount > 0);
+  const { visible, pages, safePage } = paginate(rows, page, PAGE_SIZE);
   return (
     <div>
       {MonthYearPicker}
@@ -356,7 +379,7 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
             {!loadingReport && rows.length === 0 && (
               <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No weak topics for this period.</td></tr>
             )}
-            {rows.map((r, i) => (
+            {visible.map((r, i) => (
               <tr key={i} className={cn(r.isWeak ? 'bg-red-50 dark:bg-red-900/20' : '')}>
                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">
                   <div className="flex items-center gap-2.5">
@@ -377,6 +400,7 @@ export function WeakTopicsTab({ isStudent, initialMonth, initialYear }: { isStud
             ))}
           </tbody>
         </table>
+        <PageFooter total={rows.length} page={safePage} pages={pages} onPageChange={setPage} />
       </div>
     </div>
   );
@@ -396,6 +420,7 @@ export function ClearanceTab({ role }: { role?: string }) {
   const now = new Date();
   const [month, setMonth] = useState(String(now.getMonth() + 1));
   const [year, setYear] = useState(String(now.getFullYear()));
+  const [page, setPage] = useState(1);
   const [approving, setApproving] = useState<ClearanceDoc | null>(null);
   const [grading, setGrading] = useState<ClearanceDoc | null>(null);
 
@@ -414,13 +439,15 @@ export function ClearanceTab({ role }: { role?: string }) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['clearances'] }); qc.invalidateQueries({ queryKey: ['clearance-summary'] }); },
   });
 
+  const { visible, pages, safePage } = paginate(clearances, page, PAGE_SIZE);
+
   return (
     <div>
       <div className="flex gap-3 mb-4">
-        <select value={month} onChange={e => setMonth(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+        <select value={month} onChange={e => { setMonth(e.target.value); setPage(1); }} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
           {MONTH_NAMES.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
         </select>
-        <select value={year} onChange={e => setYear(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+        <select value={year} onChange={e => { setYear(e.target.value); setPage(1); }} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
           {[2024, 2025, 2026, 2027].map(y => <option key={y} value={String(y)}>{y}</option>)}
         </select>
       </div>
@@ -444,36 +471,66 @@ export function ClearanceTab({ role }: { role?: string }) {
         </div>
       )}
 
-      <div className="card divide-y divide-gray-100 dark:divide-slate-700">
-        {isLoading && <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading...</div>}
-        {!isLoading && clearances.length === 0 && (
-          <div className="px-5 py-8 text-center text-gray-400 text-sm">No clearance exams. These are generated automatically on the 1st of each month for students averaging below the branch's failing threshold.</div>
-        )}
-        {clearances.map(c => (
-          <div key={c._id} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-slate-100">
-                {typeof c.studentId === 'object' ? `${c.studentId.rollNo} — ${c.studentId.profile.name}` : c.studentId} · {populatedName(c.subjectId)}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-slate-500">
-                {MONTH_NAMES[c.triggerMonth - 1]} {c.triggerYear} · avg {c.averagePercentage}%
-                {c.status === 'completed' && ` · scored ${c.clearanceMarksObtained}/${c.clearanceTotalMarks} (${c.clearancePercentage}%) — ${c.clearancePassed ? 'Passed' : 'Failed'}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={CLEARANCE_VARIANT[c.status]}>{CLEARANCE_LABEL[c.status]}</Badge>
-              {role === 'branch_principal' && c.status === 'pending_approval' && (
-                <>
-                  <button onClick={() => setApproving(c)} className="btn-secondary text-xs">Approve</button>
-                  <button onClick={() => waive.mutate(c._id)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700">Waive</button>
-                </>
-              )}
-              {role === 'teacher' && c.status === 'scheduled' && (
-                <button onClick={() => setGrading(c)} className="btn-secondary text-xs">Enter Marks</button>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Student</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Grade</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Section</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Subject</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Period</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Trigger Avg</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Result</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+            {isLoading && <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-sm">Loading...</td></tr>}
+            {!isLoading && clearances.length === 0 && (
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-sm">No clearance exams. These are generated automatically on the 1st of each month for students averaging below the branch's failing threshold.</td></tr>
+            )}
+            {visible.map(c => {
+              const student = typeof c.studentId === 'object' ? c.studentId : null;
+              return (
+                <tr key={c._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar name={student?.profile.name ?? String(c.studentId)} photoUrl={student?.profile.photoUrl} className="w-8 h-8 rounded-full text-xs shrink-0" />
+                      <span>{student ? `${student.rollNo} — ${student.profile.name}` : String(c.studentId)}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{populatedName(c.classId)}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{populatedName(c.sectionId)}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{populatedName(c.subjectId)}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{MONTH_NAMES[c.triggerMonth - 1]} {c.triggerYear}</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-300">{c.averagePercentage}%</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-slate-300">
+                    {c.status === 'completed'
+                      ? `${c.clearanceMarksObtained}/${c.clearanceTotalMarks} (${c.clearancePercentage}%) — ${c.clearancePassed ? 'Passed' : 'Failed'}`
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-center"><Badge variant={CLEARANCE_VARIANT[c.status]}>{CLEARANCE_LABEL[c.status]}</Badge></td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {role === 'branch_principal' && c.status === 'pending_approval' && (
+                        <>
+                          <button onClick={() => setApproving(c)} className="btn-secondary text-xs">Approve</button>
+                          <button onClick={() => waive.mutate(c._id)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700">Waive</button>
+                        </>
+                      )}
+                      {role === 'teacher' && c.status === 'scheduled' && (
+                        <button onClick={() => setGrading(c)} className="btn-secondary text-xs">Enter Marks</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <PageFooter total={clearances.length} page={safePage} pages={pages} onPageChange={setPage} />
       </div>
 
       {approving && (

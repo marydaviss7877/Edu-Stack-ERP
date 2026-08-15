@@ -5,7 +5,7 @@ export type ClearanceStatus = 'pending_approval' | 'scheduled' | 'completed' | '
 
 export interface ClearanceDoc {
   _id: string;
-  studentId: string | { _id: string; profile: { name: string }; rollNo: string };
+  studentId: string | { _id: string; profile: { name: string; photoUrl?: string | null }; rollNo: string };
   subjectId: string | { _id: string; name: string; code: string };
   classId: string | { _id: string; name: string; level: string };
   sectionId: string | { _id: string; name: string };
