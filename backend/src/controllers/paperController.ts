@@ -5,6 +5,8 @@ import { Paper } from '../models/Paper';
 import { PaperResult } from '../models/PaperResult';
 import { Branch } from '../models/Branch';
 import { Student } from '../models/Student';
+import { SubjectTopic } from '../models/SubjectTopic';
+import { Subject } from '../models/Subject';
 import { orgBranchScope } from '../utils/orgBranchScope';
 
 export const createPaperValidators = [
@@ -364,4 +366,167 @@ export async function getMonthlyWeakReport(req: Request, res: Response): Promise
     data: agg,
     meta: { month: Number(month), year: Number(year), weakThreshold },
   });
+}
+
+// ─── My Progress (student self-view — weekly topic coverage + syllabus mastery) ──
+
+export async function getMyProgress(req: Request, res: Response): Promise<void> {
+  const { orgId, branchId, id: userId, role } = req.user!;
+  const { studentId, subjectId } = req.query;
+
+  const rawStudentId = Array.isArray(studentId) ? studentId[0] : studentId;
+  let targetStudentId = typeof rawStudentId === 'string' ? rawStudentId : undefined;
+  let studentClassId: Types.ObjectId | undefined;
+
+  if (role === 'student') {
+    const student = await Student.findOne({
+      ...orgBranchScope({ orgId, branchId }),
+      userId,
+    }).select('classId').lean();
+    targetStudentId = student?._id.toString();
+    studentClassId = student?.classId;
+  } else if (targetStudentId) {
+    const student = await Student.findOne({
+      _id: targetStudentId,
+      ...orgBranchScope({ orgId, branchId }),
+    }).select('classId').lean();
+    studentClassId = student?.classId;
+  }
+
+  if (!targetStudentId || !studentClassId) {
+    res.status(400).json({ success: false, message: 'studentId is required' });
+    return;
+  }
+
+  const rawSubjectId = Array.isArray(subjectId) ? subjectId[0] : subjectId;
+  const subjectIdStr = typeof rawSubjectId === 'string' ? rawSubjectId : undefined;
+  const aggregateScope = {
+    orgId: new Types.ObjectId(orgId),
+    ...(branchId ? { branchId: new Types.ObjectId(branchId) } : {}),
+  };
+
+  // Weekly topic-by-topic results (every paper, not just weak ones) — powers the coverage timeline
+  const weeklyPipeline: PipelineStage[] = [
+    {
+      $match: {
+        ...aggregateScope,
+        studentId: new Types.ObjectId(targetStudentId),
+        ...(subjectIdStr ? { subjectId: new Types.ObjectId(subjectIdStr) } : {}),
+      },
+    },
+    { $lookup: { from: 'paper', localField: 'paperId', foreignField: '_id', as: 'paper' } },
+    { $unwind: '$paper' },
+    { $match: { 'paper.paperType': 'weekly' } },
+    { $lookup: { from: 'subjecttopics', localField: 'paper.topicId', foreignField: '_id', as: 'topic' } },
+    { $unwind: { path: '$topic', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'subjects', localField: 'subjectId', foreignField: '_id', as: 'subject' } },
+    { $unwind: { path: '$subject', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        paperId: 1,
+        subjectId: 1,
+        subjectName: '$subject.name',
+        subjectCode: '$subject.code',
+        topicName: '$topic.topicName',
+        chapterNumber: '$topic.chapterNumber',
+        weekNumber: '$paper.weekNumber',
+        month: '$paper.month',
+        year: '$paper.year',
+        scheduledDate: '$paper.scheduledDate',
+        percentage: 1,
+        marksObtained: 1,
+        totalMarks: 1,
+        isWeak: 1,
+        isAbsent: 1,
+      },
+    },
+    { $sort: { scheduledDate: 1 } },
+  ];
+
+  // Distinct topics tested / flagged weak per subject (from weekly papers, excluding absences)
+  const masteryPipeline: PipelineStage[] = [
+    {
+      $match: {
+        ...aggregateScope,
+        studentId: new Types.ObjectId(targetStudentId),
+        isAbsent: false,
+        ...(subjectIdStr ? { subjectId: new Types.ObjectId(subjectIdStr) } : {}),
+      },
+    },
+    { $lookup: { from: 'paper', localField: 'paperId', foreignField: '_id', as: 'paper' } },
+    { $unwind: '$paper' },
+    { $match: { 'paper.paperType': 'weekly', 'paper.topicId': { $exists: true } } },
+    {
+      $group: {
+        _id: '$subjectId',
+        testedTopics: { $addToSet: '$paper.topicId' },
+        weakTopics: { $addToSet: { $cond: ['$isWeak', '$paper.topicId', '$$REMOVE'] } },
+      },
+    },
+  ];
+
+  const [weekly, masteryRows, topicTotals] = await Promise.all([
+    PaperResult.aggregate(weeklyPipeline),
+    PaperResult.aggregate(masteryPipeline),
+    SubjectTopic.aggregate([
+      {
+        $match: {
+          ...aggregateScope,
+          classId: studentClassId,
+          ...(subjectIdStr ? { subjectId: new Types.ObjectId(subjectIdStr) } : {}),
+        },
+      },
+      { $group: { _id: '$subjectId', totalTopics: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const subjectIds = new Set<string>([
+    ...masteryRows.map((r) => r._id.toString()),
+    ...topicTotals.map((r) => r._id.toString()),
+  ]);
+  const subjectDocs = await Subject.find({ _id: { $in: [...subjectIds] } }).select('name code').lean();
+  const subjectMap = new Map(subjectDocs.map((s) => [s._id.toString(), s]));
+  const masteryMap = new Map(masteryRows.map((r) => [r._id.toString(), r]));
+  const totalsMap = new Map(topicTotals.map((r) => [r._id.toString(), r.totalTopics as number]));
+
+  const subjects = [...subjectIds]
+    .map((sid) => {
+      const m = masteryMap.get(sid);
+      const totalTopics = totalsMap.get(sid) ?? 0;
+      const topicsTested = m?.testedTopics?.length ?? 0;
+      const topicsWeak = m?.weakTopics?.length ?? 0;
+      const topicsMastered = Math.max(0, topicsTested - topicsWeak);
+      const sub = subjectMap.get(sid);
+      return {
+        subjectId: sid,
+        subjectName: sub?.name ?? 'Unknown',
+        subjectCode: sub?.code ?? '',
+        totalTopics,
+        topicsTested,
+        topicsWeak,
+        topicsMastered,
+        masteryPct: totalTopics > 0 ? Math.round((topicsMastered / totalTopics) * 10000) / 100 : 0,
+      };
+    })
+    .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+
+  const overallTotals = subjects.reduce(
+    (acc, s) => {
+      acc.totalTopics += s.totalTopics;
+      acc.topicsTested += s.topicsTested;
+      acc.topicsMastered += s.topicsMastered;
+      return acc;
+    },
+    { totalTopics: 0, topicsTested: 0, topicsMastered: 0 }
+  );
+
+  const overall = {
+    ...overallTotals,
+    masteryPct: overallTotals.totalTopics > 0
+      ? Math.round((overallTotals.topicsMastered / overallTotals.totalTopics) * 10000) / 100
+      : 0,
+  };
+
+  res.json({ success: true, data: { weekly, subjects, overall } });
 }

@@ -40,6 +40,41 @@ export interface WeakTopicRow {
   subject?: { name: string; code: string };
 }
 
+export interface ProgressWeeklyRow {
+  paperId: string;
+  subjectId: string;
+  subjectName?: string;
+  subjectCode?: string;
+  topicName?: string;
+  chapterNumber?: number;
+  weekNumber: number;
+  month: number;
+  year: number;
+  scheduledDate: string;
+  percentage: number;
+  marksObtained: number;
+  totalMarks: number;
+  isWeak: boolean;
+  isAbsent: boolean;
+}
+
+export interface SubjectMasteryRow {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  totalTopics: number;
+  topicsTested: number;
+  topicsWeak: number;
+  topicsMastered: number;
+  masteryPct: number;
+}
+
+export interface StudentProgressDoc {
+  weekly: ProgressWeeklyRow[];
+  subjects: SubjectMasteryRow[];
+  overall: { totalTopics: number; topicsTested: number; topicsMastered: number; masteryPct: number };
+}
+
 export interface MonthlyWeakReportRow {
   studentId: string;
   subjectId: string;
@@ -76,4 +111,7 @@ export const weeklyPaperService = {
 
   getMonthlyReport: (params: { month: string; year: string; subjectId?: string; classId?: string; sectionId?: string }) =>
     api.get<ApiResponse<MonthlyWeakReportRow[]>>('/papers/monthly-report', { params }).then(r => r.data),
+
+  getMyProgress: (params?: { studentId?: string; subjectId?: string }) =>
+    api.get<ApiResponse<StudentProgressDoc>>('/papers/my-progress', { params }).then(r => r.data.data),
 };

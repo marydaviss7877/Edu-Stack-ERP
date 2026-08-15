@@ -11,6 +11,7 @@ import {
   getPaperResults,
   getWeakTopics,
   getMonthlyWeakReport,
+  getMyProgress,
 } from '../controllers/paperController';
 
 const router = Router();
@@ -18,6 +19,7 @@ router.use(authenticate);
 
 router.get('/weak-topics', authorize('academic_intelligence', 'read'), getWeakTopics);
 router.get('/monthly-report', authorize('academic_intelligence', 'read'), getMonthlyWeakReport);
+router.get('/my-progress', authorize('academic_intelligence', 'read'), getMyProgress);
 
 router.get('/', authorize('academic_intelligence', 'read'), listPapers);
 router.post('/', authorize('academic_intelligence', 'create'), createPaperValidators, createPaper);
