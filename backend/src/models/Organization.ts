@@ -30,6 +30,7 @@ export interface IOrganization extends Document {
   tagline?: string;
   primaryColor?: string;
   websiteAddon?: boolean;
+  peerFeedbackAddon?: boolean;
   site?: ISiteConfig;
   settings: {
     timezone: string;
@@ -65,6 +66,7 @@ const organizationSchema = new Schema<IOrganization>(
     tagline: { type: String, trim: true },
     primaryColor: { type: String, default: '#2563eb' },
     websiteAddon: { type: Boolean, default: false },
+    peerFeedbackAddon: { type: Boolean, default: false },
     site: {
       published:   { type: Boolean, default: false },
       templateId:  { type: String, enum: ['classic', 'modern', 'minimal'] },

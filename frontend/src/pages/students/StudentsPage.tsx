@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentService } from '../../services/studentService';
 import type { CreateStudentPayload } from '../../services/studentService';
@@ -200,7 +201,9 @@ function StaffStudentsView() {
                       className="h-9 w-9 rounded-xl text-xs"
                       fallbackClassName="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                     />
-                    <span className="font-medium text-gray-900 dark:text-slate-100">{s.profile.name}</span>
+                    <Link to={s._id} className="font-medium text-gray-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline">
+                      {s.profile.name}
+                    </Link>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
@@ -251,6 +254,13 @@ function StaffStudentsView() {
                 </td>
                 <td className="px-4 py-3 text-center">
                   <div className="flex items-center justify-center gap-1.5">
+                    <Link
+                      to={s._id}
+                      title="View Profile"
+                      className="text-xs px-2 py-1 rounded border border-blue-200 dark:border-blue-700/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      View
+                    </Link>
                     <button
                       onClick={() => downloadTransferCertPdf(s, orgName)}
                       title="Download Transfer Certificate"

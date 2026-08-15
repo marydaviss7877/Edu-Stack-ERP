@@ -43,6 +43,8 @@ export const env = {
   resendApiKey: optional('RESEND_API_KEY', ''),
   emailFrom: optional('EMAIL_FROM', 'EduStack PK <onboarding@resend.dev>'),
 
+  geminiApiKey: optional('GEMINI_API_KEY', ''),
+
   // AES-256-GCM key (64 hex chars = 32 bytes) for encrypting per-tenant gateway credentials
   gatewayEncryptionKey: optional('GATEWAY_ENCRYPTION_KEY', ''),
 };

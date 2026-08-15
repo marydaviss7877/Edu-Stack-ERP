@@ -222,6 +222,21 @@ export default function OrgDetailPage() {
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${org.websiteAddon ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Peer Feedback (AI)</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+              AI-generated, aggregated-only peer feedback surveys. Off by default — see the requirements doc before enabling for a school.
+            </p>
+          </div>
+          <button
+            onClick={() => update.mutate({ ...data, peerFeedbackAddon: !org.peerFeedbackAddon } as any)}
+            disabled={update.isPending}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${org.peerFeedbackAddon ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${org.peerFeedbackAddon ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
       </div>
     </div>
   );

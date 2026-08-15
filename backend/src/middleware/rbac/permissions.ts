@@ -18,6 +18,8 @@ type Module =
   | 'payroll'
   | 'notifications'
   | 'reports'
+  | 'behaviour'
+  | 'peer_feedback'
   | 'system_settings'
   | 'sop'
   | 'academic_intelligence'
@@ -152,6 +154,22 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
     { roles: ['teacher'], actions: ['read'], own: true },
     { roles: ['student'], actions: ['read'], own: true },
     { roles: ['accountant'], actions: ['read', 'export'] },
+  ],
+
+  behaviour: [
+    { roles: ['group_admin'], actions: ['read'] },
+    { roles: ['branch_principal'], actions: ['create', 'read', 'update'] }, // update = retract
+    { roles: ['coordinator'], actions: ['create', 'read'] },
+    { roles: ['teacher'], actions: ['create', 'read'] }, // own-class restriction enforced in the controller via Timetable
+    { roles: ['student'], actions: ['read'], own: true },
+  ],
+
+  peer_feedback: [
+    { roles: ['group_admin'], actions: ['read'] },
+    { roles: ['branch_principal'], actions: ['read'] },
+    { roles: ['coordinator'], actions: ['read'] },
+    { roles: ['teacher'], actions: ['read'] },
+    { roles: ['student'], actions: ['create', 'read'], own: true },
   ],
 
   sop: [

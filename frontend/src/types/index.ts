@@ -69,6 +69,7 @@ export interface Organization {
   tagline?: string;
   primaryColor?: string;
   websiteAddon?: boolean;
+  peerFeedbackAddon?: boolean;
   site?: SiteConfig;
   usageBilling: { activeStudents: number; lastCountedAt?: string };
   trialEndsAt?: string;

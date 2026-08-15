@@ -28,6 +28,8 @@ import ClassFellowsPage from './pages/classFellows/ClassFellowsPage';
 import AcademicSetupPage from './pages/settings/AcademicSetupPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import StudentsPage from './pages/students/StudentsPage';
+import StudentProfileDetailPage from './pages/students/StudentProfileDetailPage';
+import PeerFeedbackPage from './pages/students/PeerFeedbackPage';
 import AttendancePage from './pages/attendance/AttendancePage';
 import TimetablePage from './pages/timetable/TimetablePage';
 import TimetableEditPage from './pages/timetable/TimetableEditPage';
@@ -147,6 +149,7 @@ function TenantRouter() {
       >
         <Route index element={<BranchDashboard />} />
         <Route path="students"       element={<StudentsPage />} />
+        <Route path="students/:id"   element={<StudentProfileDetailPage />} />
         <Route path="attendance"     element={<AttendancePage />} />
         <Route path="timetable"      element={<TimetablePage />} />
         <Route path="timetable/edit" element={<TimetableEditPage />} />
@@ -178,6 +181,7 @@ function TenantRouter() {
       >
         <Route index element={<BranchDashboard />} />
         <Route path="students"      element={<StudentsPage />} />
+        <Route path="students/:id"  element={<StudentProfileDetailPage />} />
         <Route path="attendance"    element={<AttendancePage />} />
         <Route path="timetable"     element={<TimetablePage />} />
         <Route path="exams"         element={<ExamsPage />} />
@@ -199,6 +203,8 @@ function TenantRouter() {
         }
       >
         <Route index element={<TeacherDashboard />} />
+        <Route path="students"      element={<StudentsPage />} />
+        <Route path="students/:id"  element={<StudentProfileDetailPage />} />
         <Route path="attendance"    element={<AttendancePage />} />
         <Route path="timetable"     element={<TimetablePage />} />
         <Route path="exams"         element={<ExamsPage />} />
@@ -235,6 +241,7 @@ function TenantRouter() {
         <Route path="resources"      element={<ResourcesPage />} />
         <Route path="sops"           element={<SopsPage />} />
         <Route path="profile"        element={<StudentProfilePage />} />
+        <Route path="peer-feedback"  element={<PeerFeedbackPage />} />
       </Route>
 
       {/* Group admin — full-screen website editor (no AppLayout) */}
@@ -260,6 +267,7 @@ function TenantRouter() {
         <Route path="branches"       element={<BranchesPage />} />
         <Route path="staff"          element={<StaffPage />} />
         <Route path="students"       element={<StudentsPage />} />
+        <Route path="students/:id"   element={<StudentProfileDetailPage />} />
         <Route path="attendance"     element={<AttendancePage />} />
         <Route path="timetable"      element={<TimetablePage />} />
         <Route path="timetable/edit" element={<TimetableEditPage />} />

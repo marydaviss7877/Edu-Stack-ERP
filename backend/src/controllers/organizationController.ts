@@ -161,7 +161,7 @@ export async function updateOrganization(req: Request, res: Response): Promise<v
 
   // group_admin cannot change plan or status — only super_admin can
   const allowedFields = callerRole === 'super_admin'
-    ? ['name', 'contactEmail', 'contactPhone', 'address', 'status', 'plan', 'settings', 'logoUrl', 'welcomeMessage', 'tagline', 'primaryColor', 'websiteAddon']
+    ? ['name', 'contactEmail', 'contactPhone', 'address', 'status', 'plan', 'settings', 'logoUrl', 'welcomeMessage', 'tagline', 'primaryColor', 'websiteAddon', 'peerFeedbackAddon']
     : ['name', 'contactEmail', 'contactPhone', 'address', 'settings', 'logoUrl', 'welcomeMessage', 'tagline', 'primaryColor'];
 
   const update: Record<string, unknown> = {};

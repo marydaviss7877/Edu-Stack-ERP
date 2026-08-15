@@ -38,6 +38,11 @@ agenda.define('generate-weak-report', async () => {
   await generateMonthlyWeakReport();
 });
 
+agenda.define('open-peer-feedback-cycles', async () => {
+  const { openMonthlyPeerFeedbackCycles } = await import('./handlers/peerFeedbackHandler');
+  await openMonthlyPeerFeedbackCycles();
+});
+
 export async function scheduleRecurringJobs(): Promise<void> {
   await agenda.start();
 
@@ -49,6 +54,9 @@ export async function scheduleRecurringJobs(): Promise<void> {
 
   // Generate monthly weak report on 1st of each month at 01:00 PKT (20:00 UTC)
   await agenda.every('0 20 1 * *', 'generate-weak-report', {}, { skipImmediate: true });
+
+  // Open this month's peer-feedback cycles on 1st of each month at 01:30 PKT (20:30 UTC) — orgs without the add-on are skipped
+  await agenda.every('30 20 1 * *', 'open-peer-feedback-cycles', {}, { skipImmediate: true });
 
   console.log('[Agenda] recurring jobs scheduled');
 }

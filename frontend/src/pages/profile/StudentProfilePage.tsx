@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { studentService } from '../../services/studentService';
+import { behaviourService, type BehaviourCategory } from '../../services/behaviourService';
 import { useAuthStore } from '../../stores/authStore';
 import { formatDate, getInitials } from '../../lib/utils';
+
+const CATEGORY_LABEL: Record<BehaviourCategory, string> = {
+  discipline: 'Discipline', academic: 'Academic', social: 'Social', punctuality: 'Punctuality', other: 'Other',
+};
 
 function InfoRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -32,6 +37,17 @@ export default function StudentProfilePage() {
 
   const className = typeof profile?.classId === 'object' ? profile.classId.name : null;
   const sectionName = typeof profile?.sectionId === 'object' ? profile.sectionId.name : null;
+
+  const { data: behaviourSummary } = useQuery({
+    queryKey: ['my-behaviour-summary'],
+    queryFn: () => behaviourService.getSummary(),
+    enabled: !!profile,
+  });
+  const { data: behaviourRecords = [] } = useQuery({
+    queryKey: ['my-behaviour'],
+    queryFn: () => behaviourService.list(),
+    enabled: !!profile,
+  });
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -125,6 +141,45 @@ export default function StudentProfilePage() {
               <InfoRow label="Father's CNIC"  value={profile.guardianInfo.fatherCnic} />
             </Section>
           )}
+
+          {/* ── My Behaviour ── */}
+          <div className="card p-5 mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">My Behaviour Record</h3>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-center">
+                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{behaviourSummary?.merits ?? 0}</p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">Merit Points</p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center">
+                <p className="text-lg font-extrabold text-red-600 dark:text-red-400">{behaviourSummary?.demerits ?? 0}</p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">Demerit Points</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                <p className="text-lg font-extrabold text-gray-800 dark:text-slate-200">
+                  {behaviourSummary ? (behaviourSummary.netPoints >= 0 ? `+${behaviourSummary.netPoints}` : behaviourSummary.netPoints) : 0}
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">Net Points</p>
+              </div>
+            </div>
+
+            {behaviourRecords.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-2">No behaviour records yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {behaviourRecords.slice(0, 8).map(r => (
+                  <div key={r._id} className={`flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-slate-700 last:border-0 ${r.status === 'retracted' ? 'opacity-50' : ''}`}>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium text-gray-800 dark:text-slate-200 truncate ${r.status === 'retracted' ? 'line-through' : ''}`}>{r.title}</p>
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">{CATEGORY_LABEL[r.category]} · {formatDate(r.createdAt)}</p>
+                    </div>
+                    <span className={`shrink-0 text-xs font-bold ${r.type === 'merit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {r.type === 'merit' ? '+' : '−'}{r.points}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
