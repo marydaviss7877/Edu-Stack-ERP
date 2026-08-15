@@ -8,6 +8,8 @@ import {
   getMe,
   changePassword,
   changePasswordValidators,
+  forceChangePassword,
+  forceChangePasswordValidators,
   registerOrg,
   registerOrgValidators,
   verifyEmail,
@@ -55,6 +57,7 @@ const resendVerificationLimiter = rateLimit({
 const router = Router();
 
 router.post('/login', loginLimiter, loginValidators, asyncHandler(login));
+router.post('/force-change-password', loginLimiter, forceChangePasswordValidators, asyncHandler(forceChangePassword));
 router.post('/register', registerLimiter, registerOrgValidators, asyncHandler(registerOrg));
 router.post('/refresh', refreshLimiter, asyncHandler(refresh));
 router.post('/logout', authenticate, asyncHandler(logout));

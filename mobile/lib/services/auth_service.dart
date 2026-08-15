@@ -26,11 +26,11 @@ class AuthService {
       if (data['success'] != true) {
         throw Exception(data['message'] ?? 'Login failed');
       }
-      // mustChangePassword comes at the top level, not nested under 'data'
-      if (data['mustChangePassword'] == true) {
+      final payload = data['data'] as Map<String, dynamic>?;
+      if (payload == null || payload['mustChangePassword'] == true) {
         throw Exception('PASSWORD_CHANGE_REQUIRED');
       }
-      return data['data'] as Map<String, dynamic>;
+      return payload;
     } on DioException catch (e) {
       final body = e.response?.data;
       final message = (body is Map) ? body['message'] as String? : null;

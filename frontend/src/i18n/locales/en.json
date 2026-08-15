@@ -37,7 +37,11 @@
     "sessionExpired": "Your session has expired. Please login again.",
     "invalidEmail": "Please enter a valid email address.",
     "passwordTooShort": "Password must be at least 6 characters.",
-    "mustChangePassword": "You must change your password before continuing."
+    "mustChangePassword": "You must change your password before continuing.",
+    "confirmPassword": "Confirm New Password",
+    "newPasswordTooShort": "New password must be at least 8 characters.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "setNewPasswordCta": "Set New Password"
   },
   "nav": {
     "dashboard": "Dashboard",

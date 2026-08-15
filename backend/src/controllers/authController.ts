@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { env } from '../config/env';
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import { Organization } from '../models/Organization';
 import { Branch } from '../models/Branch';
 import {
@@ -42,6 +42,46 @@ export const loginValidators = [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
 ];
+
+/** Issues tokens/cookies and sends the standard login response for an already-verified user. */
+async function issueSession(req: Request, res: Response, user: IUser & { id: string }): Promise<void> {
+  const isMobile = req.headers['x-client-type'] === 'mobile';
+
+  const tokens = generateTokens(
+    {
+      userId: user.id,
+      role: user.role,
+      orgId: user.orgId?.toString(),
+      branchId: user.branchId?.toString(),
+    },
+    isMobile ? '30d' : undefined,
+  );
+
+  await storeRefreshToken(user.id, tokens.refreshToken);
+
+  const userPayload = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    orgId: user.orgId,
+    branchId: user.branchId,
+    photoUrl: user.photoUrl,
+    emailVerifiedAt: user.emailVerifiedAt,
+  };
+
+  if (isMobile) {
+    res.json({
+      success: true,
+      data: { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, user: userPayload },
+    });
+    return;
+  }
+
+  res.cookie('accessToken', tokens.accessToken, ACCESS_COOKIE_OPTS);
+  res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTS);
+  res.json({ success: true, data: { user: userPayload } });
+}
 
 export async function login(req: Request, res: Response): Promise<void> {
   const errors = validationResult(req);
@@ -105,69 +145,66 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     if (user.mustChangePassword) {
-      res.status(200).json({ success: true, mustChangePassword: true, message: 'Password change required' });
+      res.status(200).json({ success: true, data: { mustChangePassword: true }, message: 'Password change required' });
       return;
     }
 
     user.lastLoginAt = new Date();
     await user.save();
 
-    const isMobile = req.headers['x-client-type'] === 'mobile';
+    await issueSession(req, res, user as IUser & { id: string });
+  } catch (err) {
+    console.error('[login]', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
 
-    const tokens = generateTokens(
-      {
-        userId: user.id,
-        role: user.role,
-        orgId: user.orgId?.toString(),
-        branchId: user.branchId?.toString(),
-      },
-      isMobile ? '30d' : undefined,
+export const forceChangePasswordValidators = [
+  body('email').isEmail().normalizeEmail(),
+  body('currentPassword').isLength({ min: 6 }),
+  body('newPassword').isLength({ min: 8 }),
+];
+
+/**
+ * Completes a login blocked by mustChangePassword. Unauthenticated by necessity:
+ * login() never issues a token in that state, so there's no session to call the
+ * regular authenticated /change-password endpoint with. Proof of identity is the
+ * current (temporary) password, exactly like login — scoped to accounts that are
+ * actually flagged mustChangePassword, and rate-limited the same way as login.
+ */
+export async function forceChangePassword(req: Request, res: Response): Promise<void> {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({ success: false, errors: errors.array() });
+    return;
+  }
+
+  const { email, currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await withoutTenantEnforcement(
+      User.findOne({ email, active: true }).select('+passwordHash')
     );
-
-    await storeRefreshToken(user.id, tokens.refreshToken);
-
-    if (isMobile) {
-      // Mobile: return tokens in JSON body (Flutter stores in SecureStorage)
-      res.json({
-        success: true,
-        data: {
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            orgId: user.orgId,
-            branchId: user.branchId,
-            photoUrl: user.photoUrl,
-            emailVerifiedAt: user.emailVerifiedAt,
-          },
-        },
-      });
+    if (!user || !user.mustChangePassword) {
+      res.status(401).json({ success: false, message: 'Invalid credentials' });
       return;
     }
 
-    res.cookie('accessToken', tokens.accessToken, ACCESS_COOKIE_OPTS);
-    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTS);
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return;
+    }
 
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          orgId: user.orgId,
-          branchId: user.branchId,
-          photoUrl: user.photoUrl,
-          emailVerifiedAt: user.emailVerifiedAt,
-        },
-      },
-    });
+    user.passwordHash = await hashPassword(newPassword);
+    user.passwordChangedAt = new Date();
+    user.mustChangePassword = false;
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    await issueSession(req, res, user as IUser & { id: string });
   } catch (err) {
-    console.error('[login]', err);
+    console.error('[forceChangePassword]', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 }

@@ -34,7 +34,14 @@
     "loginTitle": "ایڈو اسٹیک PK میں خوش آمدید",
     "loginSubtitle": "اپنے اسکول پورٹل میں لاگ ان کریں",
     "invalidCredentials": "غلط ای میل یا پاس ورڈ",
-    "sessionExpired": "آپ کی سیشن ختم ہو گئی۔ براہ کرم دوبارہ لاگ ان کریں۔"
+    "sessionExpired": "آپ کی سیشن ختم ہو گئی۔ براہ کرم دوبارہ لاگ ان کریں۔",
+    "invalidEmail": "براہ کرم ایک درست ای میل درج کریں۔",
+    "passwordTooShort": "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔",
+    "mustChangePassword": "جاری رکھنے سے پہلے آپ کو اپنا پاس ورڈ تبدیل کرنا ہوگا۔",
+    "confirmPassword": "نیا پاس ورڈ دوبارہ درج کریں",
+    "newPasswordTooShort": "نیا پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔",
+    "passwordsDoNotMatch": "پاس ورڈ مماثل نہیں ہیں۔",
+    "setNewPasswordCta": "نیا پاس ورڈ محفوظ کریں"
   },
   "nav": {
     "dashboard": "ڈیش بورڈ",

@@ -18,9 +18,25 @@ export async function login(
     ...(slug ? { slug } : {}),
     ...(loginAs ? { loginAs } : {}),
   });
-  if (!data.success || !data.data) throw new Error(data.message ?? 'Login failed');
-  if (data.data.mustChangePassword) throw new Error('PASSWORD_CHANGE_REQUIRED');
+  if (!data.success) throw new Error(data.message ?? 'Login failed');
+  if (data.data?.mustChangePassword) throw new Error('PASSWORD_CHANGE_REQUIRED');
+  if (!data.data) throw new Error(data.message ?? 'Login failed');
   return data.data;
+}
+
+/** Completes a login blocked by PASSWORD_CHANGE_REQUIRED — sets a new password and logs in. */
+export async function forceChangePassword(
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<AuthUser> {
+  const { data } = await api.post<ApiResponse<LoginResponse>>('/auth/force-change-password', {
+    email,
+    currentPassword,
+    newPassword,
+  });
+  if (!data.success || !data.data?.user) throw new Error(data.message ?? 'Failed to change password');
+  return data.data.user;
 }
 
 export async function logout(): Promise<void> {
