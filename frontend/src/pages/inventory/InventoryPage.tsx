@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowDownRight, ArrowUpRight, Banknote, Boxes, Building2,
   AlertCircle, Check, ChevronRight, CircleDollarSign, ClipboardCheck, FileText,
-  FolderTree, MapPin, Package, Plus, ReceiptText, RefreshCw, Search, ShieldCheck,
-  ShoppingCart, Store, TrendingUp, Truck, WalletCards, Wrench, X,
+  FolderTree, Landmark, MapPin, Package, Plus, ReceiptText, RefreshCw, Search, ShieldCheck,
+  ShoppingBag, ShoppingCart, Store, TrendingUp, Truck, WalletCards, Wrench, X,
 } from 'lucide-react';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
@@ -21,8 +21,10 @@ import {
   type ProcurementRequest,
   type Vendor,
 } from '../../services/inventoryService';
+import AccountsTab from '../../components/inventory/AccountsTab';
+import POSTab from '../../components/inventory/POSTab';
 
-type Tab = 'overview' | 'items' | 'expenses' | 'income' | 'procurement' | 'vendors';
+type Tab = 'overview' | 'items' | 'expenses' | 'income' | 'procurement' | 'vendors' | 'accounts' | 'pos';
 type FormState = Record<string, string>;
 const INVENTORY_NOW = new Date();
 
@@ -33,6 +35,8 @@ const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'income', label: 'Income', icon: <CircleDollarSign className="w-4 h-4" /> },
   { id: 'procurement', label: 'Procurement', icon: <ShoppingCart className="w-4 h-4" /> },
   { id: 'vendors', label: 'Vendors', icon: <Store className="w-4 h-4" /> },
+  { id: 'accounts', label: 'Accounts', icon: <Landmark className="w-4 h-4" /> },
+  { id: 'pos', label: 'POS', icon: <ShoppingBag className="w-4 h-4" /> },
 ];
 
 const defaultForm = (tab: Tab): FormState => ({
@@ -181,7 +185,7 @@ export default function InventoryPage() {
   const queryClient = useQueryClient();
   const { user, activeBranch } = useAuthStore();
   const isInventoryOnly = user?.role === 'it_admin';
-  const visibleTabs = isInventoryOnly ? tabs.filter(item => ['items', 'procurement', 'vendors'].includes(item.id)) : tabs;
+  const visibleTabs = isInventoryOnly ? tabs.filter(item => ['items', 'procurement', 'vendors', 'pos'].includes(item.id)) : tabs;
   const [tab, setTab] = useState<Tab>(isInventoryOnly ? 'items' : 'overview');
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -337,7 +341,10 @@ export default function InventoryPage() {
 
       {tab === 'overview' && <Overview finance={financeQuery.data} inventory={dashboardQuery.data} history={financeHistoryQuery.data} items={itemsQuery.data ?? []} expenses={expensesQuery.data ?? []} procurements={procurementQuery.data ?? []} stats={itemStats} role={role} branchLabel={activeBranch?.name || ((itemsQuery.data?.[0] && branchName(itemsQuery.data[0].branchId)) || (role === 'branch_principal' ? 'Your branch' : 'All branches'))} onOpenTab={(nextTab) => { setTab(nextTab); setSearch(''); setError(''); setRecordPage(1); }} />}
 
-      {tab !== 'overview' && (
+      {tab === 'accounts' && <AccountsTab />}
+      {tab === 'pos' && <POSTab />}
+
+      {tab !== 'overview' && tab !== 'accounts' && tab !== 'pos' && (
         <div className="space-y-4">
           {tab === 'items' && <InventoryAssurance stats={itemStats} auditOnly={auditOnly} onAuditToggle={() => { setAuditOnly(current => !current); setItemPage(1); }} />}
           {tab === 'expenses' && <ModuleSummary title="Expense control" subtitle="Maker-checker expenditure workflow" icon={<ReceiptText className="w-5 h-5" />} values={[['Total value', formatCurrency((expensesQuery.data ?? []).reduce((sum, item) => sum + item.netPaid, 0))], ['Submitted', String((expensesQuery.data ?? []).filter(item => item.status === 'submitted').length)], ['Approved', String((expensesQuery.data ?? []).filter(item => item.status === 'approved').length)], ['Paid', String((expensesQuery.data ?? []).filter(item => item.status === 'paid').length)]]} />}

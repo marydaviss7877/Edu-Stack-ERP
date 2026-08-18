@@ -5,9 +5,16 @@ export interface FeeItem { name: string; amount: number; isOptional: boolean; }
 export interface FeeStructureDoc { _id: string; classId: { _id: string; name: string } | string; academicYearId: string; name: string; items: FeeItem[]; totalAmount: number; dueDay: number; isActive: boolean; }
 
 export interface PaymentEntry { amount: number; method: 'cash' | 'bank_transfer' | 'jazzcash' | 'easypaisa' | 'cheque'; transactionRef?: string; collectedById: string; paidAt: string; receiptNo?: string; }
-export interface ChallanDoc { _id: string; studentId: { _id: string; rollNo: string; profile: { name: string } } | string; classId: { _id: string; name: string } | string; month: string; challanNo: string; items: { name: string; amount: number }[]; totalAmount: number; discount: number; waiver: number; netAmount: number; paidAmount: number; dueDate: string; status: 'unpaid' | 'partial' | 'paid' | 'waived' | 'overdue'; payments: PaymentEntry[]; }
+export interface AppliedDiscount { policyId: string; name: string; amount: number; }
+export interface ChallanDoc { _id: string; studentId: { _id: string; rollNo: string; profile: { name: string } } | string; classId: { _id: string; name: string } | string; month: string; challanNo: string; items: { name: string; amount: number }[]; totalAmount: number; discount: number; waiver: number; policyDiscount: number; appliedDiscounts: AppliedDiscount[]; netAmount: number; paidAmount: number; dueDate: string; status: 'unpaid' | 'partial' | 'paid' | 'waived' | 'overdue'; payments: PaymentEntry[]; }
 
 export interface FeeSummaryItem { _id: string; count: number; totalNet: number; totalPaid: number; }
+
+export interface DefaulterDoc extends ChallanDoc {
+  studentId: { _id: string; rollNo: string; admissionNo: string; profile: { name: string }; guardianInfo: { fatherName: string; fatherPhone: string } } | string;
+  balance: number;
+  daysOverdue: number;
+}
 
 export const feeService = {
   listStructures: (params?: Record<string, string>) =>
@@ -42,4 +49,13 @@ export const feeService = {
 
   payOnline: (id: string, data: { mobileNumber: string; gateway: 'jazzcash' | 'easypaisa'; cnic?: string }) =>
     api.post<ApiResponse<{ txnRefNo: string; responseCode: string; responseDesc: string }>>(`/fees/challans/${id}/pay-online`, data).then(r => r.data),
+
+  getDefaulters: (params?: Record<string, string>) =>
+    api.get<ApiResponse<DefaulterDoc[]>>('/fees/challans/defaulters', { params }).then(r => r.data),
+
+  exportDefaulters: (params?: Record<string, string>) =>
+    api.get('/fees/challans/defaulters/export', { params, responseType: 'blob' }).then(r => r.data as Blob),
+
+  remindDefaulters: () =>
+    api.post<ApiResponse<null>>('/fees/challans/remind').then(r => r.data),
 };

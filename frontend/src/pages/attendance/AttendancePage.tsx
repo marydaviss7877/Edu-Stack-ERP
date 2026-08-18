@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { academicService } from '../../services/academicService';
 import { attendanceService } from '../../services/attendanceService';
-import type { AttendanceRecord, StaffStatus } from '../../services/attendanceService';
+import type { AttendanceRecord, StaffStatus, ProgressGroupBy } from '../../services/attendanceService';
 import { studentService } from '../../services/studentService';
 import { branchHeaderService } from '../../services/branchHeaderService';
-import { downloadAttendancePdf, downloadAttendanceCsv } from '../../lib/attendancePdf';
+import { downloadAttendancePdf, downloadAttendanceCsv, downloadProgressReportCsv, downloadProgressReportPdf } from '../../lib/attendancePdf';
 import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
 import { useAuthStore } from '../../stores/authStore';
@@ -180,10 +180,12 @@ function StaffAttendanceView() {
   const [date, setDate] = useState(today);
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [view, setView] = useState<'mark' | 'summary'>('mark');
+  const [view, setView] = useState<'mark' | 'summary' | 'progress'>('mark');
   const [summaryMonth, setSummaryMonth] = useState(String(new Date().getMonth() + 1));
   const [summaryYear, setSummaryYear] = useState(String(new Date().getFullYear()));
+  const [progressGroupBy, setProgressGroupBy] = useState<ProgressGroupBy>('class');
 
+  const role = useAuthStore(s => s.user?.role);
   const orgSlug = useAuthStore(s => s.orgSlug);
   const { data: branchHeader } = useQuery({ queryKey: ['branch-header'], queryFn: branchHeaderService.get });
   const orgName = branchHeader?.schoolName ?? orgSlug ?? 'School';
@@ -213,6 +215,12 @@ function StaffAttendanceView() {
     queryKey: ['section-summary', sectionId, summaryMonth, summaryYear],
     queryFn: () => attendanceService.getSectionSummary({ sectionId, month: summaryMonth, year: summaryYear }),
     enabled: !!sectionId && view === 'summary',
+  });
+
+  const { data: progressReport = [] } = useQuery({
+    queryKey: ['attendance-progress-report', progressGroupBy, summaryMonth, summaryYear],
+    queryFn: () => attendanceService.getProgressReport({ groupBy: progressGroupBy, month: summaryMonth, year: summaryYear }),
+    enabled: view === 'progress',
   });
 
   const markMutation = useMutation({
@@ -271,6 +279,9 @@ function StaffAttendanceView() {
           <div className="flex items-end gap-2">
             <button onClick={() => setView('mark')} className={cn('flex-1 py-2.5 text-sm rounded-lg border transition-colors', view === 'mark' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700')}>Mark</button>
             <button onClick={() => setView('summary')} className={cn('flex-1 py-2.5 text-sm rounded-lg border transition-colors', view === 'summary' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700')}>Summary</button>
+            {role !== 'teacher' && (
+              <button onClick={() => setView('progress')} className={cn('flex-1 py-2.5 text-sm rounded-lg border transition-colors', view === 'progress' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700')}>Progress</button>
+            )}
           </div>
         </div>
       </div>
@@ -407,6 +418,83 @@ function StaffAttendanceView() {
                   </tr>
                 ))}
                 {sectionSummary.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No attendance records for this period.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Teacher/class/subject-wise progress report */}
+      {view === 'progress' && (
+        <>
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
+            <div className="flex gap-1.5">
+              {(['class', 'teacher', 'subject'] as const).map(g => (
+                <button
+                  key={g}
+                  onClick={() => setProgressGroupBy(g)}
+                  className={cn('px-3 py-1.5 text-xs font-medium rounded-lg border capitalize transition-colors', progressGroupBy === g ? 'bg-navy-950 text-white border-navy-950' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700')}
+                >
+                  {g}-wise
+                </button>
+              ))}
+            </div>
+            <select value={summaryMonth} onChange={e => setSummaryMonth(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1} value={String(i + 1)}>{new Date(2000, i).toLocaleString('default', { month: 'long' })}</option>
+              ))}
+            </select>
+            <select value={summaryYear} onChange={e => setSummaryYear(e.target.value)} className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+              {[2024, 2025, 2026].map(y => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
+            <div className="ml-auto flex gap-2">
+              <button
+                onClick={() => downloadProgressReportCsv({ rows: progressReport, groupBy: progressGroupBy, month: summaryMonth, year: summaryYear })}
+                disabled={progressReport.length === 0}
+                className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40"
+              >
+                ↓ CSV
+              </button>
+              <button
+                onClick={() => downloadProgressReportPdf({ rows: progressReport, groupBy: progressGroupBy, month: summaryMonth, year: summaryYear, orgName })}
+                disabled={progressReport.length === 0}
+                className="text-xs px-3 py-1.5 rounded-lg bg-navy-900 dark:bg-navy-800 border border-navy-700 text-white hover:bg-navy-800 dark:hover:bg-navy-700 transition-colors disabled:opacity-40"
+              >
+                ↓ PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400 capitalize">{progressGroupBy}</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Sessions</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Present</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Absent</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">%</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {progressReport.map(r => (
+                  <tr key={r.key} className={cn(r.isShortage ? 'bg-red-50 dark:bg-red-900/20' : '')}>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{r.label}{r.sublabel ? ` — ${r.sublabel}` : ''}</td>
+                    <td className="px-4 py-3 text-center text-gray-500 dark:text-slate-400">{r.sessionsMarked}</td>
+                    <td className="px-4 py-3 text-center text-green-600">{r.present}</td>
+                    <td className="px-4 py-3 text-center text-red-600">{r.absent}</td>
+                    <td className="px-4 py-3 text-center font-medium">
+                      <span className={cn(r.percentage < 75 ? 'text-red-600' : 'text-green-600')}>{r.percentage}%</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {r.isShortage && <Badge variant="danger">Below Target</Badge>}
+                    </td>
+                  </tr>
+                ))}
+                {progressReport.length === 0 && (
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No attendance records for this period.</td></tr>
                 )}
               </tbody>
@@ -597,10 +685,91 @@ function StaffDailyAttendanceView() {
   );
 }
 
+function LiveAttendanceStatus() {
+  const today = new Date().toISOString().split('T')[0];
+  const [date, setDate] = useState(today);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['attendance-today-status', date],
+    queryFn: () => attendanceService.getTodayStatus({ date }),
+    refetchInterval: 60_000,
+  });
+
+  const sections = data?.sections ?? [];
+  const markedCount = data?.summary.markedSections ?? 0;
+  const totalCount = data?.summary.totalSections ?? 0;
+
+  return (
+    <div className="px-6 pt-6">
+      <div className="card p-4">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Live Attendance Status</h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 dark:text-slate-400">{markedCount}/{totalCount} sections marked</span>
+            <input
+              type="date"
+              value={date}
+              max={today}
+              onChange={e => setDate(e.target.value)}
+              className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200"
+            />
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center text-gray-400 text-sm py-6">Loading...</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {sections.map(s => (
+              <div
+                key={s.sectionId}
+                className={cn(
+                  'rounded-lg border p-3',
+                  !s.isMarked
+                    ? 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/40'
+                    : s.percentage < 75
+                      ? 'border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10'
+                      : 'border-green-200 dark:border-green-900/40 bg-green-50 dark:bg-green-900/10'
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 truncate">{s.className} - {s.sectionName}</span>
+                  {s.isMarked ? (
+                    <span className={cn('text-xs font-bold shrink-0', s.percentage < 75 ? 'text-red-600' : 'text-green-600')}>{s.percentage}%</span>
+                  ) : (
+                    <span className="text-xs text-gray-400 shrink-0">—</span>
+                  )}
+                </div>
+                {s.isMarked ? (
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                    {s.marked}/{s.totalStudents} marked · {s.absent} absent{s.markedByName ? ` · by ${s.markedByName}` : ''}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-gray-400">Not marked yet</p>
+                )}
+              </div>
+            ))}
+            {sections.length === 0 && (
+              <div className="col-span-full text-center text-gray-400 text-sm py-6">No sections found for the current academic year.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PrincipalAttendanceView() {
   const [tab, setTab] = useState<'students' | 'staff'>('students');
   return (
     <div>
+      <LiveAttendanceStatus />
       <div className="flex gap-2 px-6 pt-4">
         {(['students', 'staff'] as const).map(t => (
           <button

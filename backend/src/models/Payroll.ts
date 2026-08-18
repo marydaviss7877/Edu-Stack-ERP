@@ -12,6 +12,7 @@ export interface IPayroll extends Document {
   deductions: { name: string; amount: number }[];
   absentDays: number;
   absentDeduction: number;
+  advanceDeduction?: { advanceId: Types.ObjectId; amount: number };
   grossSalary: number;
   totalDeductions: number;
   netPay: number;
@@ -36,6 +37,10 @@ const payrollSchema = new Schema<IPayroll>(
     deductions: [{ name: String, amount: Number }],
     absentDays: { type: Number, default: 0 },
     absentDeduction: { type: Number, default: 0 },
+    advanceDeduction: {
+      advanceId: { type: Schema.Types.ObjectId, ref: 'StaffAdvance' },
+      amount: Number,
+    },
     grossSalary: { type: Number, required: true },
     totalDeductions: { type: Number, required: true },
     netPay: { type: Number, required: true },

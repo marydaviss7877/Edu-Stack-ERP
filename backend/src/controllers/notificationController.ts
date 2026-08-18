@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Types } from 'mongoose';
 import { body, validationResult } from 'express-validator';
 import { Notification } from '../models/Notification';
+import type { NotificationType } from '../models/Notification';
 import { User } from '../models/User';
 import { AppError } from '../utils/errorHandler';
 import { emitToUser, emitToBranch } from '../socket';
@@ -117,7 +118,7 @@ export async function pushNotification(opts: {
   branchId: Types.ObjectId;
   recipientId: Types.ObjectId;
   senderId?: Types.ObjectId;
-  type: 'fee_due' | 'result_published' | 'assignment_graded' | 'assignment_created' | 'resource_uploaded' | 'system';
+  type: Exclude<NotificationType, 'broadcast'>;
   title: string;
   message: string;
   link?: string;

@@ -43,6 +43,18 @@ agenda.define('open-peer-feedback-cycles', async () => {
   await openMonthlyPeerFeedbackCycles();
 });
 
+agenda.define('send-fee-reminders', async () => {
+  const { sendFeeReminders } = await import('./handlers/feeReminderHandler');
+  await sendFeeReminders();
+});
+
+agenda.define('send-fee-reminders-manual', async (job: Job) => {
+  const { sendFeeReminders } = await import('./handlers/feeReminderHandler');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = job.attrs.data as any;
+  await sendFeeReminders({ orgId: data.orgId, branchId: data.branchId });
+});
+
 export async function scheduleRecurringJobs(): Promise<void> {
   await agenda.start();
 
@@ -58,6 +70,9 @@ export async function scheduleRecurringJobs(): Promise<void> {
   // Open this month's peer-feedback cycles on 1st of each month at 01:30 PKT (20:30 UTC) — orgs without the add-on are skipped
   await agenda.every('30 20 1 * *', 'open-peer-feedback-cycles', {}, { skipImmediate: true });
 
+  // Mark overdue challans + send fee-due reminders daily at 08:00 PKT (03:00 UTC)
+  await agenda.every('0 3 * * *', 'send-fee-reminders', {}, { skipImmediate: true });
+
   console.log('[Agenda] recurring jobs scheduled');
 }
 
@@ -69,6 +84,11 @@ export async function dispatchPayrollJob(data: Record<string, unknown>): Promise
 /** Dispatch a one-off challan generation job (HTTP-triggered). */
 export async function dispatchChallanJob(data: Record<string, unknown>): Promise<void> {
   await agenda.now('generate-challans-manual', data);
+}
+
+/** Dispatch a one-off fee reminder sweep (HTTP-triggered). */
+export async function dispatchFeeReminderJob(data: Record<string, unknown>): Promise<void> {
+  await agenda.now('send-fee-reminders-manual', data);
 }
 
 export async function stopAgenda(): Promise<void> {

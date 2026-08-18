@@ -20,6 +20,8 @@ export interface IChallan extends Document {
   totalAmount: number;
   discount: number;
   waiver: number;
+  policyDiscount: number;
+  appliedDiscounts: { policyId: Types.ObjectId; name: string; amount: number }[];
   netAmount: number;
   paidAmount: number;
   dueDate: Date;
@@ -33,6 +35,8 @@ export interface IChallan extends Document {
     receiptNo?: string;
   }[];
   bankName?: string;
+  lastReminderAt?: Date;
+  remindersSent: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +59,14 @@ const challanSchema = new Schema<IChallan>(
     totalAmount: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     waiver: { type: Number, default: 0 },
+    policyDiscount: { type: Number, default: 0 },
+    appliedDiscounts: [
+      {
+        policyId: { type: Schema.Types.ObjectId, ref: 'DiscountPolicy', required: true },
+        name: { type: String, required: true },
+        amount: { type: Number, required: true },
+      },
+    ],
     netAmount: { type: Number, required: true },
     paidAmount: { type: Number, default: 0 },
     dueDate: { type: Date, required: true },
@@ -74,6 +86,8 @@ const challanSchema = new Schema<IChallan>(
       },
     ],
     bankName: String,
+    lastReminderAt: Date,
+    remindersSent: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

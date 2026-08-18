@@ -3,7 +3,7 @@ import type { ApiResponse } from '../types';
 
 export interface NotificationDoc {
   _id: string;
-  type: 'fee_due' | 'result_published' | 'assignment_graded' | 'assignment_created' | 'broadcast' | 'system';
+  type: 'fee_due' | 'result_published' | 'assignment_graded' | 'assignment_created' | 'broadcast' | 'resource_uploaded' | 'attendance_absent' | 'system';
   title: string;
   message: string;
   link?: string;

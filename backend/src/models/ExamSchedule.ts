@@ -6,6 +6,7 @@ export interface IExamScheduleSlot {
   startTime: string; // "09:00"
   endTime: string;   // "11:30"
   syllabus: string;
+  topicIds: Types.ObjectId[];
 }
 
 export interface IExamSchedule extends Document {
@@ -26,6 +27,7 @@ const slotSchema = new Schema<IExamScheduleSlot>(
     startTime: { type: String, required: true },
     endTime:   { type: String, required: true },
     syllabus:  { type: String, default: '' },
+    topicIds:  [{ type: Schema.Types.ObjectId, ref: 'SubjectTopic' }],
   },
   { _id: false }
 );

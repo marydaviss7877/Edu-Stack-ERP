@@ -8,10 +8,13 @@ export interface StudentDoc {
   classId: { _id: string; name: string; level: string } | string;
   sectionId: { _id: string; name: string } | string;
   status: string;
-  profile: { name: string; dateOfBirth: string; gender: string; cnicOrBForm: string; photoUrl?: string; address?: string; };
+  houseId?: string;
+  labelIds?: string[];
+  profile: { name: string; dateOfBirth: string; gender: string; cnicOrBForm: string; photoUrl?: string; address?: string; bloodGroup?: string; };
   guardianInfo: { fatherName: string; fatherPhone: string; fatherCnic?: string; };
   admissionDate: string;
   monthlyFee?: number;
+  transport?: { routeId?: string; stopName?: string; monthlyFee?: number } | null;
 }
 
 export interface CreateStudentPayload {

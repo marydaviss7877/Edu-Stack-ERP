@@ -58,6 +58,9 @@ import AdmissionPage from './pages/admission/AdmissionPage';
 import DeleteAccountPage from './pages/legal/DeleteAccountPage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import InventoryPage from './pages/inventory/InventoryPage';
+import IdCardsPage from './pages/idcards/IdCardsPage';
+import LettersCertificatesPage from './pages/letters/LettersCertificatesPage';
+import VerifyDocumentPage from './pages/public/VerifyDocumentPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,6 +142,9 @@ function TenantRouter() {
       {/* Public admission portal — no auth */}
       <Route path="/admission" element={<AdmissionPortalPage />} />
 
+      {/* Public document verification (ID cards, certificates) — no auth */}
+      <Route path="/verify/:code" element={<VerifyDocumentPage />} />
+
       {/* Branch-level staff */}
       <Route
         path="/dashboard"
@@ -169,6 +175,8 @@ function TenantRouter() {
         <Route path="settings"       element={<SettingsPage />} />
         <Route path="staff"          element={<StaffPage />} />
         <Route path="admission"      element={<AdmissionPage />} />
+        <Route path="id-cards"       element={<IdCardsPage />} />
+        <Route path="letters"        element={<LettersCertificatesPage />} />
       </Route>
 
       {/* Coordinator */}
@@ -192,6 +200,8 @@ function TenantRouter() {
         <Route path="assignments"   element={<AssignmentsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="admission"     element={<AdmissionPage />} />
+        <Route path="id-cards"      element={<IdCardsPage />} />
+        <Route path="letters"       element={<LettersCertificatesPage />} />
       </Route>
 
       {/* Teacher */}
@@ -287,6 +297,8 @@ function TenantRouter() {
         <Route path="settings"       element={<GroupSettingsPage />} />
         <Route path="roles"          element={<RolesHierarchyPage />} />
         <Route path="admission"      element={<AdmissionPage />} />
+        <Route path="id-cards"       element={<IdCardsPage />} />
+        <Route path="letters"        element={<LettersCertificatesPage />} />
       </Route>
 
       <Route path="/" element={<TenantRoot />} />

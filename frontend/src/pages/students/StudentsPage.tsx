@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentService } from '../../services/studentService';
 import type { CreateStudentPayload } from '../../services/studentService';
 import { academicService } from '../../services/academicService';
+import { houseService } from '../../services/houseService';
+import { transportService } from '../../services/transportService';
 import { branchHeaderService } from '../../services/branchHeaderService';
 import { downloadTransferCertPdf } from '../../lib/transferCertPdf';
 import { downloadCharacterCertPdf } from '../../lib/characterCertPdf';
@@ -102,6 +104,14 @@ function StaffStudentsView() {
   const [leavingStudent, setLeavingStudent] = useState<import('../../services/studentService').StudentDoc | null>(null);
   const [editingFeeId, setEditingFeeId] = useState<string | null>(null);
   const [editingFeeValue, setEditingFeeValue] = useState('');
+  const [editingHouseId, setEditingHouseId] = useState<string | null>(null);
+  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
+
+  const { data: houses = [] } = useQuery({ queryKey: ['houses'], queryFn: houseService.list });
+  const houseMap = new Map(houses.map(h => [h._id, h]));
+
+  const { data: routes = [] } = useQuery({ queryKey: ['transport-routes'], queryFn: transportService.list });
+  const routeMap = new Map(routes.map(r => [r._id, r]));
 
   const { data: branchHeader } = useQuery({ queryKey: ['branch-header'], queryFn: branchHeaderService.get });
   const orgName = branchHeader?.schoolName ?? orgSlug ?? 'School';
@@ -140,6 +150,16 @@ function StaffStudentsView() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['students'] }); setEditingFeeId(null); },
   });
 
+  const assignHouse = useMutation({
+    mutationFn: ({ id, houseId }: { id: string; houseId: string }) => studentService.update(id, { houseId: (houseId || null) as unknown as string | undefined }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['students'] }); qc.invalidateQueries({ queryKey: ['houses'] }); setEditingHouseId(null); },
+  });
+
+  const assignRoute = useMutation({
+    mutationFn: ({ id, routeId }: { id: string; routeId: string }) => studentService.update(id, { transport: routeId ? { routeId } : null }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['students'] }); qc.invalidateQueries({ queryKey: ['transport-routes'] }); setEditingRouteId(null); },
+  });
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <PageHeader
@@ -176,6 +196,8 @@ function StaffStudentsView() {
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Roll No</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Name</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Class / Section</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">House</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Route</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Guardian</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Admitted</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
@@ -185,10 +207,10 @@ function StaffStudentsView() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
             {isLoading && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">Loading...</td></tr>
+              <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">Loading...</td></tr>
             )}
             {!isLoading && students.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">No students found.</td></tr>
+              <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500">No students found.</td></tr>
             )}
             {students.map((s) => (
               <tr key={s._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
@@ -209,6 +231,53 @@ function StaffStudentsView() {
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   {typeof s.classId === 'object' ? s.classId.name : '—'}
                   {typeof s.sectionId === 'object' ? ` / ${s.sectionId.name}` : ''}
+                </td>
+                <td className="px-4 py-3">
+                  {editingHouseId === s._id ? (
+                    <select
+                      autoFocus
+                      className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200"
+                      defaultValue={s.houseId ?? ''}
+                      onChange={(e) => assignHouse.mutate({ id: s._id, houseId: e.target.value })}
+                      onBlur={() => setEditingHouseId(null)}
+                    >
+                      <option value="">— None —</option>
+                      {houses.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
+                    </select>
+                  ) : (
+                    <button onClick={() => setEditingHouseId(s._id)} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
+                      {s.houseId && houseMap.get(s.houseId) ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: houseMap.get(s.houseId)!.colorHex }} />
+                          {houseMap.get(s.houseId)!.name}
+                        </>
+                      ) : (
+                        <span className="text-gray-300 dark:text-slate-600 italic">Assign</span>
+                      )}
+                    </button>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {editingRouteId === s._id ? (
+                    <select
+                      autoFocus
+                      className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200"
+                      defaultValue={s.transport?.routeId ?? ''}
+                      onChange={(e) => assignRoute.mutate({ id: s._id, routeId: e.target.value })}
+                      onBlur={() => setEditingRouteId(null)}
+                    >
+                      <option value="">— None —</option>
+                      {routes.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+                    </select>
+                  ) : (
+                    <button onClick={() => setEditingRouteId(s._id)} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors">
+                      {s.transport?.routeId && routeMap.get(s.transport.routeId) ? (
+                        routeMap.get(s.transport.routeId)!.name
+                      ) : (
+                        <span className="text-gray-300 dark:text-slate-600 italic">Assign</span>
+                      )}
+                    </button>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   <p>{s.guardianInfo.fatherName}</p>

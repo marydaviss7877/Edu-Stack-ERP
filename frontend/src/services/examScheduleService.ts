@@ -7,6 +7,7 @@ export interface ExamScheduleSlot {
   startTime: string;
   endTime: string;
   syllabus: string;
+  topicIds: (string | { _id: string; topicName: string; chapterNumber: number })[];
 }
 
 export interface ExamScheduleDoc {

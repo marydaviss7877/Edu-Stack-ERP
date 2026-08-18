@@ -7,6 +7,7 @@ import {
   listChallans, getChallan, generateChallans, recordPayment, recordPaymentValidators,
   applyWaiver, getFeeSummary,
   initiateOnlinePayment, initiateOnlinePaymentValidators,
+  getDefaulters, exportDefaultersCsv, remindDefaulters,
 } from '../controllers/feeController';
 
 const router = Router();
@@ -21,6 +22,9 @@ router.delete('/structures/:id', authorize('fee_management', 'delete'), deleteFe
 // Challans
 router.get('/challans', authorize('fee_management', 'read'), listChallans);
 router.get('/challans/summary', authorize('fee_management', 'read'), getFeeSummary);
+router.get('/challans/defaulters', authorize('fee_management', 'export'), getDefaulters);
+router.get('/challans/defaulters/export', authorize('fee_management', 'export'), exportDefaultersCsv);
+router.post('/challans/remind', authorize('fee_management', 'export'), remindDefaulters);
 router.get('/challans/:id', authorize('fee_management', 'read'), getChallan);
 router.post('/challans/generate', authorize('fee_management', 'create'), generateChallans);
 router.post('/challans/:id/payment', authorize('fee_management', 'update'), recordPaymentValidators, recordPayment);

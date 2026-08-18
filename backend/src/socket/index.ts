@@ -5,16 +5,36 @@ import { env } from '../config/env';
 
 let io: SocketServer | null = null;
 
+/** Pulls a single cookie value out of a raw `Cookie` header string. */
+function readCookie(header: string | undefined, name: string): string | undefined {
+  if (!header) return undefined;
+  const found = header.split(';').map(c => c.trim()).find(c => c.startsWith(`${name}=`));
+  return found ? decodeURIComponent(found.slice(name.length + 1)) : undefined;
+}
+
 export function initSocket(httpServer: HttpServer): SocketServer {
   io = new SocketServer(httpServer, {
     cors: {
-      origin: env.frontendUrl,
+      origin: (origin, cb) => {
+        if (!origin || env.isDev) return cb(null, true);
+        if (
+          origin === env.frontendUrl ||
+          origin === `https://${env.baseDomain}` ||
+          origin.endsWith(`.${env.baseDomain}`) ||
+          (env.vercelPreviewUrl && origin === env.vercelPreviewUrl)
+        ) return cb(null, true);
+        cb(new Error('Not allowed by CORS'));
+      },
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
+    // The web app authenticates via an HttpOnly `accessToken` cookie (JS can't read it
+    // to pass it explicitly), so prefer the cookie and fall back to an explicit auth
+    // token for clients that pass one directly (e.g. a future mobile socket client).
+    const token = socket.handshake.auth.token || readCookie(socket.handshake.headers.cookie, 'accessToken');
     if (!token) return next(new Error('Authentication required'));
 
     try {

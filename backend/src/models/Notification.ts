@@ -7,6 +7,7 @@ export type NotificationType =
   | 'assignment_created'
   | 'broadcast'
   | 'resource_uploaded'
+  | 'attendance_absent'
   | 'system';
 
 export interface INotification extends Document {
@@ -32,7 +33,7 @@ const notificationSchema = new Schema<INotification>(
     senderId: { type: Schema.Types.ObjectId, ref: 'User' },
     type: {
       type: String,
-      enum: ['fee_due', 'result_published', 'assignment_graded', 'assignment_created', 'broadcast', 'resource_uploaded', 'system'],
+      enum: ['fee_due', 'result_published', 'assignment_graded', 'assignment_created', 'broadcast', 'resource_uploaded', 'attendance_absent', 'system'],
       required: true,
     },
     title: { type: String, required: true },

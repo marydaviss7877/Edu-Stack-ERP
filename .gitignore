@@ -32,6 +32,8 @@ backend/coverage/
 # Local dev artifacts
 CREDENTIALS.md
 EduStack_Upgraded_Brochure.html
+discove.html
+SM Feature List..pdf
 scratch/
 
 # Google service account keys (NEVER commit these)

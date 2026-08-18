@@ -7,6 +7,10 @@ import { Branch } from '../models/Branch';
 import { StaffAttendance } from '../models/StaffAttendance';
 import { AppError } from '../utils/errorHandler';
 import { orgBranchScope } from '../utils/orgBranchScope';
+import { getActiveAdvanceForStaff, applyInstallmentPayment } from './staffAdvanceController';
+import { postPayroll } from '../services/ledgerService';
+
+const ADVANCE_DEDUCTION_LABEL = 'Advance/Loan Repayment';
 
 export const createPayrollValidators = [
   body('staffId').isMongoId(),
@@ -87,8 +91,18 @@ export async function createPayroll(req: Request, res: Response, next: NextFunct
     const dailyRate = basicSalary / workingDays;
     const absentDeduction = Math.round(dailyRate * absentDays);
 
+    // Auto-add this month's advance/loan installment as a deduction, if the staff member has one active
+    const activeAdvance = await getActiveAdvanceForStaff(orgId!, branchId!, staffId);
+    const finalDeductions = [...(deductions as { name: string; amount: number }[])];
+    let advanceDeduction: { advanceId: Types.ObjectId; amount: number } | undefined;
+    if (activeAdvance) {
+      const installment = Math.min(activeAdvance.installmentAmount, activeAdvance.balanceRemaining);
+      finalDeductions.push({ name: ADVANCE_DEDUCTION_LABEL, amount: installment });
+      advanceDeduction = { advanceId: activeAdvance._id as Types.ObjectId, amount: installment };
+    }
+
     const totalAllowances = (allowances as { amount: number }[]).reduce((sum, a) => sum + a.amount, 0);
-    const totalDeductionItems = (deductions as { amount: number }[]).reduce((sum, d) => sum + d.amount, 0);
+    const totalDeductionItems = finalDeductions.reduce((sum, d) => sum + d.amount, 0);
     const grossSalary = basicSalary + totalAllowances;
     const totalDeductions = totalDeductionItems + absentDeduction;
     const netPay = Math.max(0, grossSalary - totalDeductions);
@@ -100,9 +114,10 @@ export async function createPayroll(req: Request, res: Response, next: NextFunct
       month,
       basicSalary,
       allowances,
-      deductions,
+      deductions: finalDeductions,
       absentDays,
       absentDeduction,
+      advanceDeduction,
       grossSalary,
       totalDeductions,
       netPay,
@@ -161,6 +176,14 @@ export async function markPaid(req: Request, res: Response, next: NextFunction):
     payroll.paidAt = new Date();
     payroll.paymentMethod = paymentMethod ?? 'bank_transfer';
     await payroll.save();
+
+    void postPayroll(
+      String(payroll.orgId), String(payroll.branchId), payroll.netPay,
+      payroll.advanceDeduction?.amount ?? 0, payroll.paymentMethod, String(payroll._id), req.user!.id
+    );
+    if (payroll.advanceDeduction?.advanceId) {
+      void applyInstallmentPayment(String(payroll.advanceDeduction.advanceId), payroll.advanceDeduction.amount);
+    }
 
     res.json({ success: true, data: payroll });
   } catch (err) { next(err); }

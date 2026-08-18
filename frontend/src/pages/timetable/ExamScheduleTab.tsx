@@ -5,6 +5,7 @@ import { academicService } from '../../services/academicService';
 import { examService } from '../../services/examService';
 import { studentService } from '../../services/studentService';
 import { examScheduleService, type ExamScheduleDoc, type ExamScheduleSlot } from '../../services/examScheduleService';
+import { topicService } from '../../services/topicService';
 import { useAuthStore } from '../../stores/authStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -32,6 +33,13 @@ function calcDuration(start: string, end: string) {
 
 function subjectName(s: ExamScheduleSlot['subjectId']) {
   return typeof s === 'object' ? s.name : '—';
+}
+
+function topicChips(topicIds: ExamScheduleSlot['topicIds']) {
+  return (topicIds ?? [])
+    .filter((t): t is { _id: string; topicName: string; chapterNumber: number } => typeof t === 'object')
+    .sort((a, b) => a.chapterNumber - b.chapterNumber)
+    .map(t => `Ch.${t.chapterNumber} ${t.topicName}`);
 }
 
 function examName(e: ExamScheduleDoc['examId']) {
@@ -113,7 +121,13 @@ function PrintModal({ schedule, onClose }: { schedule: ExamScheduleDoc; onClose:
                         <td className="px-3 py-2.5 text-gray-600 dark:text-gray-400">{getDayName(slot.date)}</td>
                         <td className="px-3 py-2.5 text-gray-700 dark:text-gray-300 whitespace-nowrap">{slot.startTime} – {slot.endTime}</td>
                         <td className="px-3 py-2.5 text-gray-600 dark:text-gray-400">{calcDuration(slot.startTime, slot.endTime)}</td>
-                        <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400 text-xs max-w-xs">{slot.syllabus || '—'}</td>
+                        <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400 text-xs max-w-xs">
+                          {topicChips(slot.topicIds).length > 0 && (
+                            <div>{topicChips(slot.topicIds).join(', ')}</div>
+                          )}
+                          {slot.syllabus && <div className={topicChips(slot.topicIds).length > 0 ? 'mt-0.5 italic' : ''}>{slot.syllabus}</div>}
+                          {topicChips(slot.topicIds).length === 0 && !slot.syllabus && '—'}
+                        </td>
                       </tr>
                     ))
                 )}
@@ -135,6 +149,7 @@ interface SlotDraft {
   startTime: string;
   endTime: string;
   syllabus: string;
+  topicIds: string[];
 }
 
 function ScheduleEditor({
@@ -175,16 +190,29 @@ function ScheduleEditor({
         startTime: s.startTime,
         endTime: s.endTime,
         syllabus: s.syllabus,
+        topicIds: (s.topicIds ?? []).map(t => typeof t === 'object' ? t._id : t),
       }));
     }
     return [];
   });
   const [subjectsLoaded, setSubjectsLoaded] = useState(!!existing?.slots?.length);
+  const [newTopicName, setNewTopicName] = useState<Record<number, string>>({});
 
   const { data: subjects = [] } = useQuery({
     queryKey: ['subjects', classId],
     queryFn: () => academicService.getSubjects(classId || undefined),
     enabled: !!classId,
+  });
+
+  const { data: topics = [], refetch: refetchTopics } = useQuery({
+    queryKey: ['topics', classId],
+    queryFn: () => topicService.list({ classId }),
+    enabled: !!classId,
+  });
+
+  const createTopicMutation = useMutation({
+    mutationFn: ({ subjectId, topicName }: { subjectId: string; topicName: string }) =>
+      topicService.create({ classId, subjectId, chapterNumber: 1, topicName }),
   });
 
   function loadSubjects() {
@@ -196,12 +224,33 @@ function ScheduleEditor({
       startTime: '',
       endTime: '',
       syllabus: '',
+      topicIds: [],
     })));
     setSubjectsLoaded(true);
   }
 
   function updateSlot(i: number, field: keyof SlotDraft, value: string) {
     setSlots(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: value } : s));
+  }
+
+  function toggleTopic(i: number, topicId: string) {
+    setSlots(prev => prev.map((s, idx) => {
+      if (idx !== i) return s;
+      const has = s.topicIds.includes(topicId);
+      return { ...s, topicIds: has ? s.topicIds.filter(t => t !== topicId) : [...s.topicIds, topicId] };
+    }));
+  }
+
+  function addTopicToSlot(i: number, subjectId: string) {
+    const name = (newTopicName[i] ?? '').trim();
+    if (!name) return;
+    createTopicMutation.mutate({ subjectId, topicName: name }, {
+      onSuccess: (t) => {
+        setSlots(prev => prev.map((s, idx) => idx === i ? { ...s, topicIds: [...s.topicIds, t._id] } : s));
+        setNewTopicName(prev => ({ ...prev, [i]: '' }));
+        refetchTopics();
+      },
+    });
   }
 
   const saveMutation = useMutation({
@@ -212,6 +261,7 @@ function ScheduleEditor({
         startTime: s.startTime,
         endTime: s.endTime,
         syllabus: s.syllabus,
+        topicIds: s.topicIds,
       }));
       if (existing) {
         return examScheduleService.update(existing._id, payload);
@@ -293,14 +343,19 @@ function ScheduleEditor({
                   <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Date</th>
                   <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Start Time</th>
                   <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">End Time</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Syllabus / Chapters</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-56">Chapters</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Additional Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                {slots.map((slot, i) => (
+                {slots.map((slot, i) => {
+                  const subjectTopics = topics
+                    .filter(t => (typeof t.subjectId === 'object' ? t.subjectId._id : t.subjectId) === slot.subjectId)
+                    .sort((a, b) => a.chapterNumber - b.chapterNumber);
+                  return (
                   <tr key={i} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/30">
-                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">{slot.subjectName}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white align-top">{slot.subjectName}</td>
+                    <td className="px-4 py-2 align-top">
                       <input
                         type="date"
                         className="input text-sm py-1.5"
@@ -308,7 +363,7 @@ function ScheduleEditor({
                         onChange={e => updateSlot(i, 'date', e.target.value)}
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 align-top">
                       <input
                         type="time"
                         className="input text-sm py-1.5 w-28"
@@ -316,7 +371,7 @@ function ScheduleEditor({
                         onChange={e => updateSlot(i, 'startTime', e.target.value)}
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 align-top">
                       <input
                         type="time"
                         className="input text-sm py-1.5 w-28"
@@ -324,17 +379,57 @@ function ScheduleEditor({
                         onChange={e => updateSlot(i, 'endTime', e.target.value)}
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 align-top">
+                      <details className="relative">
+                        <summary className="input text-sm py-1.5 cursor-pointer list-none">
+                          {slot.topicIds.length > 0 ? `${slot.topicIds.length} chapter${slot.topicIds.length !== 1 ? 's' : ''} selected` : 'Select chapters...'}
+                        </summary>
+                        <div className="absolute z-10 mt-1 w-64 max-h-56 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-2 space-y-1">
+                          {subjectTopics.length === 0 && (
+                            <p className="text-xs text-gray-400 px-1 py-1">No chapters defined yet for this subject.</p>
+                          )}
+                          {subjectTopics.map(t => (
+                            <label key={t._id} className="flex items-center gap-2 px-1 py-1 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={slot.topicIds.includes(t._id)}
+                                onChange={() => toggleTopic(i, t._id)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600"
+                              />
+                              Ch.{t.chapterNumber} — {t.topicName}
+                            </label>
+                          ))}
+                          <div className="flex gap-1 pt-1 border-t border-gray-100 dark:border-gray-700">
+                            <input
+                              className="input text-xs py-1 flex-1"
+                              placeholder="New chapter..."
+                              value={newTopicName[i] ?? ''}
+                              onChange={e => setNewTopicName(prev => ({ ...prev, [i]: e.target.value }))}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => addTopicToSlot(i, slot.subjectId)}
+                              disabled={!(newTopicName[i] ?? '').trim()}
+                              className="text-xs px-2 py-1 rounded border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 disabled:opacity-40"
+                            >
+                              + Add
+                            </button>
+                          </div>
+                        </div>
+                      </details>
+                    </td>
+                    <td className="px-4 py-2 align-top">
                       <input
                         type="text"
                         className="input text-sm py-1.5"
-                        placeholder="e.g. Ch 1-5, Poetry, Grammar…"
+                        placeholder="e.g. bring calculator, open-book…"
                         value={slot.syllabus}
                         onChange={e => updateSlot(i, 'syllabus', e.target.value)}
                       />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -454,7 +549,13 @@ export function StudentExamScheduleTab() {
                     <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400">{getDayName(slot.date)}</td>
                     <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 whitespace-nowrap">{slot.startTime} – {slot.endTime}</td>
                     <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400">{calcDuration(slot.startTime, slot.endTime)}</td>
-                    <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 text-xs max-w-xs">{slot.syllabus || '—'}</td>
+                    <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 text-xs max-w-xs">
+                      {topicChips(slot.topicIds).length > 0 && (
+                        <div>{topicChips(slot.topicIds).join(', ')}</div>
+                      )}
+                      {slot.syllabus && <div className={topicChips(slot.topicIds).length > 0 ? 'mt-0.5 italic' : ''}>{slot.syllabus}</div>}
+                      {topicChips(slot.topicIds).length === 0 && !slot.syllabus && '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

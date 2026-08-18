@@ -4,6 +4,9 @@ import { Student } from '../../models/Student';
 import { FeeStructure } from '../../models/FeeStructure';
 import { Challan } from '../../models/Challan';
 import { Organization } from '../../models/Organization';
+import { TransportRoute } from '../../models/TransportRoute';
+import { DiscountPolicy } from '../../models/DiscountPolicy';
+import { computeSiblingRanks, computeDiscounts, SiblingRankInput } from '../../services/discountEngine';
 
 export async function generateMonthlyChallans(opts?: {
   orgId?: string;
@@ -33,14 +36,30 @@ export async function generateMonthlyChallans(opts?: {
       const studentQuery: Record<string, unknown> = { orgId: org._id, branchId: branch._id, status: 'active' };
       if (opts?.classId) studentQuery.classId = new Types.ObjectId(opts.classId);
 
-      const [students, structures, existingChallans] = await Promise.all([
+      const [students, structures, existingChallans, routes, policies, allActiveStudents] = await Promise.all([
         Student.find(studentQuery).lean(),
         FeeStructure.find({ orgId: org._id, branchId: branch._id, isActive: true }).lean(),
         Challan.find({ orgId: org._id, branchId: branch._id, month }).select('studentId').lean(),
+        TransportRoute.find({ orgId: org._id, branchId: branch._id, isActive: true }).lean(),
+        DiscountPolicy.find({ orgId: org._id, branchId: branch._id, isActive: true }).lean(),
+        // Full active-student set (unfiltered by classId) — sibling ranking must consider
+        // every sibling in the branch, not just the ones targeted by this generation run.
+        Student.find({ orgId: org._id, branchId: branch._id, status: 'active' })
+          .select('guardianInfo.fatherCnic guardianInfo.fatherPhone admissionDate')
+          .lean(),
       ]);
 
       const existingSet = new Set(existingChallans.map(c => c.studentId.toString()));
       const structureMap = new Map(structures.map(s => [s.classId.toString(), s]));
+      const routeMap = new Map(routes.map(r => [r._id.toString(), r]));
+
+      const siblingInputs: SiblingRankInput[] = allActiveStudents.map(s => ({
+        _id: s._id,
+        fatherCnic: s.guardianInfo?.fatherCnic,
+        fatherPhone: s.guardianInfo?.fatherPhone,
+        admissionDate: s.admissionDate,
+      }));
+      const siblingRanks = computeSiblingRanks(siblingInputs);
 
       const dueDay = structures[0]?.dueDay ?? 10;
       const dueDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), dueDay);
@@ -52,29 +71,47 @@ export async function generateMonthlyChallans(opts?: {
           const challanNo = `${String(org._id).slice(-4).toUpperCase()}-${String(branch._id).slice(-4).toUpperCase()}-${month}-${String(s._id).slice(-6).toUpperCase()}`;
 
           // Per-student fee override: replace tuition item, keep other structure items
+          let items: { name: string; amount: number }[];
           if (s.monthlyFee && s.monthlyFee > 0) {
             const otherItems = structure
               ? structure.items.filter(i => i.isOptional).map(i => ({ name: i.name, amount: i.amount }))
               : [];
-            const items = [{ name: 'Monthly Fee', amount: s.monthlyFee }, ...otherItems];
-            const total = items.reduce((sum, i) => sum + i.amount, 0);
-            return {
-              orgId: org._id, branchId: branch._id, studentId: s._id, classId: s.classId,
-              ...(structure ? { feeStructureId: structure._id } : {}),
-              month, challanNo, items, totalAmount: total,
-              discount: 0, waiver: 0, netAmount: total, paidAmount: 0, dueDate, status: 'unpaid', payments: [],
-            };
+            items = [{ name: 'Monthly Fee', amount: s.monthlyFee }, ...otherItems];
+          } else {
+            // Standard: use class fee structure
+            const std = structure!;
+            items = std.items.map(i => ({ name: i.name, amount: i.amount }));
           }
 
-          // Standard: use class fee structure
-          const std = structure!;
-          return {
+          // Transport fee — auto-added when the student is assigned to an active route
+          if (s.transport?.routeId) {
+            const route = routeMap.get(s.transport.routeId.toString());
+            if (route) {
+              const fee = s.transport.monthlyFee && s.transport.monthlyFee > 0 ? s.transport.monthlyFee : route.monthlyFee;
+              if (fee > 0) items = [...items, { name: 'Transport Fee', amount: fee }];
+            }
+          }
+
+          const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
+
+          const { total: policyDiscount, breakdown } = computeDiscounts({
+            totalAmount,
+            classId: s.classId,
+            labelIds: s.labelIds ?? [],
+            siblingRank: siblingRanks.get(s._id.toString()),
+            policies,
+          });
+
+          const base = {
             orgId: org._id, branchId: branch._id, studentId: s._id, classId: s.classId,
-            feeStructureId: std._id, month, challanNo,
-            items: std.items.map(i => ({ name: i.name, amount: i.amount })),
-            totalAmount: std.totalAmount,
-            discount: 0, waiver: 0, netAmount: std.totalAmount, paidAmount: 0, dueDate, status: 'unpaid', payments: [],
+            month, challanNo, items, totalAmount,
+            discount: 0, waiver: 0,
+            policyDiscount, appliedDiscounts: breakdown,
+            netAmount: Math.max(0, totalAmount - policyDiscount),
+            paidAmount: 0, dueDate, status: 'unpaid' as const, payments: [],
           };
+
+          return structure ? { ...base, feeStructureId: structure._id } : base;
         });
 
       skipped += students.length - toCreate.length;

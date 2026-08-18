@@ -23,6 +23,8 @@ export interface IInventoryItem extends Document {
   reorderLevel: number;
   unitCost: number;
   salvageValue: number;
+  isSellable: boolean;
+  salePrice: number;
   purchaseDate?: Date;
   inServiceDate?: Date;
   usefulLifeMonths?: number;
@@ -61,6 +63,8 @@ const inventoryItemSchema = new Schema<IInventoryItem>(
     reorderLevel: { type: Number, min: 0, default: 0 },
     unitCost: { type: Number, min: 0, default: 0 },
     salvageValue: { type: Number, min: 0, default: 0 },
+    isSellable: { type: Boolean, default: false },
+    salePrice: { type: Number, min: 0, default: 0 },
     purchaseDate: Date,
     inServiceDate: Date,
     usefulLifeMonths: { type: Number, min: 1 },
@@ -95,6 +99,7 @@ inventoryItemSchema.index({ orgId: 1, branchId: 1, assetCode: 1 }, { unique: tru
 inventoryItemSchema.index({ orgId: 1, branchId: 1, type: 1, category: 1, status: 1 });
 inventoryItemSchema.index({ orgId: 1, branchId: 1, availableQuantity: 1, reorderLevel: 1 });
 inventoryItemSchema.index({ orgId: 1, branchId: 1, nextVerificationDue: 1 });
+inventoryItemSchema.index({ orgId: 1, branchId: 1, isSellable: 1 });
 
 import { tenantPlugin } from '../utils/tenantPlugin';
 inventoryItemSchema.plugin(tenantPlugin);

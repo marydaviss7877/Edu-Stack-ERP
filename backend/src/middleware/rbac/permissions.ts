@@ -28,7 +28,16 @@ type Module =
   | 'procurement'
   | 'expense_management'
   | 'income_management'
-  | 'finance_dashboard';
+  | 'finance_dashboard'
+  | 'houses'
+  | 'labels'
+  | 'document_templates'
+  | 'document_issuance'
+  | 'accounting'
+  | 'staff_finance'
+  | 'staff_clearance'
+  | 'pos'
+  | 'transport';
 
 type PermissionRule = {
   roles: UserRole[];
@@ -123,9 +132,9 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
 
   fee_management: [
     { roles: ['super_admin'], actions: ['read'] },
-    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete'] },
-    { roles: ['branch_principal'], actions: ['create', 'read', 'update', 'delete'] },
-    { roles: ['accountant'], actions: ['create', 'read', 'update', 'delete'] },
+    { roles: ['group_admin'], actions: ['create', 'read', 'update', 'delete', 'export', 'configure'] },
+    { roles: ['branch_principal'], actions: ['create', 'read', 'update', 'delete', 'export', 'configure'] },
+    { roles: ['accountant'], actions: ['create', 'read', 'update', 'delete', 'export', 'configure'] },
     { roles: ['student'], actions: ['read'], own: true },
   ],
 
@@ -232,6 +241,52 @@ export const PERMISSIONS: Record<Module, PermissionRule[]> = {
     { roles: ['group_admin'], actions: ['read', 'export'] },
     { roles: ['branch_principal'], actions: ['read', 'export'] },
     { roles: ['accountant'], actions: ['read', 'export'] },
+  ],
+
+  houses: [
+    { roles: ['group_admin', 'branch_principal', 'it_admin'], actions: ['create', 'read', 'update', 'delete'] },
+    { roles: ['coordinator', 'teacher'], actions: ['read'] },
+    { roles: ['student'], actions: ['read'], own: true },
+  ],
+
+  labels: [
+    { roles: ['group_admin', 'branch_principal', 'it_admin'], actions: ['create', 'read', 'update', 'delete'] },
+    { roles: ['coordinator', 'teacher'], actions: ['read'] },
+  ],
+
+  document_templates: [
+    { roles: ['group_admin', 'branch_principal', 'it_admin'], actions: ['create', 'read', 'update', 'delete'] },
+    { roles: ['coordinator'], actions: ['read'] },
+  ],
+
+  document_issuance: [
+    { roles: ['group_admin', 'branch_principal', 'it_admin'], actions: ['create', 'read', 'update', 'export'] },
+    { roles: ['coordinator'], actions: ['create', 'read'] },
+    { roles: ['teacher'], actions: ['read'], own: true },
+    { roles: ['student'], actions: ['read'], own: true },
+  ],
+
+  accounting: [
+    { roles: ['group_admin', 'branch_principal', 'accountant'], actions: ['create', 'read', 'update', 'export'] },
+  ],
+
+  staff_finance: [
+    { roles: ['group_admin', 'branch_principal', 'accountant'], actions: ['create', 'read', 'update', 'approve'] },
+    { roles: ['teacher'], actions: ['read'], own: true },
+  ],
+
+  staff_clearance: [
+    { roles: ['group_admin', 'branch_principal', 'accountant', 'it_admin'], actions: ['create', 'read', 'update'] },
+  ],
+
+  pos: [
+    { roles: ['group_admin', 'branch_principal', 'accountant', 'it_admin'], actions: ['create', 'read', 'update', 'export'] },
+  ],
+
+  transport: [
+    { roles: ['group_admin', 'branch_principal', 'it_admin'], actions: ['create', 'read', 'update', 'delete'] },
+    { roles: ['coordinator', 'teacher', 'accountant'], actions: ['read'] },
+    { roles: ['student'], actions: ['read'], own: true },
   ],
 };
 

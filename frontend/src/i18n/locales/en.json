@@ -68,7 +68,9 @@
     "classFellows": "Class Fellows",
     "profile": "My Profile",
     "peerFeedback": "Peer Feedback",
-    "roles": "Roles"
+    "roles": "Roles",
+    "idCards": "ID Cards",
+    "letters": "Letters & Certificates"
   },
   "dashboard": {
     "title": "Dashboard",

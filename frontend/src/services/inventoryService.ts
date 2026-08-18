@@ -20,6 +20,8 @@ export interface InventoryItem {
   reorderLevel: number;
   unitCost: number;
   salvageValue: number;
+  isSellable: boolean;
+  salePrice: number;
   purchaseDate?: string;
   inServiceDate?: string;
   usefulLifeMonths?: number;

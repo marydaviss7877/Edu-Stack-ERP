@@ -16,6 +16,7 @@ export async function listSchedules(req: Request, res: Response, next: NextFunct
       .populate('examId', 'name')
       .populate('classId', 'name section')
       .populate('slots.subjectId', 'name code')
+      .populate('slots.topicIds', 'topicName chapterNumber')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: schedules });
@@ -30,7 +31,8 @@ export async function getSchedule(req: Request, res: Response, next: NextFunctio
     const schedule = await ExamSchedule.findOne({ _id: req.params.id, ...orgBranchScope({ orgId: orgId!, branchId }) })
       .populate('examId', 'name')
       .populate('classId', 'name section')
-      .populate('slots.subjectId', 'name code');
+      .populate('slots.subjectId', 'name code')
+      .populate('slots.topicIds', 'topicName chapterNumber');
 
     if (!schedule) throw new AppError('Schedule not found', 404);
     res.json({ success: true, data: schedule });
@@ -56,7 +58,8 @@ export async function upsertSchedule(req: Request, res: Response, next: NextFunc
     )
       .populate('examId', 'name')
       .populate('classId', 'name section')
-      .populate('slots.subjectId', 'name code');
+      .populate('slots.subjectId', 'name code')
+      .populate('slots.topicIds', 'topicName chapterNumber');
 
     res.status(200).json({ success: true, data: schedule });
   } catch (err: any) {
@@ -77,7 +80,8 @@ export async function updateSchedule(req: Request, res: Response, next: NextFunc
     )
       .populate('examId', 'name')
       .populate('classId', 'name section')
-      .populate('slots.subjectId', 'name code');
+      .populate('slots.subjectId', 'name code')
+      .populate('slots.topicIds', 'topicName chapterNumber');
 
     if (!schedule) throw new AppError('Schedule not found', 404);
     res.json({ success: true, data: schedule });

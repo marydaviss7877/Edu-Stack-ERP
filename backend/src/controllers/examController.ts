@@ -57,7 +57,7 @@ export async function updateExam(req: Request, res: Response): Promise<void> {
 
 // ─── Marks Entry ─────────────────────────────────────────────────────────────
 
-function calculateGrade(percentage: number, config: IGradeThreshold[]): string {
+export function calculateGrade(percentage: number, config: IGradeThreshold[]): string {
   const sorted = [...config].sort((a, b) => b.minPercentage - a.minPercentage);
   for (const tier of sorted) {
     if (percentage >= tier.minPercentage && percentage <= tier.maxPercentage) {
@@ -73,6 +73,7 @@ export const enterMarksValidators = [
   body('subjectMarks.*.subjectId').isMongoId(),
   body('subjectMarks.*.marksObtained').isNumeric(),
   body('subjectMarks.*.isAbsent').optional().isBoolean(),
+  body('remarks').optional().isString().trim(),
 ];
 
 export async function enterMarks(req: Request, res: Response): Promise<void> {
@@ -82,6 +83,15 @@ export async function enterMarks(req: Request, res: Response): Promise<void> {
   const { orgId, branchId, id: enteredById } = req.user!;
   const { examId } = req.params;
   const { studentId, subjectMarks } = req.body;
+
+  // enterMarks replaces the whole Result document (no $set), so carry the existing remark
+  // forward unless the caller explicitly sent a new one — otherwise re-entering marks would
+  // silently wipe out a remark a principal already finalized.
+  let remarks: string | undefined = req.body.remarks;
+  if (remarks === undefined) {
+    const existing = await Result.findOne({ examId, studentId, orgId }).select('remarks').lean();
+    remarks = existing?.remarks;
+  }
 
   const exam = await Exam.findOne({ _id: examId, orgId });
   if (!exam) { res.status(404).json({ success: false, message: 'Exam not found' }); return; }
@@ -114,11 +124,27 @@ export async function enterMarks(req: Request, res: Response): Promise<void> {
       subjectMarks: processedMarks,
       totalMarksObtained: totalObtained,
       totalMarks: totalMax,
-      percentage, grade, isPassed, enteredById,
+      percentage, grade, isPassed, remarks, enteredById,
     },
     { upsert: true, new: true, runValidators: true }
   );
 
+  res.json({ success: true, data: result });
+}
+
+export async function setResultRemarks(req: Request, res: Response): Promise<void> {
+  const { orgId } = req.user!;
+  const { examId, studentId } = req.params;
+  const { remarks } = req.body;
+
+  if (typeof remarks !== 'string') { res.status(422).json({ success: false, message: 'remarks must be a string' }); return; }
+
+  const result = await Result.findOneAndUpdate(
+    { examId, studentId, orgId },
+    { $set: { remarks: remarks.trim() } },
+    { new: true }
+  );
+  if (!result) { res.status(404).json({ success: false, message: 'Result not found' }); return; }
   res.json({ success: true, data: result });
 }
 

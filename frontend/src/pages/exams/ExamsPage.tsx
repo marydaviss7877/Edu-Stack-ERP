@@ -11,8 +11,12 @@ import Badge from '../../components/ui/Badge';
 import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/utils';
 import { downloadResultCardPdf } from '../../lib/resultCardPdf';
+import SyllabusManagerTab from './SyllabusManagerTab';
+import ExamAnalyticsTab from './ExamAnalyticsTab';
+import CombinedAssessmentTab from './CombinedAssessmentTab';
+import ResultHistoryTab from './ResultHistoryTab';
 
-type View = 'list' | 'marks' | 'results';
+type View = 'list' | 'marks' | 'results' | 'history' | 'syllabus' | 'analytics' | 'combined';
 
 function StudentExamsView() {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
@@ -141,6 +145,13 @@ function StudentExamsView() {
               </tbody>
             </table>
           </div>
+
+          {selectedResult.remarks && (
+            <div className="card p-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Teacher's Remarks</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-300">{selectedResult.remarks}</p>
+            </div>
+          )}
         </div>
       ) : (
         /* ── Exam list ── */
@@ -213,6 +224,9 @@ function StaffExamsView() {
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [marksInput, setMarksInput] = useState<Record<string, string>>({});
   const [absentMap, setAbsentMap] = useState<Record<string, boolean>>({});
+  const [remarksInput, setRemarksInput] = useState('');
+  const [editingRemarksFor, setEditingRemarksFor] = useState<string | null>(null);
+  const [remarksDraft, setRemarksDraft] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [apiError, setApiError] = useState('');
 
@@ -268,10 +282,16 @@ function StaffExamsView() {
   });
 
   const marksMutation = useMutation({
-    mutationFn: ({ examId, studentId, subjectMarks }: { examId: string; studentId: string; subjectMarks: { subjectId: string; marksObtained: number; isAbsent?: boolean }[] }) =>
-      examService.enterMarks(examId, studentId, subjectMarks),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['results'] }); setMarksInput({}); setAbsentMap({}); setSelectedStudentId(''); },
+    mutationFn: ({ examId, studentId, subjectMarks, remarks }: { examId: string; studentId: string; subjectMarks: { subjectId: string; marksObtained: number; isAbsent?: boolean }[]; remarks?: string }) =>
+      examService.enterMarks(examId, studentId, subjectMarks, remarks),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['results'] }); setMarksInput({}); setAbsentMap({}); setRemarksInput(''); setSelectedStudentId(''); },
     onError: (e: { response?: { data?: { message?: string } } }) => setApiError(e?.response?.data?.message ?? 'Failed to save marks'),
+  });
+
+  const remarksMutation = useMutation({
+    mutationFn: ({ examId, studentId, remarks }: { examId: string; studentId: string; remarks: string }) =>
+      examService.setRemarks(examId, studentId, remarks),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['results'] }); setEditingRemarksFor(null); },
   });
 
   const publishMutation = useMutation({
@@ -321,10 +341,11 @@ function StaffExamsView() {
       marksObtained: absentMap[sub.subjectId as string] ? 0 : Number(marksInput[sub.subjectId as string] ?? 0),
       isAbsent: absentMap[sub.subjectId as string] ?? false,
     }));
-    marksMutation.mutate({ examId: selectedExam._id, studentId: selectedStudentId, subjectMarks });
+    marksMutation.mutate({ examId: selectedExam._id, studentId: selectedStudentId, subjectMarks, remarks: remarksInput || undefined });
   };
 
   const canManage = ['branch_principal', 'it_admin', 'group_admin', 'teacher'].includes(user?.role ?? '');
+  const canFinalizeRemarks = user?.role === 'branch_principal';
 
   const getResult = (studentId: string) => results.find(r => {
     const sid = typeof r.studentId === 'object' ? r.studentId._id : r.studentId;
@@ -344,7 +365,7 @@ function StaffExamsView() {
 
       {/* Filters */}
       <div className="card p-4 mb-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="label">Class</label>
             <select className="input" value={classId} onChange={e => { setClassId(e.target.value); setSectionId(''); setSelectedExam(null); setView('list'); }}>
@@ -359,19 +380,29 @@ function StaffExamsView() {
               {sections.map(s => <option key={s._id} value={s._id}>Section {s.name}</option>)}
             </select>
           </div>
-          <div className="col-span-2 flex items-end gap-2">
-            {(['list', 'marks', 'results'] as View[]).map(v => (
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(['list', 'marks', 'results', 'history', 'syllabus', 'analytics', 'combined'] as View[]).map(v => {
+            const needsExam = v === 'marks' || v === 'results';
+            const isDisabled = needsExam ? !selectedExam : (v !== 'list' && !classId);
+            return (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                disabled={v !== 'list' && !selectedExam}
-                className={cn('flex-1 py-2 text-sm rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed capitalize',
+                disabled={isDisabled}
+                className={cn('px-3 py-2 text-sm rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                   view === v ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700')}
               >
-                {v === 'marks' ? 'Enter Marks' : v === 'results' ? 'Results' : 'Exams'}
+                {v === 'marks' ? 'Enter Marks'
+                  : v === 'results' ? 'Results'
+                  : v === 'history' ? 'Result History'
+                  : v === 'syllabus' ? 'Syllabus'
+                  : v === 'analytics' ? 'Analytics'
+                  : v === 'combined' ? 'Combined Assessment'
+                  : 'Exams'}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
         {selectedExam && (
           <div className="mt-3 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 dark:bg-blue-900/20 dark:border-blue-700/50 dark:text-blue-300">
@@ -427,7 +458,13 @@ function StaffExamsView() {
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <label className="label">Select Student</label>
-                <select className="input" value={selectedStudentId} onChange={e => { setSelectedStudentId(e.target.value); setMarksInput({}); setAbsentMap({}); }}>
+                <select className="input" value={selectedStudentId} onChange={e => {
+                  setSelectedStudentId(e.target.value);
+                  setMarksInput({});
+                  setAbsentMap({});
+                  const existing = getResult(e.target.value);
+                  setRemarksInput(existing?.remarks ?? '');
+                }}>
                   <option value="">Choose student...</option>
                   {students.map(s => (
                     <option key={s._id} value={s._id}>{s.rollNo} — {s.profile.name}</option>
@@ -502,10 +539,22 @@ function StaffExamsView() {
                   })}
                 </tbody>
               </table>
-              <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700 flex justify-end">
-                <button onClick={handleSaveMarks} disabled={marksMutation.isPending} className="btn-primary">
-                  {marksMutation.isPending ? 'Saving...' : 'Save Marks'}
-                </button>
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700 space-y-3">
+                <div>
+                  <label className="label">Remarks (optional)</label>
+                  <textarea
+                    className="input"
+                    rows={2}
+                    placeholder="e.g. Good improvement in Math, needs to focus on Science..."
+                    value={remarksInput}
+                    onChange={e => setRemarksInput(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button onClick={handleSaveMarks} disabled={marksMutation.isPending} className="btn-primary">
+                    {marksMutation.isPending ? 'Saving...' : 'Save Marks'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -530,12 +579,14 @@ function StaffExamsView() {
                   <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">%</th>
                   <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Grade</th>
                   <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Remarks</th>
                   <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">PDF</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {(results as ResultDoc[]).sort((a, b) => (a.classPosition ?? 999) - (b.classPosition ?? 999)).map(r => {
                   const student = typeof r.studentId === 'object' ? r.studentId : null;
+                  const studentId = typeof r.studentId === 'object' ? r.studentId._id : r.studentId;
                   return (
                     <tr key={r._id} className={cn(!r.isPassed && 'bg-red-50 dark:bg-red-900/20')}>
                       <td className="px-4 py-3 font-mono text-gray-400 dark:text-slate-500">{r.classPosition ?? '—'}</td>
@@ -548,6 +599,40 @@ function StaffExamsView() {
                       <td className="px-4 py-3 text-center font-bold">{r.grade}</td>
                       <td className="px-4 py-3 text-center">
                         {r.isPassed ? <Badge variant="success">Pass</Badge> : <Badge variant="danger">Fail</Badge>}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs max-w-xs">
+                        {editingRemarksFor === r._id ? (
+                          <div className="flex items-center gap-1.5">
+                            <textarea
+                              className="input text-xs py-1 flex-1"
+                              rows={1}
+                              value={remarksDraft}
+                              onChange={e => setRemarksDraft(e.target.value)}
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => remarksMutation.mutate({ examId: selectedExam!._id, studentId, remarks: remarksDraft })}
+                              disabled={remarksMutation.isPending}
+                              className="text-blue-600 hover:text-blue-700 text-xs whitespace-nowrap"
+                            >
+                              Save
+                            </button>
+                            <button onClick={() => setEditingRemarksFor(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex-1">{r.remarks || '—'}</span>
+                            {canFinalizeRemarks && (
+                              <button
+                                onClick={() => { setEditingRemarksFor(r._id); setRemarksDraft(r.remarks ?? ''); }}
+                                className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 shrink-0"
+                                title="Edit final remarks"
+                              >
+                                ✎
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -571,6 +656,26 @@ function StaffExamsView() {
             </table>
           )}
         </div>
+      )}
+
+      {/* Result History */}
+      {view === 'history' && (
+        <ResultHistoryTab classId={classId} sectionId={sectionId} orgName={orgName} />
+      )}
+
+      {/* Syllabus Manager */}
+      {view === 'syllabus' && (
+        <SyllabusManagerTab />
+      )}
+
+      {/* Analytics */}
+      {view === 'analytics' && (
+        <ExamAnalyticsTab exams={exams} classId={classId} sectionId={sectionId} academicYearId={currentYear?._id} />
+      )}
+
+      {/* Combined Assessment */}
+      {view === 'combined' && (
+        <CombinedAssessmentTab exams={exams} classId={classId} sectionId={sectionId} academicYearId={currentYear?._id} orgName={orgName} />
       )}
 
       {/* Create exam modal */}

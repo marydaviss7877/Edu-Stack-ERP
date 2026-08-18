@@ -8,11 +8,15 @@ import PageHeader from '../../components/ui/PageHeader';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
 import { useAuthStore } from '../../stores/authStore';
-import { formatCurrency } from '../../lib/utils';
+import { cn, formatCurrency } from '../../lib/utils';
 import { downloadPayslipPdf } from '../../lib/payslipPdf';
+import StaffAdvancesTab from '../../components/payroll/StaffAdvancesTab';
+import StaffClearanceTab from '../../components/payroll/StaffClearanceTab';
 
 const today = new Date();
 const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+type MainTab = 'payroll' | 'advances' | 'clearance';
 
 const STATUS_VARIANT: Record<string, 'default' | 'warning' | 'success'> = {
   draft: 'default', approved: 'warning', paid: 'success',
@@ -54,6 +58,7 @@ export default function PayrollPage() {
   const { data: branchHeader } = useQuery({ queryKey: ['branch-header'], queryFn: branchHeaderService.get });
   const orgName = branchHeader?.schoolName ?? orgSlug ?? 'School';
 
+  const [mainTab, setMainTab] = useState<MainTab>('payroll');
   const [month, setMonth] = useState(currentMonth);
   const [editOpen, setEditOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<PayrollDoc | null>(null);
@@ -135,10 +140,10 @@ export default function PayrollPage() {
   const totalPaid = payrolls.filter(p => p.status === 'paid').reduce((s, p) => s + p.netPay, 0);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <PageHeader
         title="Payroll"
-        actions={canManage ? (
+        actions={canManage && mainTab === 'payroll' ? (
           <div className="flex gap-2">
             <button onClick={() => { setBulkMonth(month); setApiError(''); setBulkOpen(true); }} className="btn-secondary text-sm">Bulk Process</button>
             <button onClick={() => { closeEdit(); setEditOpen(true); }} className="btn-primary text-sm">+ Add Payroll</button>
@@ -146,6 +151,25 @@ export default function PayrollPage() {
         ) : undefined}
       />
 
+      <div className="flex gap-1 bg-gray-100 dark:bg-slate-700 p-1 rounded-lg mb-6 w-fit">
+        {([
+          ['payroll', 'Payroll'],
+          ['advances', 'Advances & Loans'],
+          ['clearance', 'Clearance'],
+        ] as [MainTab, string][]).map(([id, label]) => (
+          <button key={id} onClick={() => setMainTab(id)}
+            className={cn('px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+              mainTab === id ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 shadow-sm' : 'text-gray-500 dark:text-slate-400')}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mainTab === 'advances' && <StaffAdvancesTab canManage={canManage} />}
+      {mainTab === 'clearance' && <StaffClearanceTab canManage={canManage} />}
+
+      {mainTab === 'payroll' && (
+      <>
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4 mb-5">
         <div className="card p-4">
@@ -241,6 +265,8 @@ export default function PayrollPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {/* Add/Edit Payroll Modal */}
       <Modal open={editOpen} onClose={closeEdit} title={editRecord ? 'Edit Payroll' : 'Add Payroll Record'} size="lg">

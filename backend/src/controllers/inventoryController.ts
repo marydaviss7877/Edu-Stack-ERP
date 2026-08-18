@@ -12,8 +12,9 @@ import { Payroll } from '../models/Payroll';
 import { Branch } from '../models/Branch';
 import { IncomeEntry } from '../models/IncomeEntry';
 import { calculateOperatingResult } from '../utils/finance';
+import { postExpensePayment, postIncomeReceived } from '../services/ledgerService';
 
-const EXPENSE_CATEGORIES = [
+export const EXPENSE_CATEGORIES = [
   'Salaries & Benefits', 'Utilities', 'Rent & Rates', 'Repairs & Maintenance',
   'Teaching & Laboratory Supplies', 'IT & Software', 'Library', 'Transport',
   'Security', 'Cleaning & Sanitation', 'Examinations', 'Student Activities',
@@ -152,7 +153,7 @@ export async function updateInventoryItem(req: Request, res: Response): Promise<
     'name', 'description', 'category', 'subcategory', 'unit', 'reorderLevel', 'unitCost',
     'salvageValue', 'purchaseDate', 'inServiceDate', 'usefulLifeMonths', 'depreciationMethod',
     'location', 'department', 'custodianId', 'vendorId', 'serialNo', 'modelNo',
-    'warrantyExpiry', 'fundingSource', 'condition', 'status', 'notes',
+    'warrantyExpiry', 'fundingSource', 'condition', 'status', 'notes', 'isSellable', 'salePrice',
   ];
   const update: Record<string, unknown> = {};
   for (const key of allowed) if (req.body[key] !== undefined) update[key] = req.body[key];
@@ -363,6 +364,9 @@ export async function createIncome(req: Request, res: Response): Promise<void> {
     receiptNo: req.body.receiptNo?.trim() || autoReference('INC'),
     createdById: req.user!.id,
   });
+  if (record.status === 'received') {
+    void postIncomeReceived(String(record.orgId), String(record.branchId), record.amount, record.paymentMethod, String(record._id), req.user!.id);
+  }
   res.status(201).json({ success: true, data: record });
 }
 
@@ -403,6 +407,9 @@ export async function updateExpenseStatus(req: Request, res: Response): Promise<
     return;
   }
   await expense.save();
+  if (action === 'pay') {
+    void postExpensePayment(String(expense.orgId), String(expense.branchId), expense.category, expense.netPaid, expense.paymentMethod, String(expense._id), req.user!.id);
+  }
   res.json({ success: true, data: expense });
 }
 

@@ -27,6 +27,10 @@ export function useSocket() {
         qc.invalidateQueries({ queryKey: ['notif-count'] });
         qc.invalidateQueries({ queryKey: ['notifications'] });
       });
+
+      socket.on('attendance:updated', () => {
+        qc.invalidateQueries({ queryKey: ['attendance-today-status'] });
+      });
     }).catch(() => {
       // Socket.io unavailable (e.g. serverless deployment) — notifications work via polling
     });

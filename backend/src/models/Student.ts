@@ -12,6 +12,8 @@ export interface IStudent extends Document {
   academicYearId: Types.ObjectId;
   rollNo: string;
   admissionNo: string;
+  houseId?: Types.ObjectId;
+  labelIds: Types.ObjectId[];
   profile: {
     name: string;
     dateOfBirth: Date;
@@ -41,6 +43,11 @@ export interface IStudent extends Document {
   status: StudentStatus;
   previousSchool?: string;
   monthlyFee?: number;
+  transport?: {
+    routeId: Types.ObjectId;
+    stopName?: string;
+    monthlyFee?: number; // per-student override; falls back to the route's monthlyFee
+  };
   admissionDate: Date;
   leavingInfo?: {
     initiatedAt: Date;
@@ -66,6 +73,8 @@ const studentSchema = new Schema<IStudent>(
     academicYearId: { type: Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
     rollNo: { type: String, required: true },
     admissionNo: { type: String, required: true },
+    houseId: { type: Schema.Types.ObjectId, ref: 'House' },
+    labelIds: { type: [Schema.Types.ObjectId], ref: 'Label', default: [] },
     profile: {
       name: { type: String, required: true },
       dateOfBirth: { type: Date, required: true },
@@ -101,6 +110,11 @@ const studentSchema = new Schema<IStudent>(
     },
     previousSchool: String,
     monthlyFee: { type: Number, min: 0 },
+    transport: {
+      routeId: { type: Schema.Types.ObjectId, ref: 'TransportRoute' },
+      stopName: String,
+      monthlyFee: { type: Number, min: 0 },
+    },
     admissionDate: { type: Date, default: Date.now },
     leavingInfo: {
       initiatedAt:       Date,

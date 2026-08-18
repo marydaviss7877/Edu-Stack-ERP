@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { academicService } from '../../services/academicService';
 import { feeService } from '../../services/feeService';
 import type { FeeStructureDoc, ChallanDoc } from '../../services/feeService';
+import { discountPolicyService } from '../../services/discountPolicyService';
+import type { DiscountPolicyDoc, DiscountRuleType, DiscountValueType } from '../../services/discountPolicyService';
+import { labelService } from '../../services/labelService';
 import { branchHeaderService } from '../../services/branchHeaderService';
 import PageHeader from '../../components/ui/PageHeader';
 import Modal from '../../components/ui/Modal';
@@ -11,7 +14,14 @@ import { useAuthStore } from '../../stores/authStore';
 import { cn, formatCurrency, formatDate } from '../../lib/utils';
 import { downloadChallanPdf } from '../../lib/challanPdf';
 
-type Tab = 'structures' | 'challans';
+type Tab = 'challans' | 'defaulters' | 'discounts' | 'structures';
+
+const TAB_LABELS: Record<Tab, string> = {
+  challans: 'Fee Challans',
+  defaulters: 'Defaulters',
+  discounts: 'Discount Policies',
+  structures: 'Fee Structures',
+};
 
 const STATUS_VARIANT: Record<string, 'success' | 'danger' | 'warning' | 'info' | 'default'> = {
   paid: 'success', unpaid: 'danger', partial: 'warning', overdue: 'danger', waived: 'info',
@@ -65,6 +75,15 @@ export default function FeesPage() {
   const [onlineCnic, setOnlineCnic] = useState('');
   const [onlineResult, setOnlineResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Defaulters
+  const [minDaysOverdue, setMinDaysOverdue] = useState('');
+  const [exportingDefaulters, setExportingDefaulters] = useState(false);
+
+  // Discount policies
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [editPolicy, setEditPolicy] = useState<DiscountPolicyDoc | null>(null);
+  const [applyMonth, setApplyMonth] = useState(currentMonth);
+
   const [apiError, setApiError] = useState('');
 
   const { data: branchHeader } = useQuery({ queryKey: ['branch-header'], queryFn: branchHeaderService.get });
@@ -101,6 +120,25 @@ export default function FeesPage() {
     queryFn: () => feeService.getSummary({ month: challanMonth }),
     enabled: tab === 'challans',
   });
+
+  const defaulterParams: Record<string, string> = {};
+  if (classFilter) defaulterParams['classId'] = classFilter;
+  if (minDaysOverdue) defaulterParams['minDaysOverdue'] = minDaysOverdue;
+
+  const { data: defaultersResp, isLoading: loadingDefaulters } = useQuery({
+    queryKey: ['fee-defaulters', classFilter, minDaysOverdue],
+    queryFn: () => feeService.getDefaulters(defaulterParams),
+    enabled: tab === 'defaulters',
+  });
+  const defaulters = defaultersResp?.data ?? [];
+
+  const { data: policies = [], isLoading: loadingPolicies } = useQuery({
+    queryKey: ['discount-policies'],
+    queryFn: discountPolicyService.list,
+    enabled: tab === 'discounts',
+  });
+
+  const { data: labels = [] } = useQuery({ queryKey: ['labels'], queryFn: labelService.list, enabled: tab === 'discounts' });
 
   const createStructureMutation = useMutation({
     mutationFn: feeService.createStructure,
@@ -144,6 +182,54 @@ export default function FeesPage() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => setOnlineResult({ success: false, message: e?.response?.data?.message ?? 'Payment initiation failed.' }),
   });
+
+  const remindMutation = useMutation({
+    mutationFn: feeService.remindDefaulters,
+    onSuccess: (r) => alert(r.message ?? 'Reminders queued.'),
+    onError: (e: { response?: { data?: { message?: string } } }) => alert(e?.response?.data?.message ?? 'Failed to queue reminders.'),
+  });
+
+  const handleExportDefaulters = async () => {
+    setExportingDefaulters(true);
+    try {
+      const blob = await feeService.exportDefaulters(defaulterParams);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fee-defaulters-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingDefaulters(false);
+    }
+  };
+
+  const createPolicyMutation = useMutation({
+    mutationFn: discountPolicyService.create,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['discount-policies'] }); closePolicyModal(); },
+    onError: (e: { response?: { data?: { message?: string } } }) => setApiError(e?.response?.data?.message ?? 'Error'),
+  });
+
+  const updatePolicyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<DiscountPolicyDoc> }) => discountPolicyService.update(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['discount-policies'] }); closePolicyModal(); },
+    onError: (e: { response?: { data?: { message?: string } } }) => setApiError(e?.response?.data?.message ?? 'Error'),
+  });
+
+  const deletePolicyMutation = useMutation({
+    mutationFn: discountPolicyService.remove,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['discount-policies'] }),
+  });
+
+  const applyPolicyMutation = useMutation({
+    mutationFn: discountPolicyService.apply,
+    onSuccess: (r) => { qc.invalidateQueries({ queryKey: ['challans'] }); alert(`Recalculated ${r.data?.updated} challan(s). Total discount applied: ${formatCurrency(r.data?.totalDiscountApplied ?? 0)}.`); },
+    onError: (e: { response?: { data?: { message?: string } } }) => alert(e?.response?.data?.message ?? 'Failed to apply discount policies.'),
+  });
+
+  const closePolicyModal = () => { setPolicyOpen(false); setEditPolicy(null); setApiError(''); };
 
   const closeStructureModal = () => {
     setStructureOpen(false); setEditStructure(null);
@@ -195,16 +281,17 @@ export default function FeesPage() {
           <div className="flex gap-2">
             {tab === 'structures' && <button onClick={openCreateStructure} className="btn-primary text-sm">+ Fee Structure</button>}
             {tab === 'challans' && <button onClick={() => { setGenMonth(currentMonth); setGenClassId(''); setApiError(''); setGenOpen(true); }} className="btn-primary text-sm">Generate Challans</button>}
+            {tab === 'discounts' && <button onClick={() => { setEditPolicy(null); setApiError(''); setPolicyOpen(true); }} className="btn-primary text-sm">+ Discount Policy</button>}
           </div>
         ) : undefined}
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1 mb-5 w-fit">
-        {(['challans', 'structures'] as Tab[]).map(t => (
+      <div className="flex gap-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1 mb-5 w-fit flex-wrap">
+        {(['challans', 'defaulters', 'discounts', 'structures'] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={cn('px-4 py-1.5 text-sm rounded-md transition-colors capitalize', tab === t ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700')}>
-            {t === 'challans' ? 'Fee Challans' : 'Fee Structures'}
+            className={cn('px-4 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap', tab === t ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700')}>
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -325,6 +412,153 @@ export default function FeesPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </>
+      )}
+
+      {/* Defaulters tab */}
+      {tab === 'defaulters' && (
+        <>
+          <div className="card p-4 mb-4">
+            <div className="flex gap-3 flex-wrap items-end justify-between">
+              <div className="flex gap-3 flex-wrap">
+                <div>
+                  <label className="label">Class</label>
+                  <select className="input" value={classFilter} onChange={e => setClassFilter(e.target.value)}>
+                    <option value="">All classes</option>
+                    {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Min Days Overdue</label>
+                  <input type="number" min={0} className="input w-36" placeholder="0" value={minDaysOverdue} onChange={e => setMinDaysOverdue(e.target.value)} />
+                </div>
+              </div>
+              {isAccountant && (
+                <div className="flex gap-2">
+                  <button onClick={() => remindMutation.mutate()} disabled={remindMutation.isPending || defaulters.length === 0} className="btn-secondary text-sm">
+                    {remindMutation.isPending ? 'Queuing...' : '🔔 Send Reminders'}
+                  </button>
+                  <button onClick={handleExportDefaulters} disabled={exportingDefaulters || defaulters.length === 0} className="btn-primary text-sm">
+                    {exportingDefaulters ? 'Exporting...' : '↓ Export CSV'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+            <div className="card p-4">
+              <p className="text-xs text-gray-500">Defaulters</p>
+              <p className="text-xl font-bold text-red-600 mt-1">{defaultersResp?.meta?.total ?? 0}</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs text-gray-500">Total Outstanding</p>
+              <p className="text-xl font-bold text-red-600 mt-1">{formatCurrency((defaultersResp?.meta as { totalOutstanding?: number } | undefined)?.totalOutstanding ?? 0)}</p>
+            </div>
+          </div>
+
+          <div className="card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Student</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Class</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Guardian</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Month</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Balance</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Days Overdue</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-slate-400">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {loadingDefaulters && (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">Loading...</td></tr>
+                )}
+                {!loadingDefaulters && defaulters.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">No defaulters — everyone's paid up 🎉</td></tr>
+                )}
+                {defaulters.map(c => {
+                  const student = typeof c.studentId === 'object' ? c.studentId : null;
+                  const cls = typeof c.classId === 'object' ? c.classId : null;
+                  return (
+                    <tr key={c._id} className={cn(c.daysOverdue > 0 ? 'bg-red-50 dark:bg-red-900/20' : '')}>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-900 dark:text-slate-100">{student?.profile.name ?? '—'}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{student?.rollNo}</p>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{cls?.name ?? '—'}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
+                        <p>{student?.guardianInfo?.fatherName}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{student?.guardianInfo?.fatherPhone}</p>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{c.month}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-red-600 dark:text-red-400">{formatCurrency(c.balance)}</td>
+                      <td className="px-4 py-3 text-center">
+                        {c.daysOverdue > 0 ? <Badge variant="danger">{c.daysOverdue}d</Badge> : <span className="text-xs text-gray-400">Due soon</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center"><Badge variant={STATUS_VARIANT[c.status] ?? 'default'}>{c.status}</Badge></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Discount Policies tab */}
+      {tab === 'discounts' && (
+        <>
+          {isAccountant && (
+            <div className="card p-4 mb-4">
+              <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Recalculate Outstanding Challans</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">Re-runs all active policies against a month's unpaid/partial challans — use after creating or editing a policy.</p>
+              <div className="flex gap-3 items-end flex-wrap">
+                <div>
+                  <label className="label">Month</label>
+                  <input type="month" className="input" value={applyMonth} onChange={e => setApplyMonth(e.target.value)} />
+                </div>
+                <button onClick={() => applyPolicyMutation.mutate({ month: applyMonth })} disabled={applyPolicyMutation.isPending} className="btn-primary text-sm">
+                  {applyPolicyMutation.isPending ? 'Recalculating...' : 'Recalculate'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="card divide-y divide-gray-100 dark:divide-slate-700">
+            {loadingPolicies && <div className="px-5 py-10 text-center text-gray-400 text-sm">Loading...</div>}
+            {!loadingPolicies && policies.length === 0 && (
+              <div className="px-5 py-10 text-center text-gray-400 text-sm">No discount policies yet. Create one to auto-apply concessions during challan generation.</div>
+            )}
+            {policies.map(p => {
+              const label = typeof p.labelId === 'object' ? p.labelId : null;
+              return (
+                <div key={p._id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900 dark:text-slate-100">{p.name}</p>
+                      {!p.isActive && <Badge variant="default">Inactive</Badge>}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-slate-500">
+                      {p.type === 'sibling' ? `Sibling discount — from child #${p.siblingMinRank} onward` : `Label — ${label?.name ?? 'Unknown label'}`}
+                      {p.classIds.length > 0 && ` · ${p.classIds.length} class(es)`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-gray-800 dark:text-slate-200">
+                      {p.valueType === 'percent' ? `${p.value}%` : formatCurrency(p.value)}
+                    </span>
+                    {isAccountant && (
+                      <>
+                        <button onClick={() => { setEditPolicy(p); setApiError(''); setPolicyOpen(true); }} className="btn-secondary text-xs">Edit</button>
+                        <button onClick={() => confirm(`Delete policy "${p.name}"?`) && deletePolicyMutation.mutate(p._id)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </>
       )}
@@ -561,6 +795,118 @@ export default function FeesPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Discount Policy Modal */}
+      <Modal open={policyOpen} onClose={closePolicyModal} title={editPolicy ? 'Edit Discount Policy' : 'Create Discount Policy'} size="md">
+        <DiscountPolicyForm
+          policy={editPolicy}
+          labels={labels}
+          classes={classes}
+          apiError={apiError}
+          loading={createPolicyMutation.isPending || updatePolicyMutation.isPending}
+          onSubmit={(data) => editPolicy ? updatePolicyMutation.mutate({ id: editPolicy._id, data }) : createPolicyMutation.mutate(data)}
+        />
+      </Modal>
+    </div>
+  );
+}
+
+function DiscountPolicyForm({ policy, labels, classes, apiError, loading, onSubmit }: {
+  policy: DiscountPolicyDoc | null;
+  labels: { _id: string; name: string }[];
+  classes: { _id: string; name: string }[];
+  apiError: string;
+  loading: boolean;
+  onSubmit: (d: Partial<DiscountPolicyDoc>) => void;
+}) {
+  const [name, setName] = useState(policy?.name ?? '');
+  const [description, setDescription] = useState(policy?.description ?? '');
+  const [type, setType] = useState<DiscountRuleType>(policy?.type ?? 'sibling');
+  const [labelId, setLabelId] = useState(typeof policy?.labelId === 'object' ? policy.labelId._id : policy?.labelId ?? '');
+  const [siblingMinRank, setSiblingMinRank] = useState(String(policy?.siblingMinRank ?? 2));
+  const [valueType, setValueType] = useState<DiscountValueType>(policy?.valueType ?? 'percent');
+  const [value, setValue] = useState(String(policy?.value ?? ''));
+  const [classIds, setClassIds] = useState<string[]>((policy?.classIds ?? []).map(c => typeof c === 'object' ? c._id : c));
+  const [isActive, setIsActive] = useState(policy?.isActive ?? true);
+
+  const toggleClass = (id: string) => setClassIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+
+  const handleSubmit = () => {
+    onSubmit({
+      name, description: description || undefined, type,
+      labelId: type === 'label' ? labelId : undefined,
+      siblingMinRank: type === 'sibling' ? parseInt(siblingMinRank) : undefined,
+      valueType, value: Number(value), classIds, isActive,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {apiError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{apiError}</div>}
+      <div>
+        <label className="label">Policy Name</label>
+        <input className="input" placeholder="e.g. Sibling Discount, Staff Child Concession" value={name} onChange={e => setName(e.target.value)} />
+      </div>
+      <div>
+        <label className="label">Description (optional)</label>
+        <input className="input" value={description} onChange={e => setDescription(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Rule Type</label>
+          <select className="input" value={type} onChange={e => setType(e.target.value as DiscountRuleType)}>
+            <option value="sibling">Sibling (by admission rank)</option>
+            <option value="label">Student Label</option>
+          </select>
+        </div>
+        {type === 'sibling' ? (
+          <div>
+            <label className="label">Applies From Child #</label>
+            <input type="number" min={2} className="input" value={siblingMinRank} onChange={e => setSiblingMinRank(e.target.value)} />
+          </div>
+        ) : (
+          <div>
+            <label className="label">Label</label>
+            <select className="input" value={labelId} onChange={e => setLabelId(e.target.value)}>
+              <option value="">Select label...</option>
+              {labels.map(l => <option key={l._id} value={l._id}>{l.name}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Discount Type</label>
+          <select className="input" value={valueType} onChange={e => setValueType(e.target.value as DiscountValueType)}>
+            <option value="percent">Percent (%)</option>
+            <option value="fixed">Fixed Amount (PKR)</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Value</label>
+          <input type="number" min={0} className="input" value={value} onChange={e => setValue(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label className="label">Restrict to Classes (optional — leave blank for all)</label>
+        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-gray-200 dark:border-slate-600 rounded-lg p-2">
+          {classes.map(c => (
+            <label key={c._id} className={cn('text-xs px-2 py-1 rounded-full border cursor-pointer transition-colors', classIds.includes(c._id) ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300')}>
+              <input type="checkbox" className="hidden" checked={classIds.includes(c._id)} onChange={() => toggleClass(c._id)} />
+              {c.name}
+            </label>
+          ))}
+          {classes.length === 0 && <p className="text-xs text-gray-400">No classes configured.</p>}
+        </div>
+      </div>
+      <label className="flex items-center gap-2 text-sm dark:text-slate-300">
+        <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} /> Active
+      </label>
+      <div className="flex gap-3 justify-end pt-2">
+        <button onClick={handleSubmit} disabled={loading || !name || !value} className="btn-primary w-full">
+          {loading ? 'Saving...' : policy ? 'Save Changes' : 'Create Policy'}
+        </button>
+      </div>
     </div>
   );
 }

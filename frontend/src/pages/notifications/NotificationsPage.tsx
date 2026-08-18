@@ -13,6 +13,8 @@ const TYPE_COLORS: Record<string, string> = {
   assignment_graded: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
   assignment_created: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
   broadcast: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+  resource_uploaded: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400',
+  attendance_absent: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
   system: 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400',
 };
 

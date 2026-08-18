@@ -6,6 +6,7 @@ import { FeeStructure } from '../models/FeeStructure';
 import { Challan } from '../models/Challan';
 import { Student } from '../models/Student';
 import { AppError } from '../utils/errorHandler';
+import { orgBranchScope } from '../utils/orgBranchScope';
 import {
   loadTenantGateway,
   initiateJazzCash,
@@ -13,6 +14,7 @@ import {
   JazzCashCreds,
   EasypaisaCreds,
 } from '../services/paymentGatewayService';
+import { postFeePayment } from '../services/ledgerService';
 
 export const createFeeStructureValidators = [
   body('name').trim().notEmpty().withMessage('Name is required'),
@@ -193,6 +195,7 @@ export async function recordPayment(req: Request, res: Response, next: NextFunct
     }
 
     await challan.save();
+    void postFeePayment(req.orgId!, String(challan.branchId), amount, method, String(challan._id), req.user!.id);
     res.json({ success: true, data: challan, meta: { receiptNo } });
   } catch (err) { next(err); }
 }
@@ -205,7 +208,7 @@ export async function applyWaiver(req: Request, res: Response, next: NextFunctio
 
     if (discount != null) challan.discount = discount;
     if (waiver != null) challan.waiver = waiver;
-    challan.netAmount = challan.totalAmount - challan.discount - challan.waiver;
+    challan.netAmount = Math.max(0, challan.totalAmount - challan.discount - challan.waiver - (challan.policyDiscount || 0));
 
     if (challan.waiver >= challan.totalAmount) {
       challan.status = 'waived';
@@ -286,5 +289,92 @@ export async function getFeeSummary(req: Request, res: Response, next: NextFunct
     ]);
 
     res.json({ success: true, data: summary });
+  } catch (err) { next(err); }
+}
+
+// ─── Defaulters ────────────────────────────────────────────────────────────
+
+interface DefaulterStudent { rollNo?: string; admissionNo?: string; profile?: { name?: string }; guardianInfo?: { fatherName?: string; fatherPhone?: string } }
+interface DefaulterClass { name?: string }
+
+async function fetchDefaulterChallans(req: Request): Promise<Record<string, unknown>[]> {
+  const { classId, minDaysOverdue } = req.query;
+  const scope = orgBranchScope({ orgId: req.orgId!, branchId: req.user!.branchId });
+  const filter: Record<string, unknown> = { ...scope, status: { $in: ['unpaid', 'partial', 'overdue'] } };
+  if (classId) filter['classId'] = classId;
+
+  const challans = await Challan.find(filter)
+    .populate<{ studentId: DefaulterStudent }>('studentId', 'rollNo admissionNo profile.name guardianInfo.fatherName guardianInfo.fatherPhone')
+    .populate<{ classId: DefaulterClass }>('classId', 'name')
+    .sort({ dueDate: 1 })
+    .lean();
+
+  const now = Date.now();
+  const rows = challans
+    .map((c) => ({
+      ...c,
+      balance: c.netAmount - c.paidAmount,
+      daysOverdue: Math.max(0, Math.floor((now - new Date(c.dueDate).getTime()) / 86_400_000)),
+    }))
+    .filter((r) => !minDaysOverdue || r.daysOverdue >= Number(minDaysOverdue))
+    .sort((a, b) => b.daysOverdue - a.daysOverdue);
+
+  return rows;
+}
+
+export async function getDefaulters(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const rows = await fetchDefaulterChallans(req);
+    const totalOutstanding = rows.reduce((sum, r) => sum + (r['balance'] as number), 0);
+    res.json({ success: true, data: rows, meta: { total: rows.length, totalOutstanding } });
+  } catch (err) { next(err); }
+}
+
+function csvEscape(value: unknown): string {
+  const s = String(value ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export async function exportDefaultersCsv(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const rows = await fetchDefaulterChallans(req);
+
+    const headers = ['Challan No', 'Roll No', 'Admission No', 'Student Name', 'Class', "Father's Name", "Father's Phone", 'Month', 'Due Date', 'Days Overdue', 'Total Amount', 'Paid Amount', 'Balance', 'Status'];
+    const lines = [
+      headers.join(','),
+      ...rows.map((r) => {
+        const student = r['studentId'] as DefaulterStudent | undefined;
+        const cls = r['classId'] as DefaulterClass | undefined;
+        return [
+          r['challanNo'],
+          student?.rollNo ?? '',
+          student?.admissionNo ?? '',
+          student?.profile?.name ?? '',
+          cls?.name ?? '',
+          student?.guardianInfo?.fatherName ?? '',
+          student?.guardianInfo?.fatherPhone ?? '',
+          r['month'],
+          new Date(r['dueDate'] as string).toISOString().slice(0, 10),
+          r['daysOverdue'],
+          r['totalAmount'],
+          r['paidAmount'],
+          r['balance'],
+          r['status'],
+        ].map(csvEscape).join(',');
+      }),
+    ];
+    const csv = `﻿${lines.join('\r\n')}`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="fee-defaulters-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send(csv);
+  } catch (err) { next(err); }
+}
+
+export async function remindDefaulters(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { dispatchFeeReminderJob } = await import('../jobs');
+    await dispatchFeeReminderJob({ orgId: req.orgId, branchId: req.user!.branchId });
+    res.status(202).json({ success: true, message: 'Reminder sweep queued. Students with due/overdue challans will be notified shortly.' });
   } catch (err) { next(err); }
 }

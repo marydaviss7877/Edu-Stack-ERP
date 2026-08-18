@@ -143,7 +143,7 @@ export async function getStudent(req: Request, res: Response): Promise<void> {
 
 export async function updateStudent(req: Request, res: Response): Promise<void> {
   const { orgId } = req.user!;
-  const allowed = ['profile', 'guardianInfo', 'classId', 'sectionId', 'status', 'previousSchool', 'monthlyFee'];
+  const allowed = ['profile', 'guardianInfo', 'classId', 'sectionId', 'status', 'previousSchool', 'monthlyFee', 'houseId', 'labelIds', 'transport'];
   const update: Record<string, unknown> = {};
   for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
 

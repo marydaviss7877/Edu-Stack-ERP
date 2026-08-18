@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import {
   markAttendance, markAttendanceValidators,
   getAttendance, getStudentMonthlySummary, getSectionSummary, getMyAttendance,
+  getTodayAttendanceStatus, getAttendanceProgressReport,
   markStaffAttendance, markStaffAttendanceValidators,
   getStaffAttendance, getStaffMonthlySummary,
 } from '../controllers/attendanceController';
@@ -17,6 +18,8 @@ router.post('/', authorize('attendance', 'mark'), markAttendanceValidators, asyn
 router.get('/', authorize('attendance', 'read'), asyncHandler(getAttendance));
 router.get('/student-summary', authorize('attendance', 'read'), asyncHandler(getStudentMonthlySummary));
 router.get('/section-summary', authorize('attendance', 'read'), asyncHandler(getSectionSummary));
+router.get('/today-status', authorize('attendance', 'read'), asyncHandler(getTodayAttendanceStatus));
+router.get('/progress-report', authorize('attendance', 'read'), asyncHandler(getAttendanceProgressReport));
 
 // Staff attendance (principal / IT admin)
 router.post('/staff', authorize('attendance', 'mark'), markStaffAttendanceValidators, asyncHandler(markStaffAttendance));
