@@ -31,6 +31,7 @@ export default function AcademicSetupPage() {
   const [modal, setModal] = useState<{ type: string; data?: Record<string, unknown> } | null>(null);
   const [selectedYearId, setSelectedYearId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
+  const [routeActiveFilter, setRouteActiveFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [wizardDismissed, setWizardDismissed] = useState(false);
 
   const { data: years = [], isLoading: yearsLoading } = useQuery({ queryKey: ['years'], queryFn: academicService.getYears });
@@ -39,7 +40,10 @@ export default function AcademicSetupPage() {
   const { data: subjects = [] } = useQuery({ queryKey: ['subjects'], queryFn: () => academicService.getSubjects() });
   const { data: houses = [] } = useQuery({ queryKey: ['houses'], queryFn: houseService.list });
   const { data: labels = [] } = useQuery({ queryKey: ['labels'], queryFn: labelService.list });
-  const { data: routes = [] } = useQuery({ queryKey: ['transport-routes'], queryFn: transportService.list });
+  const { data: routes = [] } = useQuery({
+    queryKey: ['transport-routes', routeActiveFilter],
+    queryFn: () => transportService.list(routeActiveFilter === 'all' ? undefined : routeActiveFilter === 'active'),
+  });
 
   const createYear = useMutation({ mutationFn: academicService.createYear, onSuccess: () => { qc.invalidateQueries({ queryKey: ['years'] }); setModal(null); } });
   const createClass = useMutation({ mutationFn: academicService.createClass, onSuccess: () => { qc.invalidateQueries({ queryKey: ['classes'] }); setModal(null); } });
@@ -56,6 +60,10 @@ export default function AcademicSetupPage() {
 
   const createRoute = useMutation({ mutationFn: transportService.create, onSuccess: () => { qc.invalidateQueries({ queryKey: ['transport-routes'] }); setModal(null); } });
   const deleteRoute = useMutation({ mutationFn: transportService.remove, onSuccess: () => qc.invalidateQueries({ queryKey: ['transport-routes'] }) });
+  const toggleRouteActive = useMutation({
+    mutationFn: (r: TransportRouteDoc) => transportService.update(r._id, { isActive: !r.isActive }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['transport-routes'] }),
+  });
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'years', label: 'Academic Years' },
@@ -257,7 +265,15 @@ export default function AcademicSetupPage() {
       {tab === 'transport' && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-gray-900 dark:text-slate-100">Transport Routes</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="font-semibold text-gray-900 dark:text-slate-100">Transport Routes</h2>
+              <select value={routeActiveFilter} onChange={(e) => setRouteActiveFilter(e.target.value as typeof routeActiveFilter)}
+                className="text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 rounded-lg px-2 py-1">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="all">All</option>
+              </select>
+            </div>
             <button onClick={() => setModal({ type: 'route' })} className="btn-primary">+ Add Route</button>
           </div>
           <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">Assign students to a route from their profile in Students. The route's monthly fee is added automatically as a line item when challans are generated.</p>
@@ -277,11 +293,18 @@ export default function AcademicSetupPage() {
                 <div className="flex items-center gap-3">
                   <Badge variant="default">{r.studentCount} students</Badge>
                   <span className="font-semibold text-gray-800 dark:text-slate-200">Rs {r.monthlyFee.toLocaleString()}/mo</span>
+                  <button onClick={() => toggleRouteActive.mutate(r)} className="text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">
+                    {r.isActive ? 'Deactivate' : 'Reactivate'}
+                  </button>
                   <button onClick={() => deleteRoute.mutate(r._id)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
                 </div>
               </div>
             ))}
-            {routes.length === 0 && <div className="px-5 py-8 text-center text-sm text-gray-400 dark:text-slate-500">No transport routes yet.</div>}
+            {routes.length === 0 && (
+              <div className="px-5 py-8 text-center text-sm text-gray-400 dark:text-slate-500">
+                {routeActiveFilter === 'active' ? 'No active routes.' : routeActiveFilter === 'inactive' ? 'No inactive routes.' : 'No transport routes yet.'}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -13,7 +13,11 @@ export const transportRouteValidators = [
 
 export async function listTransportRoutes(req: Request, res: Response): Promise<void> {
   const { orgId, branchId } = req.user!;
-  const routes = await TransportRoute.find(orgBranchScope({ orgId: orgId!, branchId }))
+  const scope = orgBranchScope({ orgId: orgId!, branchId });
+  if (req.query.isActive === 'true') scope.isActive = true;
+  else if (req.query.isActive === 'false') scope.isActive = false;
+
+  const routes = await TransportRoute.find(scope)
     .sort({ name: 1 })
     .lean();
 
