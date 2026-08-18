@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { documentTemplateService } from '../../services/documentTemplateService';
-import type { DocumentTemplateDoc, TemplateKind } from '../../services/documentTemplateService';
+import type { DocumentTemplateDoc, TemplateElement, TemplateKind, TemplatePage } from '../../services/documentTemplateService';
 import { documentIssuanceService } from '../../services/documentIssuanceService';
 import { studentService } from '../../services/studentService';
 import type { StudentDoc } from '../../services/studentService';
@@ -9,8 +9,9 @@ import { userService } from '../../services/userService';
 import { academicService } from '../../services/academicService';
 import PageHeader from '../../components/ui/PageHeader';
 import Badge from '../../components/ui/Badge';
-import TemplateStaticView from '../../components/templates/TemplateStaticView';
+import TemplateThumb from '../../components/templates/TemplateThumb';
 import TemplateDesignerModal from '../../components/templates/TemplateDesignerModal';
+import StarterGalleryModal, { type StarterPick } from '../../components/templates/StarterGalleryModal';
 import { resolveStudentData, resolveStaffData, resolveOrgBranchData, resolveIssueMeta, SAMPLE_STUDENT_DATA, SAMPLE_STAFF_DATA, SAMPLE_ISSUE_DATA } from '../../lib/templateFields';
 import { exportCardsPdf } from '../../lib/templateExport';
 import { getOrgBranding } from '../../services/authService';
@@ -20,23 +21,14 @@ import { cn, formatDate, roleLabel } from '../../lib/utils';
 
 type Tab = 'templates' | 'issue' | 'log';
 
-function ThumbPreview({ template, sampleData }: { template: DocumentTemplateDoc; sampleData: Record<string, string> }) {
-  const boxW = 220;
-  const scale = boxW / template.page.width;
-  return (
-    <div style={{ width: boxW, height: template.page.height * scale, overflow: 'hidden', borderRadius: 8, pointerEvents: 'none' }} className="border border-gray-200 dark:border-slate-600">
-      <TemplateStaticView page={template.page} elements={template.elements} data={sampleData} scale={scale} />
-    </div>
-  );
-}
-
 export default function IdCardsPage() {
   const qc = useQueryClient();
   const slug = getOrgSlug();
   const activeBranch = useAuthStore((s) => s.activeBranch);
   const [tab, setTab] = useState<Tab>('templates');
   const [subject, setSubject] = useState<'student' | 'staff'>('student');
-  const [designer, setDesigner] = useState<{ open: boolean; templateId?: string }>({ open: false });
+  const [designer, setDesigner] = useState<{ open: boolean; templateId?: string; initial?: { name: string; page: TemplatePage; elements: TemplateElement[] } }>({ open: false });
+  const [starterGalleryOpen, setStarterGalleryOpen] = useState(false);
 
   const kind: TemplateKind = subject === 'student' ? 'id_card_student' : 'id_card_staff';
 
@@ -63,7 +55,7 @@ export default function IdCardsPage() {
       <PageHeader
         title="ID Cards"
         subtitle="Design, issue, and track student and staff ID cards"
-        actions={tab === 'templates' ? <button onClick={() => setDesigner({ open: true })} className="btn-primary">+ New Template</button> : undefined}
+        actions={tab === 'templates' ? <button onClick={() => (subject === 'student' ? setStarterGalleryOpen(true) : setDesigner({ open: true }))} className="btn-primary">+ New Template</button> : undefined}
       />
 
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -87,7 +79,7 @@ export default function IdCardsPage() {
           {templates.map((t) => (
             <div key={t._id} className="card p-4 flex flex-col gap-3">
               <div className="flex items-center justify-center bg-gray-50 dark:bg-slate-900 rounded-lg p-3">
-                <ThumbPreview template={t} sampleData={sampleData} />
+                <TemplateThumb page={t.page} elements={t.elements} sampleData={sampleData} />
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -113,10 +105,23 @@ export default function IdCardsPage() {
       {tab === 'issue' && <IssueCardsTab kind={kind} subject={subject} templates={templates} orgBranchData={orgBranchData} />}
       {tab === 'log' && <IssuanceLogTab kind={kind} />}
 
+      {starterGalleryOpen && (
+        <StarterGalleryModal
+          open={starterGalleryOpen}
+          onClose={() => setStarterGalleryOpen(false)}
+          sampleData={sampleData}
+          onPick={(initial: StarterPick) => {
+            setStarterGalleryOpen(false);
+            setDesigner({ open: true, initial });
+          }}
+        />
+      )}
+
       {designer.open && (
         <TemplateDesignerModal
           kind={kind}
           templateId={designer.templateId}
+          initial={designer.initial}
           onClose={() => setDesigner({ open: false })}
           onSaved={() => setDesigner({ open: false })}
         />

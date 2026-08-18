@@ -24,6 +24,7 @@ const CERT_DOC_TYPES: { value: CertificateDocType; label: string }[] = [
 interface Props {
   kind: TemplateKind;
   templateId?: string;
+  initial?: { name: string; page: TemplatePage; elements: TemplateElement[] };
   onClose: () => void;
   onSaved: () => void;
 }
@@ -34,7 +35,7 @@ function pill(active: boolean) {
 
 /** Loads the existing template (if editing) before mounting the form, so form state can be
  * initialized directly from real data on mount — no effect-based sync needed. */
-export default function TemplateDesignerModal({ kind, templateId, onClose, onSaved }: Props) {
+export default function TemplateDesignerModal({ kind, templateId, initial, onClose, onSaved }: Props) {
   const { data: existing, isLoading } = useQuery({ queryKey: ['document-template', templateId], queryFn: () => documentTemplateService.get(templateId!), enabled: !!templateId });
 
   if (templateId && isLoading) {
@@ -45,21 +46,21 @@ export default function TemplateDesignerModal({ kind, templateId, onClose, onSav
     );
   }
 
-  return <TemplateDesignerForm key={templateId ?? 'new'} kind={kind} templateId={templateId} existing={existing ?? null} onClose={onClose} onSaved={onSaved} />;
+  return <TemplateDesignerForm key={templateId ?? 'new'} kind={kind} templateId={templateId} initial={initial} existing={existing ?? null} onClose={onClose} onSaved={onSaved} />;
 }
 
-function TemplateDesignerForm({ kind, templateId, existing, onClose, onSaved }: Props & { existing: DocumentTemplateDoc | null }) {
+function TemplateDesignerForm({ kind, templateId, initial, existing, onClose, onSaved }: Props & { existing: DocumentTemplateDoc | null }) {
   const qc = useQueryClient();
   const slug = getOrgSlug();
   const activeBranch = useAuthStore((s) => s.activeBranch);
   const { data: branding } = useQuery({ queryKey: ['org-branding', slug], queryFn: () => getOrgBranding(slug!), enabled: !!slug });
 
   const presets = presetsForKind(kind);
-  const [name, setName] = useState(existing?.name ?? '');
+  const [name, setName] = useState(existing?.name ?? initial?.name ?? '');
   const [documentType, setDocumentType] = useState<CertificateDocType>(existing?.documentType ?? 'custom');
   const [isDefault, setIsDefault] = useState(existing?.isDefault ?? false);
-  const [page, setPage] = useState<TemplatePage>(existing?.page ?? presets[0].page);
-  const [elements, setElements] = useState<TemplateElement[]>(existing?.elements ?? []);
+  const [page, setPage] = useState<TemplatePage>(existing?.page ?? initial?.page ?? presets[0].page);
+  const [elements, setElements] = useState<TemplateElement[]>(existing?.elements ?? initial?.elements ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewSubject, setPreviewSubject] = useState<'student' | 'user'>(kind === 'id_card_staff' ? 'user' : 'student');
   const [uploadingBg, setUploadingBg] = useState(false);
