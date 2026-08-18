@@ -110,7 +110,7 @@ function StaffStudentsView() {
   const { data: houses = [] } = useQuery({ queryKey: ['houses'], queryFn: houseService.list });
   const houseMap = new Map(houses.map(h => [h._id, h]));
 
-  const { data: routes = [] } = useQuery({ queryKey: ['transport-routes'], queryFn: transportService.list });
+  const { data: routes = [] } = useQuery({ queryKey: ['transport-routes'], queryFn: () => transportService.list() });
   const routeMap = new Map(routes.map(r => [r._id, r]));
 
   const { data: branchHeader } = useQuery({ queryKey: ['branch-header'], queryFn: branchHeaderService.get });
